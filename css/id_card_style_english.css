@@ -1,0 +1,82 @@
+/* CSS Document */
+#container {
+
+border:1px solid black;
+width:3.9in;
+height:3.1in;
+overflow:hidden;
+margin:0 auto;
+}
+#container #text{
+ float:left;
+ width:70px;
+ height:100%;
+ padding-left:5px;
+ 
+}
+
+
+
+.vText {
+   -moz-transform: rotate(0) translate(0, 100%);
+/*   -moz-transform-origin: 0% 100%;*/
+
+   margin-top:-170px;
+   top:125px;
+   font-family:SolaimanLipi;
+   font-size:12px;
+   width:175px;
+   font-style:italic;   
+}
+#container #id {
+
+
+width:2in;
+height:auto;
+float:right;
+position:relative;
+font-family: SolaimanLipi;
+border-left: 1px solid #000;
+}
+
+#id #logo{
+ 
+ 
+ float:left; 
+ width:100%;
+ height:auto;
+ margin-top: 5px;
+ 
+ }
+ 
+ #id #image{
+ width:100%;
+ text-align:center;
+ position:relative;
+ float: left;
+ height: 78px;
+ top:5px;
+ }
+
+ #id #profile{
+  width:98%;
+  height:auto;
+  float:left;
+  padding-left:5px;
+  font-size:10px;
+  position:relative;
+  bottom:40px;
+  font-weight:bold;
+  bottom:62px;
+
+  }
+
+#id #sign {
+    float: right;
+    font-size: 11px;
+    font-weight: bold;
+    position: absolute;
+    text-align: left;
+    top: 246px;
+    width: 187px;
+	}

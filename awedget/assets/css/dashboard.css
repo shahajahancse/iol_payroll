@@ -1,0 +1,190 @@
+ @font-face {
+    font-family: 'Kalpurush';
+    src: url('<?=base_url('awedget/assets/')?>/fonts/Kalpurush.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  .report-table{
+    width: 100%;
+  }
+  .report-table tr th{
+    font-size: 15px;
+    text-align: left;
+    width: 25%;
+    font-weight: normal;
+  }
+  .report-table tr td{
+    text-align: left;
+    width: 25%;
+    font-size: 15px;
+  }
+  .report-table tr th:nth-child(1),
+  .report-table tr td:nth-child(1){
+    width: 35%;
+  }
+  .report-table tr th:nth-child(2),
+  .report-table tr td:nth-child(2){
+    width: 20px;
+  }
+  .sub-mark{
+    width: 5% !important;
+  }
+  .new{
+    -webkit-box-shadow: 13px 11px 40px 0px rgba(82,82,82,0.43);
+    -moz-box-shadow: 13px 11px 40px 0px rgba(82,82,82,0.43);
+    box-shadow: 13px 11px 40px 0px rgba(82,82,82,0.43);
+  }
+  .new .tiles-title {
+    height: 40px;
+}
+  .new .heading{
+    width: 180px;
+    padding: 5px 10px;
+    margin-left: -30px !important;
+    border-radius: 0 20px 20px 0px;
+    position: relative;
+    text-align: center;
+  }
+  .new .triangle-up {
+    width: 0;
+    height: 0;
+    right: -3px;
+    bottom: -3px;
+    position: absolute;
+  }
+  
+  .new1 .heading{
+    color: #fff !important;
+    background: #9424b8;
+  }
+
+  .new2 tr:nth-child(1),
+  .new1 .tiles-title{
+    color: #9424b8 !important;
+  }
+
+  .new3 tr:nth-child(1){
+    color: #78c72f !important;
+  }
+
+  .new1 .triangle-up {
+   
+    border-left: 70px solid transparent;
+    border-right: 0px solid transparent;
+    border-bottom: 70px solid #9424b8;
+  }
+
+  .new2 .heading{
+    color: #fff !important;
+    background: #00adef;
+  }
+
+  .new1 tr:nth-child(1),
+  .new2 .tiles-title{
+    color: #00adef !important;
+  }
+  .new2 .triangle-up {
+   
+    border-left: 70px solid transparent;
+    border-right: 0px solid transparent;
+    border-bottom: 70px solid #00adef;
+  }
+
+  .new3 .heading{
+    color: #fff !important;
+    background: #ff940b;
+  }
+
+  .new4 tr:nth-child(1),
+  .new3 .tiles-title{
+    color: #ff940b !important;
+  }
+  .new3 .triangle-up {
+   
+    border-left: 70px solid transparent;
+    border-right: 0px solid transparent;
+    border-bottom: 70px solid #ff940b;
+  }
+
+  .new4 .heading{
+    color: #fff !important;
+    background: #78c72f;
+  }
+
+  .new4 .tiles-title{
+    color: #78c72f !important;
+  }
+  .new4 .triangle-up {
+   
+    border-left: 70px solid transparent;
+    border-right: 0px solid transparent;
+    border-bottom: 70px solid #78c72f;
+  }
+  .grand_total{
+      color: #fff !important;
+      background: #9424b8;
+      width: 20%;
+      height: 40px;
+      padding: 0px 10px;
+      font-size: 20px;
+      border-radius: 0;
+      text-align: center;
+      position: relative;
+      right: 40%;
+      bottom: 45px;
+      float: right;
+  }
+  .head-title{
+    font-size: 14px;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+    font-weight:600;
+  }
+  .field, .field1{
+    position: relative;
+  }
+  .field .tiles-title{
+    color: #9424b8;
+  }
+
+  .field .triangle-up {
+    width: 0;
+    height: 0;
+    right: 0px;
+    bottom: 0px;
+    position: absolute;
+    border-left: 50px solid transparent;
+    border-right: 0px solid transparent;
+    border-bottom: 50px solid #9424b8;
+  }
+  .field1 .tiles-title{
+    color: #00adef;
+  }
+
+  .field1 .triangle-up {
+    width: 0;
+    height: 0;
+    right: 0px;
+    bottom: 0px;
+    position: absolute;
+    border-left: 50px solid transparent;
+    border-right: 0px solid transparent;
+    border-bottom: 50px solid #00adef;
+  }
+  .head-title i{
+    margin-right: 10px;
+    line-height: 20px
+  }
+
+  .zc-ref {
+    display: none;
+  }
+  div#myChart1-license-text,
+  div#myChart2-license-text,
+  div#myChart-license-text {
+      display: none !important;
+  }
+  td i{
+    color: #9424b8 !important;
+    font-size: 12px !important;
+  }

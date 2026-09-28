@@ -1,0 +1,126 @@
+ @font-face {
+    font-family: 'Kalpurush';
+    src: url('<?=base_url()?>awedget/assets/fonts/Kalpurush.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  a{
+    underline:none;
+  }
+  .page-content {
+    font-family: 'Kalpurush', 'Open Sans', Arial, sans-serif;
+    background: #e5e9ec;
+  }
+
+  .header_container{
+    background:#683091;
+    min-height: 50px;
+    margin-bottom: 30px;
+    padding-top:10px;
+    display: block;
+  }
+
+  .footer_container{
+    background:#006ba3;
+    min-height: 50px;
+    padding-top:10px;
+  }
+
+  .page-sidebar .page-sidebar-wrapper > ul > li > ul.sub-menu li > ul.sub-menu > li > a {
+      color: #683091;
+  }
+
+td i{
+    color: #9424b8 !important;
+    font-size: 12px !important;
+  }
+
+.anchor_cls.mactive{
+  background: red;
+  color:#fff;
+}
+
+.custom_loader {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    background-image: url(<?php echo base_url(); ?>images/ajax-loader1.gif);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-color: rgba(255, 255, 255, 0.3);
+}
+.container_page{
+  width: 1000px;
+}
+
+h1,h2,h3,h4,h5,h6{
+  margin: 0;
+  padding: 0;
+  color:#000;
+}
+.temp_info{
+  width: 235px;
+  height: 95px;
+  padding: 2px 4px;
+  background-color: #0090D9;
+  float: left;
+}
+.temp_daily_report{
+  background-color: #0AA699;
+}
+
+.temp_monthly_report{
+  background-color: #F35958;
+}
+.last_month_expansive_report{
+  background-color: #7DC6EC;
+}
+.amount{
+  font-size: 15px;
+  margin-left: 3px;
+  color:#fff;
+}
+.temp_daily_report,.temp_monthly_report,.last_month_expansive_report{
+  margin-left:8px;
+  width: 235px;
+  height: 95px;
+  padding: 2px 4px;
+  float: left;
+}
+
+#container_page{
+  min-width: 320px;
+  max-width: 500px;
+  height: 250px;
+  margin: 0 auto;
+}
+#piechart{
+ min-width: 210px; 
+ height: 200px; 
+ max-width: 300px;
+}
+
+#calendar{
+    /*max-width: 1100px;*/
+    height: 50px; 
+    margin: 0 auto;
+ }
+
+path.highcharts-button-symbol,text.highcharts-title,text.highcharts-credits{
+  display: none;
+}
+
+.department,.section,.designation,.line{
+  /* width: 243px; */
+  height: 20px;
+  padding: 3px;
+  background-color: #0090D9;
+  /* float: left; */
+}
+
+rect.highcharts-button-box,g.highcharts-exporting-group{
+  display: none;
+}
