@@ -21,13 +21,13 @@
       <li class="start <?= activate_class('emp_info_con') ?>"> <a href="javascript:;"> <i class="fa fa-users"></i>
         <span class="title">HRM</span> <span class="selected"></span> <span class="arrow <?= arrow_open('emp_info_con') ?>"></span> </a>
         <ul class="sub-menu">
-          <?php if(in_array(11,$acl)) { ?>
+          <!-- <?php if(in_array(11,$acl)) { ?>
             <li class="start <?= activate_method('personal_info') ?>">
               <a href="<?=base_url('emp_info_con/personal_info')?>">
                 <i class="fa fa-id-card"></i> Emp Information
               </a>
             </li>
-          <?php } ?>
+          <?php } ?> -->
 
           <?php if(in_array(12,$acl)) { ?>
             <li class="start <?= activate_method('personal_info_short') ?>">
