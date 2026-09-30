@@ -254,6 +254,7 @@
       <?php } ?>
 
       <!-- Training -->
+      <!--
       <?php if(in_array(6,$acl)) { ?>
         <li class="start <?= activate_class('training_con') ?>"> <a href="javascript:;"> <i class="fa fa-book fa-fw"></i>
           <span class="title">Training</span> <span class="selected"></span> <span class="arrow <?= arrow_open('training_con') ?>"></span> </a>
@@ -278,8 +279,10 @@
           </ul>
         </li>
       <?php } ?>
+      -->
 
       <!-- Monitoring / Audit Log -->
+      <!--
       <?php if(in_array(8,$acl)) { ?>
         <li class="start <?= activate_class('monitoring_con') ?>"><a href="javascript:;"><i class="fa fa-desktop"></i>
           <span class="title">Audit Log</span> <span class="selected"></span> <span class="arrow <?= arrow_open('monitoring_con') ?>"></span> </a>
@@ -316,6 +319,7 @@
           </ul>
         </li>
       <?php } ?>
+      -->
 
       <!-- Setup -->
       <?php if(in_array(5,$acl)) { ?>
