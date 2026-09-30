@@ -77,6 +77,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(17,$acl)) { ?>
             <li class="<?= activate_method('gov_holiday_list') ?>">
               <a href="<?= base_url('entry_system_con/gov_holiday_list')?>" class="anchor_cls">
@@ -84,6 +85,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
           <?php if(in_array(18,$acl)) { ?>
             <li class="<?= activate_method('leave_transation') ?>">
@@ -93,6 +95,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(19,$acl)) { ?>
             <li class="<?= activate_method('maternity_entry') ?>">
               <a href="<?= base_url('entry_system_con/maternity_entry')?>" class="anchor_cls">
@@ -100,6 +103,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
           <?php if(in_array(20,$acl)) { ?>
             <li class="<?= activate_method('leave_list') ?>">
@@ -141,6 +145,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(25,$acl)) { ?>
             <li class="<?= activate_method('inter_unit_transfer') ?>">
               <a href="<?= base_url('entry_system_con/inter_unit_transfer')?>" class="anchor_cls">
@@ -164,6 +169,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
         </ul>
       </li>
       <?php } ?>

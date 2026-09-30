@@ -171,6 +171,7 @@
             </div>
 
             <!-- Stop Salary -->
+            <!--
             <?php
                 $user_id = $this->session->userdata('data')->id;
                 $acl = check_acl_list($user_id);
@@ -201,6 +202,7 @@
                     </div>
                 </div>
             <?php } ?>
+            -->
             <style>
                 .hints {
                     color: #436D19;
@@ -209,6 +211,7 @@
             </style>
 
             <!-- alert entry form   -->
+            <!--
             <div id="alert_system" class="row nav_head" style="margin-top: 13px;">
                 <div class="col-md-12" style="display: flex;gap: 11px;flex-direction: column;">
                     <div class="col-md-12" style="box-shadow: 0px 0px 2px 2px #bdbdbd;border-radius: 4px;padding-top: 10px; padding-bottom: 10px;">
@@ -238,6 +241,7 @@
                     </div>
                 </div>
             </div>
+            -->
         </div>
 
         <!-- employee list for right side -->
