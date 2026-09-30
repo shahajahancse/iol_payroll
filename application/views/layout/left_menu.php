@@ -495,6 +495,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(45,$acl)) { ?>
             <li class="<?= activate_method('report_setting') ?>">
               <a href="<?=base_url('setting_con/report_setting')?>" class="anchor_cls" id="acl">
@@ -524,6 +525,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
           <?php if(in_array(48,$acl)) { ?>
             <li class="<?= activate_method('acl') ?>">
