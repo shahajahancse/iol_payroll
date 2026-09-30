@@ -59,6 +59,7 @@
                             <?= (isset($failuer['unit_id'])) ? '<div class="alert alert-failuer">' . $failuer['unit_id'] . '</div>' : ''; ?>
                         </div>
                     </div>
+                    <!--
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="unit">Select Attendance Bonus</label>
@@ -106,6 +107,7 @@
                             <?= (isset($failuer['tiffin_id'])) ? '<div class="alert alert-failuer">' . $failuer['tiffin_id'] . '</div>' : ''; ?>
                         </div>
                     </div>
+                    -->
                 </div>
 
                 <div class="row">

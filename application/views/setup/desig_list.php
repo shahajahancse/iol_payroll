@@ -77,11 +77,13 @@
                         <th>Sl. No.</th>
                         <th>Designation Name </th>
                         <th>Unit Name </th>
+                        <!--
                         <th>Attendance Bonus</th>
                         <th>Holiday Weekend Allowance </th>
                         <th>Iftar Allowance </th>
                         <th>Night Allowance </th>
                         <th>Tiffin Allowance </th>
+                        -->
                         <th width="80">Edit</th>
                         <th <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(in_array(139,$acl)) {echo '';} else { echo 'style="display:none;"';}?>>Delete</th>
                     </tr>
@@ -105,11 +107,13 @@
                         <td><?php echo $key+1?></td>
                         <td><?php echo $data['desig_name'] ?></td>
                         <td><?php echo $data['unit_name'] ?></td>
+                        <!--
                         <td><?php echo $data['allowance_attn_bonus'] ?></td>
                         <td><?php echo $data['allowance_holiday_weekend'] ?></td>
                         <td><?php echo $data['allowance_iftar'] ?></td>
                         <td><?php echo $data['allowance_night_rules'] ?></td>
                         <td><?php echo $data['allowance_tiffin'] ?></td>
+                        -->
                         <td>
                             <a href="<?=base_url('setup_con/designation_edit') . '/' . $data["id"]?>"
                             class="btn btn-primary center-text" role="button">Edit</a>

@@ -349,13 +349,16 @@
               </a>
             </li>
 
+            <!--
             <li class="<?= activate_method('position') ?>">
               <a href="<?=base_url('setup_con/position')?>" class="anchor_cls">
                 <i class="fa fa-map-marker"></i> Position
               </a>
             </li>
+            -->
           <?php } ?>
 
+          <!--
           <?php if(in_array(36,$acl)) { ?>
             <li class="<?= activate_method('manage_designation') ?>">
               <a href="<?=base_url('setup_con/manage_designation')?>" class="anchor_cls">
@@ -397,6 +400,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
           <?php if(in_array(38,$acl)) { ?>
             <li class="<?= activate_method('shift_schedule') ?>">
