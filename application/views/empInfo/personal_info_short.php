@@ -49,38 +49,19 @@ input[type="number"] {
 
                 <hr style="margin-bottom: 0px !important;">
                 <div style="background-color: white; padding: 15px !important;">
+                    <!-- Unit field commented out, default set to 1 -->
+                    <input type="hidden" name="unit_id" id="unit_id" value="<?= isset($emp_info->unit_id) ? $emp_info->unit_id : 1 ?>">
+
                     <div class="row">
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label>Unit <span style="color: red;">*</span> </label>
-                                <select name="unit_id" id="unit_id" onchange='get_last_id()' id="unit_id"
-                                    class="form-control input-sm required" required>
-                                    <option value="">Select Unit</option>
-                                    <?php
-										foreach ($units as $row) {
-										if($row->unit_id == $user_data->unit_name){
-											$select_data="selected";
-										}else{
-                                            if ($user_data->level != "All") {
-                                                continue;
-                                            }
-										}
-										echo '<option '.$select_data.'  value="'.$row->unit_id.'">'.$row->unit_name.
-										'</option>';
-										}
-									?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Emp Id <span style="color: red;">*</span> </label>
                                 <input type="text" name="emp_id" id="emp_id" class="form-control input-sm required"
-                                    value="<?= isset($emp_info->emp_id)?>" required>
+                                    value="<?= isset($emp_info->emp_id) ? $emp_info->emp_id : '' ?>" required>
                                 <?php echo form_error('emp_id');?>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label> Punch Card No. <span style="color: red;">*</span> </label>
                                 <input type="text" name="proxi_id" id="proxi_id"
@@ -93,7 +74,7 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Name (Bangla) <span style="color: red;">*</span> </label>
                                 <input type="text" name="name_bn" id="name_bn"
-                                    class="form-control input-sm bangla_name required" value="<?= isset($emp_info->name_bn)?>"
+                                    class="form-control input-sm bangla_name required" value="<?= isset($emp_info->name_bn) ? $emp_info->name_bn : '' ?>"
                                     required>
                                 <?php echo form_error('name_bn');?>
                             </div>
@@ -102,7 +83,7 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Name (English) <span style="color: red;">*</span> </label>
                                 <input type="text" name="name_en" id="name_en"
-                                    class="form-control input-sm english_name required" value="<?= isset($emp_info->name_en)?>"
+                                    class="form-control input-sm english_name required" value="<?= isset($emp_info->name_en) ? $emp_info->name_en : '' ?>"
                                     required>
                                 <?php echo form_error('name_en');?>
                             </div>
@@ -976,7 +957,8 @@ $(document).ready(function() {
                 });
             }
         });
-    });
+    // Trigger unit_id change to auto-load departments for default unit 1
+    $('#unit_id').trigger('change');
 });
 </script>
 
