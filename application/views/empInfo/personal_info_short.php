@@ -83,9 +83,9 @@ input[type="number"] {
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label> Punch Card No. <span style="color: red;">*</span> </label>
-                                <input type="text" name="proxi_id" id="proxi_id" value="<?= set_value('proxi_id') ?>"
-                                    required readonly class="form-control input-sm required"
-                                    value="<?= isset($emp_info->proxi_id)?>" required>
+                                <input type="text" name="proxi_id" id="proxi_id"
+                                    class="form-control input-sm required"
+                                    value="<?= isset($emp_info->proxi_id) ? $emp_info->proxi_id : set_value('proxi_id')?>" required>
                                 <?php echo form_error('proxi_id');?>
                             </div>
                         </div>
