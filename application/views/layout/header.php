@@ -154,6 +154,42 @@
         color: #683091;
     }
 
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li>ul.sub-menu {
+        display: none !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 50px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        width: 220px !important;
+        background-color: #ffffff !important;
+        border: 1px solid #dcdcdc !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.18) !important;
+        border-radius: 0 4px 4px 0 !important;
+        padding: 5px 0 !important;
+        z-index: 1000 !important;
+    }
+
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li:hover>ul.sub-menu {
+        display: block !important;
+    }
+
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li>ul.sub-menu>li>a {
+        padding: 9px 15px !important;
+        color: #333333 !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        text-shadow: none !important;
+        background: transparent !important;
+        display: block !important;
+    }
+
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li>ul.sub-menu>li>a:hover,
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li>ul.sub-menu>li.active>a {
+        background-color: #006ba3 !important;
+        color: #ffffff !important;
+    }
+
     </style>
 </head> <!-- END HEAD -->
 

@@ -31,10 +31,7 @@ input[type="number"] {
     </div>
 
     <div id="target-div">
-
         <div class="container-fluid">
-
-
             <button onclick="emp_id_search()" class="form-control btn input-sm  btn-success"
                 style="width: 8%;line-height: 10px !important;float: right;border-radius: 0 !important; margin-top: 7px;">Search</button>
 

@@ -603,7 +603,7 @@ body.menu-non-fixed .page-sidebar {
   display: block;
   padding: 5px 0px;
 /*  color: #ccc;*/
-  color: #006ba3 !important
+  color: #006ba3 !important;
   text-decoration: none;
   text-shadow: 0 1px 1px #000;
   font-size: 13px;
@@ -629,12 +629,40 @@ body.menu-non-fixed .page-sidebar {
   padding: 60px 0 0;
 }
 .page-sidebar.mini .page-sidebar-wrapper > ul > li > ul.sub-menu {
+  display: none !important;
   position: absolute;
-  margin-top: -46px;
-  margin-left: 50px;
-  width: auto;
-  z-index: 110;
-  min-width: 250px;
+  top: 0;
+  left: 50px;
+  margin-top: 0;
+  margin-left: 0;
+  width: 220px;
+  background-color: #ffffff !important;
+  border: 1px solid #dcdcdc;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.18);
+  border-radius: 0 4px 4px 0;
+  padding: 5px 0 !important;
+  z-index: 1000;
+}
+.page-sidebar.mini .page-sidebar-wrapper > ul > li:hover > ul.sub-menu {
+  display: block !important;
+}
+.page-sidebar.mini .page-sidebar-wrapper > ul > li > ul.sub-menu > li > a {
+  padding: 9px 15px !important;
+  color: #333333 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+  background: transparent !important;
+  display: block;
+}
+.page-sidebar.mini .page-sidebar-wrapper > ul > li > ul.sub-menu > li > a:hover,
+.page-sidebar.mini .page-sidebar-wrapper > ul > li > ul.sub-menu > li.active > a {
+  background-color: #006ba3 !important;
+  color: #ffffff !important;
+}
+.page-sidebar.mini .page-sidebar-wrapper > ul > li > ul.sub-menu > li > a i {
+  color: inherit !important;
+  margin-right: 8px;
 }
 .page-sidebar.mini .page-sidebar-wrapper > ul > li > a {
   padding: 13px;
