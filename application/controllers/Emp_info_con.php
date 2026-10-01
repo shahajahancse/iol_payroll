@@ -51,10 +51,10 @@ class Emp_info_con extends CI_Controller {
 		} else {
 			$this->db->select('emp_id');
 			$this->db->where('unit_id', $unit_id);
-			$this->db->order_by('emp_id', 'desc');
+			$this->db->order_by('CAST(emp_id AS UNSIGNED)', 'desc', FALSE);
 			$this->db->limit(1);
 			$query = $this->db->get('pr_emp_com_info');
-			echo $query->row()->emp_id;
+			echo ($query->num_rows() > 0) ? $query->row()->emp_id : '';
 		}
 	}
 
