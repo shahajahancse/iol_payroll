@@ -58,15 +58,15 @@ input[type="number"] {
                                     <option value="">Select Unit</option>
                                     <?php
 										foreach ($units as $row) {
-										if($row->unit_id == $user_data->unit_name){
-											$select_data="selected";
-										}else{
-                                            if ($user_data->level != "All") {
-                                                continue;
-                                            }
-										}
-										echo '<option '.$select_data.'  value="'.$row->unit_id.'">'.$row->unit_name.
-										'</option>';
+											$select_data = "";
+											if($row->unit_id == $user_data->unit_name){
+												$select_data = "selected";
+											}else{
+												if ($user_data->level != "All") {
+													continue;
+												}
+											}
+											echo '<option '.$select_data.' value="'.$row->unit_id.'">'.$row->unit_name.'</option>';
 										}
 									?>
                                 </select>
@@ -156,21 +156,23 @@ input[type="number"] {
                 <hr style="margin-bottom: 0px !important;">
                 <div style="background-color: white; padding: 15px !important;">
                     <?php
-                        if (!empty($user_data->unit_name)) {
-                            $this->db->where('unit_id', $user_data->unit_name);
-                        }
                         $depts = $this->db->get('emp_depertment')->result();
+                        $sections = $this->db->get('emp_section')->result();
+                        $lines = $this->db->get('emp_line_num')->result();
                     ?>
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-3"> 
                             <div class="form-group">
                                 <label>Department <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_dept_id');?>
                                 <select name="emp_dept_id" id="emp_dept_id" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <?php foreach ($depts as $key => $row) { ?>
-                                    <option value="<?= $row->dept_id ?>"><?= $row->dept_name.' >>'.$row->dept_bangla; ?>
-                                    </option>
+                                    <option value="">-- Select Department --</option>
+                                    <?php foreach ($depts as $key => $row) {
+                                        $d_id = isset($row->dept_id) && $row->dept_id ? $row->dept_id : (isset($row->id) ? $row->id : '');
+                                        $d_en = !empty($row->dept_name) ? $row->dept_name : (!empty($row->dept_name_en) ? $row->dept_name_en : '');
+                                        $d_bn = !empty($row->dept_bangla) ? $row->dept_bangla : (!empty($row->dept_name_bn) ? $row->dept_name_bn : '');
+                                    ?>
+                                    <option value="<?= $d_id ?>"><?= $d_en . ($d_bn ? ' >> '.$d_bn : ''); ?></option>
                                     <?php } ?>
                                 </select>
                             </div>
@@ -179,29 +181,44 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Section <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_sec_id');?>
-                                <select name="emp_sec_id" id="emp_sec_id" class="emp_sec_id form-control input-sm required"
-                                    required>
-                                    <option value="">-- Select one --</option>
+                                <select name="emp_sec_id" id="emp_sec_id" class="emp_sec_id form-control input-sm required" required>
+                                    <option value="">-- Select Section --</option>
+                                    <?php foreach ($sections as $key => $row) {
+                                        $s_id = isset($row->sec_id) && $row->sec_id ? $row->sec_id : (isset($row->id) ? $row->id : '');
+                                        $s_en = !empty($row->sec_name_en) ? $row->sec_name_en : (!empty($row->sec_name) ? $row->sec_name : '');
+                                        $s_bn = !empty($row->sec_name_bn) ? $row->sec_name_bn : (!empty($row->sec_bangla) ? $row->sec_bangla : '');
+                                    ?>
+                                    <option value="<?= $s_id ?>"><?= $s_en . ($s_bn ? ' >> '.$s_bn : ''); ?></option>
+                                    <?php } ?>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3" style="padding-left: 0px !important;">
+                        <!-- <div class="col-md-3" style="padding-left: 0px !important;">
                             <div class="form-group">
                                 <label>Line<span style="color: red;">*</span> </label>
-                                <?php echo form_error('emp_line_id');?>
-                                <select name="emp_line_id" id="emp_line_id" class="emp_line_id form-control input-sm required"
-                                    required>
-                                    <option value="">-- Select one --</option>
+                                < ?php echo form_error('emp_line_id');?>
+                                <select name="emp_line_id" id="emp_line_id" class="emp_line_id form-control input-sm required" required>
+                                    <option value="">-- Select Line --</option>
+                                    < ?php foreach ($lines as $key => $row) {
+                                        $l_id = isset($row->line_id) && $row->line_id ? $row->line_id : (isset($row->id) ? $row->id : '');
+                                        $l_en = !empty($row->line_name_en) ? $row->line_name_en : (!empty($row->line_name) ? $row->line_name : '');
+                                        $l_bn = !empty($row->line_name_bn) ? $row->line_name_bn : (!empty($row->line_bangla) ? $row->line_bangla : '');
+                                    ?>
+                                    <option value="< ?= $l_id ?>">< ?= $l_en . ($l_bn ? ' >> '.$l_bn : ''); ?></option>
+                                    < ?php } ?>
                                 </select>
                             </div>
-                        </div>
+                        </div> -->
                         <div class="col-md-3" style="padding-left: 0px !important;">
                             <div class="form-group">
                                 <label>Designation<span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_desi_id');?>
-                                <select name="emp_desi_id" id="emp_desi_id" class="emp_desi_id form-control input-sm required">
-                                    <!--desig  -->
-                                    <option value="">-- Select one --</option>
+                                <?php $designations = $this->db->order_by('desig_name', 'ASC')->get('emp_designation')->result(); ?>
+                                <select name="emp_desi_id" id="emp_desi_id" class="emp_desi_id form-control input-sm required" required>
+                                    <option value="">-- Select Designation --</option>
+                                    <?php foreach ($designations as $key => $row) { ?>
+                                    <option value="<?= $row->id ?>"><?= $row->desig_name; ?></option>
+                                    <?php } ?>
                                 </select>
                             </div>
                         </div>
@@ -266,8 +283,8 @@ input[type="number"] {
                             <label>Employee Type <span style="color: red;">*</span> </label>
                             <select name="emp_type" id="emp_type" class="form-control input-sm required" required="">
                                 <option value="">-- Select one --</option>
-                                <option value="1">Worker</option>
-                                <option value="2">Staff</option>
+                                <option value="1">Office</option>
+                                <option value="2">Factory</option>
                             </select>
                         </div>
                     </div>
@@ -275,71 +292,71 @@ input[type="number"] {
 
                     <div class="row">
                         <?php //dd($shifts); ?>
-                        <div class="col-md-3">
+                        <!-- <div class="col-md-3">
                             <div class="form-group">
                                 <label>Position <span style="color: red;">*</span> </label>
-                                <?php echo form_error('position_id');?>
+                                < ?php echo form_error('position_id');?>
                                 <select name="position_id" id="position_id" class="form-control input-sm required" required>
                                     <option value="">-- Select one --</option>
-                                    <?php $positions = $this->db->get('pr_emp_position')->result();
+                                    < ?php $positions = $this->db->get('pr_emp_position')->result();
                                         foreach ($positions as $key => $value) {
                                             echo '<option value="'.$value->posi_id.'">'.$value->posi_name.'</option>';
                                         }
                                     ?>
                                 </select>
                             </div>
-                        </div>
-                        <div class="col-md-3">
+                        </div> -->
+                        <!-- <div class="col-md-3">
                             <div class="form-group">
                                 <label>Salary Type <span style="color: red;">*</span> </label>
-                                <?php echo form_error('salary_type');?>
+                                < ?php echo form_error('salary_type');?>
                                 <select name="salary_type" id="salary_type" class="form-control input-sm required" required>
                                     <option value="">-- Select one --</option>
                                     <option value="1" selected>Fixed</option>
                                     <option value="2">Production</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="col-md-2">
+                        </div> -->
+                        <!-- <div class="col-md-2">
                             <div class="form-group">
                                 <label>Salary Withdraw <span style="color: red;">*</span> </label>
-                                <?php echo form_error('salary_draw');?>
+                                < ?php echo form_error('salary_draw');?>
                                 <select name="salary_draw" id="salary_draw" class="form-control input-sm required" required>
                                     <option value="">-- Select one --</option>
                                     <option value="1">cash</option>
                                     <option value="2">bank</option>
                                 </select>
                             </div>
-                        </div>
+                        </div> -->
 
-                        <div class="col-md-2">
+                        <!-- <div class="col-md-2">
                             <div class="form-group">
                                 <label>Lunch <span style="color: red;">*</span> </label>
-                                <?php echo form_error('lunch');?>
+                                < ?php echo form_error('lunch');?>
                                 <select name="lunch" id="lunch" class="form-control input-sm required" required>
                                     <option value="">-- Select one --</option>
                                     <option value="0">Yes</option>
                                     <option selected value="1">No</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="col-md-2">
+                        </div> -->
+                        <!-- <div class="col-md-2">
                             <div class="form-group">
                                 <label>Transport <span style="color: red;">*</span> </label>
-                                <?php echo form_error('transport');?>
+                                < ?php echo form_error('transport');?>
                                 <select name="transport" id="transport" class="form-control input-sm required" required>
                                     <option value="">-- Select one --</option>
                                     <option value="0">Yes</option>
                                     <option selected value="1">No</option>
                                 </select>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
 
                     <div class="row" <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(!in_array(10,$acl)) {echo '';} else { echo 'style="display:none;"';}?>>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Gross Salary <span style="color: red;">*</span> </label>
+                                <label>Salary <span style="color: red;">*</span> </label>
                                 <?php echo form_error('gross_sal');?>
                                 <input type="text" onkeyup="salary_structure_cal()" onchange="salary_structure_cal()" name="gross_sal" id="gross_sal"
                                     class="form-control input-sm required" required>
@@ -349,7 +366,7 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Basic Salary </label>
                                 <?php echo form_error('basic_sal');?>
-                                <input type="text" name="basic_sal" id="basic_sal" disabled
+                                <input type="text" name="basic_sal" id="basic_sal" readonly
                                     class="form-control input-sm required" required>
                             </div>
                         </div>
@@ -357,42 +374,42 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>House </label>
                                 <?php echo form_error('house_rent');?>
-                                <input type="text" name="house_rent" id="house_rent" disabled
+                                <input type="text" name="house_rent" id="house_rent" readonly
                                     class="form-control input-sm required" required>
                             </div>
                         </div>
 
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Medical </label>
                                 <?php echo form_error('medical');?>
-                                <input type="text" name="medical" id="medical" disabled class="form-control input-sm required"
+                                <input type="text" name="medical" id="medical" readonly class="form-control input-sm required"
                                     required>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Conveyance </label>
+                                <?php echo form_error('trans_allow');?>
+                                <input type="text" name="trans_allow" id="trans_allow" readonly
+                                    class="form-control input-sm required" required>
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="form-group">
-                                <label>Transport </label>
-                                <?php echo form_error('trans_allow');?>
-                                <input type="text" name="trans_allow" id="trans_allow" disabled
-                                    class="form-control input-sm required" required>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
                                 <label> Food </label>
                                 <?php echo form_error('food');?>
-                                <input type="text" name="food" id="food" disabled class="form-control input-sm required"
+                                <input type="text" name="food" id="food" readonly class="form-control input-sm required"
                                     required>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label style="white-space: nowrap">Ot Entitle </label>
                             <?php echo form_error('ot_entitle');?>
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="0" class="form-check-input"
-                                style="display: inline; margin-right: 10px;" required>Yes
+                                style="display: inline; margin-right: 5px;" required>Yes
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="1" class="form-check-input"
-                                style="display: inline; margin-right: 10px;" required checked>No
+                                style="display: inline; margin-right: 5px;" required checked>No
                         </div>
                     </div>
                     <div class="row">
@@ -421,7 +438,7 @@ input[type="number"] {
                             </div>
                         </div>
 
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Medical </label>
                                 <?php echo form_error('medicall');?>
@@ -429,29 +446,29 @@ input[type="number"] {
                                     required>
                             </div>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <div class="form-group">
-                                <label>Transport </label>
+                                <label>Conveyance </label>
                                 <?php echo form_error('trans_alloww');?>
-                                <input type="text" name="trans_alloww" id="trans_alloww" disabled
+                                <input type="text" name="trans_alloww" id="trans_alloww" readonly
                                     class="form-control input-sm required" required>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <div class="form-group">
                                 <label> Food </label>
                                 <?php echo form_error('foodd');?>
-                                <input type="text" name="foodd" id="foodd" disabled class="form-control input-sm required"
+                                <input type="text" name="foodd" id="foodd" readonly class="form-control input-sm required"
                                     required>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label style="white-space: nowrap">Ot Entitle </label>
                             <?php echo form_error('ot_entitle');?>
                             <input type="radio" name="com_ot_entitle" id="com_ot_entitle" value="0"
-                                class="form-check-input" style="display: inline; margin-right: 10px;" required>Yes
+                                class="form-check-input" style="display: inline; margin-right: 5px;" required>Yes
                             <input type="radio" name="com_ot_entitle" id="com_ot_entitle" value="1"
-                                class="form-check-input" style="display: inline; margin-right: 10px;" required checked>No
+                                class="form-check-input" style="display: inline; margin-right: 5px;" required checked>No
                         </div>
                     </div>
                 </div>
@@ -572,22 +589,16 @@ function set_desi_item() {
         }, 500)
     }, 500)
 
-    // Update emp_dept_id and trigger 'change'
-    $('#unit_id').trigger('change');
-    setTimeout(function() {
-        $('#emp_dept_id').val(emp_dept_id).trigger('change');
-        // Set a delay of 0.5 seconds before updating emp_sec_id
-        setTimeout(function() {
-            $('#emp_sec_id').val(emp_sec_id).trigger('change');
-            // Set another delay of 0.5 seconds before updating emp_line_id
-            setTimeout(function() {
-                $('#emp_line_id').val(emp_line_id).trigger('change');
-                setTimeout(function() {
-                    $('#emp_desi_id').val(emp_desi_id);
-                }, 500);
-            }, 500);
-        }, 500);
-    }, 500);
+    // Directly set values for unit, department, section, line, designation without cascading wipeout
+    var unit_id = localStorage.getItem('unit_id');
+    if (unit_id) {
+        $('#unit_id').val(unit_id);
+        get_last_id();
+    }
+    if (emp_dept_id) $('#emp_dept_id').val(emp_dept_id);
+    if (emp_sec_id) $('#emp_sec_id').val(emp_sec_id);
+    if (emp_line_id) $('#emp_line_id').val(emp_line_id);
+    if (emp_desi_id) $('#emp_desi_id').val(emp_desi_id);
     // Clear all items in localStorage
     var otEntitleElement = document.querySelector('input[name="ot_entitle"][value="'+ot_entitle+'"]');
         if (otEntitleElement) {
@@ -712,28 +723,6 @@ $(document).ready(function() {
     });
 
 
-    //Designation dropdown
-    $('#emp_line_id').change(function() {
-        $('.emp_desi_id').addClass('form-control input-sm');
-        $(".emp_desi_id > option").remove();
-        var id = $('#emp_line_id').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_designation_by_line_id/" + id,
-            success: function(func_data) {
-                $('.emp_desi_id').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_desi_id').append(opt);
-                    // $(function() {
-                    // 	$('#emp_dept_id').val();
-                    // });
-                });
-            }
-        });
-    });
     $('#emp_sal_gra_id').change(function() {
     // alert($(this).val());
         var grade_id = $(this).val();
@@ -746,67 +735,6 @@ $(document).ready(function() {
             success: function(func_data) {
               $('#com_gross_sal').val(func_data);
               salary_structure_cal2();
-            }
-        });
-    });
-
-    //Line dropdown
-    $('#emp_sec_id').change(function() {
-        $('.emp_line_id').addClass('form-control input-sm');
-        $(".emp_line_id > option").remove();
-        $(".emp_desi_id > option").remove();
-        var id = $('#emp_sec_id').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_line_by_sec_id/" + id,
-            success: function(func_data) {
-                $('.emp_line_id').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_line_id').append(opt);
-                });
-            }
-        });
-    });
-
-    //section dropdown
-    $('#emp_dept_id').change(function() {
-        $('.emp_sec_id').addClass('form-control input-sm');
-        $(".emp_sec_id > option").remove();
-        $(".emp_line_id > option").remove();
-        var id = $('#emp_dept_id').val();
-        var unit_id = $('#unit_id').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_section_by_dept_id/" + id + '/' + unit_id,
-            success: function(func_data) {
-                $('.emp_sec_id').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_sec_id').append(opt);
-                });
-            }
-        });
-    });
-    $('#unit_id').change(function() {
-        var id = $('#unit_id').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_department_by_unit_id/" + id,
-            success: function(func_data) {
-                $('#emp_dept_id').empty();
-                $('#emp_dept_id').append(
-                    "<option value=''>-- Select Department --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('#emp_dept_id').append(opt);
-                });
             }
         });
     });

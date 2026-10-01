@@ -51,7 +51,7 @@
       <input type="hidden" name="id"value="<?=$pr_grade->gr_id;?>" class="form-control"> 
       <div class="form-group">
         <label>Salary</label>
-        <input type="text" name="salary"value="<?=set_value('salary',$pr_grade->salary)?>" class="form-control">
+        <input type="text" name="salary" value="<?=set_value('salary', isset($pr_grade->gr_salary) ? $pr_grade->gr_salary : (isset($pr_grade->salary) ? $pr_grade->salary : ''))?>" class="form-control">
         <?php echo form_error('salary');?>
       </div>
     </div>

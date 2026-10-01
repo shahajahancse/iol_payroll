@@ -32,7 +32,7 @@
             <option value="">Select Unit</option>
             <?php
             foreach ($allUnit as  $row){?>
-              <option value="<?=$row['unit_id']?>"<?php if($row['unit_id']==$pr_emp_shift_schedule->unit_id){echo 'selected';}?>><?=$row['unit_name']?></option>">Select Unit</option>
+              <option value="<?=$row['unit_id']?>"<?php if($row['unit_id']==$pr_emp_shift_schedule->unit_id){echo 'selected';}?>><?=$row['unit_name']?></option>
             <?php } ?>
           </select>
         </div>

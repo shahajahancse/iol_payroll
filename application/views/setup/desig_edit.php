@@ -35,16 +35,43 @@
     <form action="<?= base_url('setup_con/designation_edit').'/'.$emp_designation->id?>"
         enctype="multipart/form-data" method="post">
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="form-group">
-                    <label for="unit_id">Unit Id <span style="color: red;">*</span></label>
-                    <select name="unit_id" onchange="get_data(this.value);" id="unit_id" class=" form-control ">
+                    <label for="unit_id">Unit <span style="color: red;">*</span></label>
+                    <select name="unit_id" onchange="get_data(this.value);getDepertment(this.value);" id="unit_id" class="form-control">
                         <option value="">Select Unit</option>
                         <?php foreach ($pr_units as $key => $value) {?>
                         <option value="<?php echo $value->unit_id; ?>" <?php echo $value->unit_id == $emp_designation->unit_id ? 'selected' : ''; ?>><?php echo $value->unit_name; ?></option>
                         <?php } ?>
                     </select>
                     <?= (isset($failuer['unit_id'])) ? '<div class="alert alert-failuer">' . $failuer['unit_id'] . '</div>' : ''; ?>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="dept_id">Department <span style="color: red;">*</span></label>
+                    <select name="dept_id" id="depertment_id" onchange="get_section(this.value)" class="form-control">
+                        <option value="">Select Department</option>
+                    </select>
+                    <?= (isset($failuer['dept_id'])) ? '<div class="alert alert-failuer">' . $failuer['dept_id'] . '</div>' : ''; ?>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="sec_id">Section <span style="color: red;">*</span></label>
+                    <select name="sec_id" id="section_id" onchange="get_line(this.value)" class="form-control">
+                        <option value="">Select Section</option>
+                    </select>
+                    <?= (isset($failuer['sec_id'])) ? '<div class="alert alert-failuer">' . $failuer['sec_id'] . '</div>' : ''; ?>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="line_id">Line <span style="color: red;">*</span></label>
+                    <select name="line_id" id="line_id" class="form-control">
+                        <option value="">Select Line</option>
+                    </select>
+                    <?= (isset($failuer['line_id'])) ? '<div class="alert alert-failuer">' . $failuer['line_id'] . '</div>' : ''; ?>
                 </div>
             </div>
             <!--
@@ -300,4 +327,74 @@
         })
     }
     get_data('<?= $emp_designation->unit_id ?>','e');
+
+    function getDepertment(unit_id, selected_dept_id, selected_sec_id, selected_line_id) {
+        var s_dept = selected_dept_id || '<?= isset($emp_designation->dept_id) ? $emp_designation->dept_id : '' ?>';
+        var s_sec  = selected_sec_id || '<?= isset($emp_designation->sec_id) ? $emp_designation->sec_id : '' ?>';
+        var s_line = selected_line_id || '<?= isset($emp_designation->line_id) ? $emp_designation->line_id : '' ?>';
+        $.ajax({
+            url: "<?php echo base_url('setup_con/get_department') ?>",
+            method: "POST",
+            data: { unit_id: unit_id },
+            success: function(data) {
+                var parsedData = JSON.parse(data);
+                var item = '<option value="">Select Department</option>';
+                for (let index = 0; index < parsedData.length; index++) {
+                    var selected = (s_dept && parsedData[index].dept_id == s_dept) ? 'selected' : '';
+                    item += `<option value="${parsedData[index].dept_id}" ${selected}>${parsedData[index].dept_name}</option>`;
+                }
+                $('#depertment_id').html(item);
+                if (s_dept) {
+                    get_section(s_dept, s_sec, s_line);
+                } else {
+                    $('#section_id').html('<option value="">Select Section</option>');
+                    $('#line_id').html('<option value="">Select Line</option>');
+                }
+            }
+        });
+    }
+
+    function get_section(depertment_id, selected_sec_id, selected_line_id) {
+        var s_sec  = selected_sec_id || '<?= isset($emp_designation->sec_id) ? $emp_designation->sec_id : '' ?>';
+        var s_line = selected_line_id || '<?= isset($emp_designation->line_id) ? $emp_designation->line_id : '' ?>';
+        $.ajax({
+            url: "<?php echo base_url('setup_con/get_section') ?>",
+            method: "POST",
+            data: { depertment_id: depertment_id },
+            success: function(data) {
+                var parsedData = JSON.parse(data);
+                var item = '<option value="">Select Section</option>';
+                for (let index = 0; index < parsedData.length; index++) {
+                    var selected = (s_sec && parsedData[index].id == s_sec) ? 'selected' : '';
+                    item += `<option value="${parsedData[index].id}" ${selected}>${parsedData[index].sec_name_en}</option>`;
+                }
+                $('#section_id').html(item);
+                if (s_sec) {
+                    get_line(s_sec, s_line);
+                } else {
+                    $('#line_id').html('<option value="">Select Line</option>');
+                }
+            }
+        });
+    }
+
+    function get_line(section_id, selected_line_id) {
+        var s_line = selected_line_id || '<?= isset($emp_designation->line_id) ? $emp_designation->line_id : '' ?>';
+        $.ajax({
+            url: "<?php echo base_url('setup_con/get_line') ?>",
+            method: "POST",
+            data: { id: section_id, section_id: section_id },
+            success: function(data) {
+                var parsedData = JSON.parse(data);
+                var item = '<option value="">Select Line</option>';
+                for (let index = 0; index < parsedData.length; index++) {
+                    var selected = (s_line && parsedData[index].id == s_line) ? 'selected' : '';
+                    item += `<option value="${parsedData[index].id}" ${selected}>${parsedData[index].line_name_en}</option>`;
+                }
+                $('#line_id').html(item);
+            }
+        });
+    }
+
+    getDepertment('<?= $emp_designation->unit_id ?>');
 </script>
