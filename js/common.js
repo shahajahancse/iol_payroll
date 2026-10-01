@@ -59,14 +59,6 @@ function salary_structure_cal2(){
    }
 }
 
-
-  
-
-
-
-
-
-
 function attendance_process(){
    var ajaxRequest = new XMLHttpRequest();
    unit_id = document.getElementById('unit_id').value;
