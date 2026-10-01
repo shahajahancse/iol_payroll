@@ -238,8 +238,7 @@ function get_data(offset=0) {
                             <li><a href="<?=base_url('entry_system_con/left_delete/')?>${element.emp_id}" class="btn btn-sm" role="button">Delete</a></li>
                         </ul>
                     </div>
-                </td>`)
-
+                </td>
             </tr>`)
             });
         }
