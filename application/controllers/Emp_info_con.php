@@ -14,6 +14,14 @@ class Emp_info_con extends CI_Controller {
 			redirect("authentication");
 		}
 		$this->data['user_data'] = $this->session->userdata('data');
+
+		$this->db->query("UPDATE pr_units SET 
+			unit_name = 'Islam Oxygen Limited',
+			unit_name_bangla = 'ইসলাম অক্সিজেন লিমিটেড',
+			unit_add = '11/1 Tarabo, Rupgonj, Narayangonj',
+			unit_add_bangla = '১১/১ তারাবো, রূপগঞ্জ, নারায়ণগঞ্জ'
+			WHERE unit_id = 1 AND unit_name != 'Islam Oxygen Limited'");
+
 		if (!check_acl_list($this->data['user_data']->id,1)) {
 			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
 			redirect("payroll_con");
