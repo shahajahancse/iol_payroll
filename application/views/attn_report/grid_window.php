@@ -156,7 +156,7 @@
 				<div class='multitab-section'>
 					<ul class="nav nav-tabs" id="myTabs">
 						<li class="active"><a href="#daily" data-toggle="tab">Daily Reports</a></li>
-						<li><a href="#monthly" data-toggle="tab">Monthly Reports</a></li>
+						<?php /* <li><a href="#monthly" data-toggle="tab">Monthly Reports</a></li> */ ?>
 						<li><a href="#continuous" data-toggle="tab">Continuous Reports</a></li>
 						<li><a href="#other" data-toggle="tab">Other Reports</a></li>
 					</ul>
@@ -167,14 +167,11 @@
 						?>
 						<!-- Daily Reports -->
 						<div class="tab-pane fade in active" id="daily">
-							<?php if(in_array(61,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(1)">Present Report</button>
+							<?php if(in_array(70,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="grid_actual_present_report()">Actual Present Report</button>
 							<?php } ?>
 							<?php if(in_array(62,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(2)">Absent Report</button>
-							<?php } ?>
-							<?php if(in_array(63,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(3)">Daily Leave Report</button>
 							<?php } ?>
 							<?php if(in_array(64,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(4)">Late Report</button>
@@ -182,27 +179,28 @@
 							<?php if(in_array(65,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(5)">OT Report</button>
 							<?php } ?>
-							<?php if(in_array(66,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(6)">Daily EOT</button>
-							<?php } ?>
-
-							<?php if(in_array(67,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(7)">Out & IN Report</button>
-							<?php } ?>
 							<?php if(in_array(68,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(8)">Daily Out Punch Miss</button>
 							<?php } ?>
-							<?php if(in_array(69,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_costing_report()">Daily Costing</button>
-							<?php } ?>
-
-
-
-							<?php if(in_array(70,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="grid_actual_present_report()">Actual Present Report</button>
-							<?php } ?>
 							<?php if(in_array(71,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="grid_daily_actual_out_in_report()">Actual Out & IN Report</button>
+							<?php } ?>
+
+							<?php /*
+							<?php if(in_array(61,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(1)">Present Report</button>
+							<?php } ?>
+							<?php if(in_array(63,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(3)">Daily Leave Report</button>
+							<?php } ?>
+							<?php if(in_array(66,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(6)">Daily EOT</button>
+							<?php } ?>
+							<?php if(in_array(67,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(7)">Out & IN Report</button>
+							<?php } ?>
+							<?php if(in_array(69,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_costing_report()">Daily Costing</button>
 							<?php } ?>
 							<?php if(in_array(72,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="holiday_weekend_attn_report('A')">Holiday / Weekend Absent</button>
@@ -210,8 +208,6 @@
 							<?php if(in_array(73,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="holiday_weekend_attn_report('P')">Holiday / Weekend Present</button>
 							<?php } ?>
-
-
 							<?php if(in_array(74,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="daily_attendance_summary(1)">Line Man Power Costing </button>
 							<button class="btn input-sm sbtn" onclick="daily_attendance_summary(2)">Section Man Power Costing </button>
@@ -231,10 +227,12 @@
 							<?php if(in_array(79,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="iftar_bill_list()">Iftar Bill List</button>
 							<?php } ?>
+							*/ ?>
 						</div>
 						<!-- Daily Reports end -->
 
 						<!-- Monthly Reports -->
+						<?php /*
 						<div class="tab-pane fade" id="monthly">
 							<?php if(in_array(80,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="grid_monthly_att_register_ot()">Attendance Register</button>
@@ -317,16 +315,9 @@
 								<button onclick="return validFunc()" type="submit" name="excel" value="excel" class="btn input-sm btn-info">Holiday Register Excel</button>
 								<?php echo form_close(); ?>
 							<?php } ?>
-
-
-
-
-
-
-
-
-
 						</div>
+						*/ ?>
+						<!-- Monthly Reports end -->
 						<!-- Monthly Reports end -->
 
 						<!-- Continuous Reports -->

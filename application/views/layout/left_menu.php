@@ -439,11 +439,13 @@
           <?php } ?>
 
           <?php if(in_array(41,$acl)) { ?>
+            <?php /*
             <li class="<?= activate_method('alternet_day') ?>">
               <a href="<?=base_url('setup_con/alternet_day')?>">
                 <i class="fa fa-exchange"></i> Alternet Day
               </a>
             </li>
+            */ ?>
           <?php } ?>
 
           <?php if(in_array(42,$acl)) { ?>

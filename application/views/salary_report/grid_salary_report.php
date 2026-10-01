@@ -168,6 +168,7 @@
                     <div class="tab-content">
                         <!-- salary report  -->
                         <div class="tab-pane fade in active" id="daily">
+                            <?php /*
                             <?php if(in_array(180,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="salary_sheet_com()">Salary Sheet</button>
                             <?php } ?>
@@ -180,6 +181,7 @@
                             <?php if(in_array(183,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="sec_sal_summary_com()">Sec Wise Salary Summary</button>
                             <?php } ?>
+                            */ ?>
 
                             <?php if(in_array(184,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="actual_salary_sheet()">Actual Salary Sheet</button>
@@ -207,6 +209,7 @@
                             <button class="btn input-sm sbtn" onclick="actual_eot_sheet_bank()">Actual EOT Bank</button>
                             <?php } ?>
 
+                            <?php /*
                             <?php if(in_array(192,$acl)) { ?>
                                 <button class="btn input-sm sbtn" onclick="eot_sheet_com_9()">EOT Sheet.</button>
                             <?php } ?>
@@ -216,9 +219,11 @@
                             <?php if(in_array(194,$acl)) { ?>
                                 <button class="btn input-sm sbtn" onclick="eot_sheet_com_all()">EOT Sheet!</button>
                             <?php } ?>
+                            */ ?>
                             <?php if(in_array(195,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_monthly_stop_sheet()">Stop Salary Sheet</button>
                             <?php } ?>
+                            <?php /*
                             <?php if(in_array(196,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_salary_sheet_with_eot_bank()">Mobile Banking Report</button>
                             <?php } ?>
@@ -228,6 +233,7 @@
                             <?php if(in_array(198,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_salary_sheet_with_eot_bank()">Monthly Weekend/Holiday Report</button>
                             <?php } ?>
+                            */ ?>
                         </div>
                         <!-- salary report end  -->
 
