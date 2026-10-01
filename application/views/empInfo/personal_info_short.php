@@ -343,7 +343,7 @@ input[type="number"] {
                                 <label>Salary <span style="color: red;">*</span> </label>
                                 <?php echo form_error('gross_sal');?>
                                 <input type="text" onkeyup="salary_structure_cal()" onchange="salary_structure_cal()" name="gross_sal" id="gross_sal"
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -351,7 +351,7 @@ input[type="number"] {
                                 <label>Basic Salary </label>
                                 <?php echo form_error('basic_sal');?>
                                 <input type="text" name="basic_sal" id="basic_sal" readonly
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -359,7 +359,7 @@ input[type="number"] {
                                 <label>House </label>
                                 <?php echo form_error('house_rent');?>
                                 <input type="text" name="house_rent" id="house_rent" readonly
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm">
                             </div>
                         </div>
 
@@ -367,8 +367,7 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Medical </label>
                                 <?php echo form_error('medical');?>
-                                <input type="text" name="medical" id="medical" readonly class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="medical" id="medical" readonly class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -376,24 +375,23 @@ input[type="number"] {
                                 <label>Conveyance </label>
                                 <?php echo form_error('trans_allow');?>
                                 <input type="text" name="trans_allow" id="trans_allow" readonly
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="form-group">
                                 <label> Food </label>
                                 <?php echo form_error('food');?>
-                                <input type="text" name="food" id="food" readonly class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="food" id="food" readonly class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-1">
                             <label style="white-space: nowrap">Ot Entitle </label>
                             <?php echo form_error('ot_entitle');?>
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="0" class="form-check-input"
-                                style="display: inline; margin-right: 5px;" required>Yes
+                                style="display: inline; margin-right: 5px;">Yes
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="1" class="form-check-input"
-                                style="display: inline; margin-right: 5px;" required checked>No
+                                style="display: inline; margin-right: 5px;" checked>No
                         </div>
                     </div>
                     <div class="row">
@@ -409,16 +407,16 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Basic Salary </label>
                                 <?php echo form_error('basic_sall');?>
-                                <input type="text" name="basic_sall" id="basic_sall" disabled
-                                    class="form-control input-sm required" required>
+                                <input type="text" name="basic_sall" id="basic_sall" readonly
+                                    class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label>House </label>
                                 <?php echo form_error('house_rentt');?>
-                                <input type="text" name="house_rentt" id="house_rentt" disabled
-                                    class="form-control input-sm required" required>
+                                <input type="text" name="house_rentt" id="house_rentt" readonly
+                                    class="form-control input-sm">
                             </div>
                         </div>
 
@@ -426,8 +424,7 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Medical </label>
                                 <?php echo form_error('medicall');?>
-                                <input type="text" name="medicall" id="medicall" disabled class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="medicall" id="medicall" readonly class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -435,24 +432,23 @@ input[type="number"] {
                                 <label>Conveyance </label>
                                 <?php echo form_error('trans_alloww');?>
                                 <input type="text" name="trans_alloww" id="trans_alloww" readonly
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="form-group">
                                 <label> Food </label>
                                 <?php echo form_error('foodd');?>
-                                <input type="text" name="foodd" id="foodd" readonly class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="foodd" id="foodd" readonly class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-1">
                             <label style="white-space: nowrap">Ot Entitle </label>
                             <?php echo form_error('ot_entitle');?>
                             <input type="radio" name="com_ot_entitle" id="com_ot_entitle" value="0"
-                                class="form-check-input" style="display: inline; margin-right: 5px;" required>Yes
+                                class="form-check-input" style="display: inline; margin-right: 5px;">Yes
                             <input type="radio" name="com_ot_entitle" id="com_ot_entitle" value="1"
-                                class="form-check-input" style="display: inline; margin-right: 5px;" required checked>No
+                                class="form-check-input" style="display: inline; margin-right: 5px;" checked>No
                         </div>
                     </div>
                 </div>
