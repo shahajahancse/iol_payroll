@@ -357,19 +357,23 @@
 							<?php if(in_array(89,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_prom_report()">Promotion Report</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(90,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_line_report('line')">Line Change Report</button>
 							<?php } ?>
 							<?php if(in_array(91,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_line_report('section')">Section Change Report</button>
 							<?php } ?>
+							*/ ?>
 							<?php if(in_array(92,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_ot_eot_report()">OT / EOT Report</button>
 							<?php } ?>
 
+							<?php /*
 							<?php if(in_array(93,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_costing_report()">Continuous Costing Report</button>
 							<?php } ?>
+							*/ ?>
 
 							<?php if(in_array(94,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="last_increment_promotion(1)">Last Increment Check</button>
@@ -380,6 +384,7 @@
 							<?php if(in_array(96,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="increment_able_employee()">Increment able employee</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(97,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="unit_transferred_list(1)">Unit transfer list</button>
 							<?php } ?>
@@ -395,6 +400,7 @@
 							<?php if(in_array(101,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="emp_conformation_list(3)">Conformation Letter</button>
 							<?php } ?>
+							*/ ?>
 						</div>
 						<!-- Continuous Reports end -->
 
