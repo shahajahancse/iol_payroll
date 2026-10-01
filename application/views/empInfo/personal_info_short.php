@@ -966,7 +966,8 @@ $(document).ready(function() {
                 });
             }
         });
-    // Trigger unit_id change to auto-load departments for default unit 1
+    });
+
     // Auto-load designations on page ready
     load_designations();
 });
