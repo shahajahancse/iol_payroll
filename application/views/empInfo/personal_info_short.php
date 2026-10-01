@@ -733,15 +733,14 @@ $(document).ready(function() {
         });
     });
 
-    // Section change populates Designation dropdown directly
-    $('#emp_sec_id').change(function() {
-        $('.emp_desi_id').addClass('form-control input-sm');
-        $(".emp_desi_id > option").remove();
+    function load_designations() {
         var unit_id = $('#unit_id').val() || 1;
         $.ajax({
             type: "POST",
             url: hostname + "common/ajax_designation_by_unit/" + unit_id,
             success: function(func_data) {
+                var currentVal = $('.emp_desi_id').val();
+                $('.emp_desi_id').empty();
                 $('.emp_desi_id').append("<option value=''>-- Select Designation --</option>");
                 $.each(func_data, function(id, name) {
                     var opt = $('<option />');
@@ -749,30 +748,40 @@ $(document).ready(function() {
                     opt.text(name);
                     $('.emp_desi_id').append(opt);
                 });
+                if (currentVal) {
+                    $('.emp_desi_id').val(currentVal);
+                }
             }
         });
+    }
+
+    // Section change populates Designation dropdown directly
+    $('#emp_sec_id').change(function() {
+        load_designations();
     });
 
-    // Department change populates Section dropdown
+    // Department change populates Section dropdown and Designation dropdown
     $('#emp_dept_id').change(function() {
         $('.emp_sec_id').addClass('form-control input-sm');
         $(".emp_sec_id > option").remove();
-        $(".emp_desi_id > option").remove();
         var id = $('#emp_dept_id').val();
         var unit_id = $('#unit_id').val() || 1;
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_section_by_dept_id/" + id + '/' + unit_id,
-            success: function(func_data) {
-                $('.emp_sec_id').append("<option value=''>-- Select Section --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_sec_id').append(opt);
-                });
-            }
-        });
+        if (id) {
+            $.ajax({
+                type: "POST",
+                url: hostname + "common/ajax_section_by_dept_id/" + id + '/' + unit_id,
+                success: function(func_data) {
+                    $('.emp_sec_id').append("<option value=''>-- Select Section --</option>");
+                    $.each(func_data, function(id, name) {
+                        var opt = $('<option />');
+                        opt.val(id);
+                        opt.text(name);
+                        $('.emp_sec_id').append(opt);
+                    });
+                }
+            });
+        }
+        load_designations();
     });
     $('#unit_id').change(function() {
         var id = $('#unit_id').val();
@@ -958,7 +967,8 @@ $(document).ready(function() {
             }
         });
     // Trigger unit_id change to auto-load departments for default unit 1
-    $('#unit_id').trigger('change');
+    // Auto-load designations on page ready
+    load_designations();
 });
 </script>
 
