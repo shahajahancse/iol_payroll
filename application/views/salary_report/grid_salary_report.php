@@ -315,60 +315,7 @@
         });
     </script>
 
-    <?php /*
     <script type="text/javascript">
-        function advance_salary_report(){
-            var ajaxRequest;
-            try{
-                ajaxRequest = new XMLHttpRequest();
-            }catch (e){
-                try{
-                    ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");
-                }catch (e) {
-                    try{
-                        ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");
-                    }catch (e){
-                        alert("Your browser broke!");
-                        return false;
-                    }
-                }
-            }
-
-            var checkboxes = document.getElementsByName('emp_id[]');
-            var sql = get_checked_value(checkboxes);
-            let emp_id = sql.split(",");
-            if (emp_id == '') {
-                alert('Please select employee Id');
-                return false;
-            }
-            unit_id = document.getElementById('unit_id').value;
-            if (unit_id == '') {
-                alert('Please select Unit');
-                return false;
-            }
-            salary_month = document.getElementById('salary_month').value;
-            if (salary_month == '') {
-                alert('Please select month');
-                return false;
-            }
-
-            var data = "unit_id=" + unit_id + "&emp_id=" + emp_id + "&salary_month=" + salary_month; 
-            url =  hostname+"salary_report_con/advance_salary_report/";
-
-            ajaxRequest.open("POST", url, true);
-            ajaxRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
-            ajaxRequest.send(data);
-            ajaxRequest.onreadystatechange = function(){
-                if(ajaxRequest.readyState == 4){
-                    var resp = ajaxRequest.responseText;
-
-                    advance_salary_sheet = window.open('', '_blank', 'menubar=1,resizable=1,scrollbars=1,width=1600,height=800');
-                    advance_salary_sheet.document.write(resp);
-                }
-            }
-        }
-    </script>
-    */ ?>
         // on load employee
         function grid_emp_list() {
             var unit = document.getElementById('unit_id').value;
