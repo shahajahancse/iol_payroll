@@ -44,16 +44,20 @@ input[type="number"] {
             <form id="form_id" enctype="multipart/form-data" method="post" name="creatdepartment"
                 action="<?php echo base_url('emp_info_con/personal_info_add_short')?>">
                 <h3 style="font-weight: bold; width:fit-content"><?= $title.' Short' ?>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
-                        class="text-center" style="font-size:18px !important" id='last_emp_id'></span></h3>
+                    <span class="text-center" style="font-size:18px !important; display:none;" id='last_emp_id'></span></h3>
 
                 <hr style="margin-bottom: 0px !important;">
                 <div style="background-color: white; padding: 15px !important;">
+                    <!-- Hidden default inputs for removed fields -->
+                    <input type="hidden" name="proxi_id" id="proxi_id" value="<?= isset($emp_info->proxi_id) ? $emp_info->proxi_id : '' ?>">
+                    <input type="hidden" name="name_bn" id="name_bn" value="<?= isset($emp_info->name_bn) ? $emp_info->name_bn : '' ?>">
+                    <input type="hidden" name="gender" id="gender" value="Male">
+
                     <div class="row">
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Unit <span style="color: red;">*</span> </label>
-                                <select name="unit_id" id="unit_id" onchange='get_last_id()' id="unit_id"
+                                <select name="unit_id" id="unit_id" onchange='get_last_id()'
                                     class="form-control input-sm required" required>
                                     <option value="">Select Unit</option>
                                     <?php
@@ -72,37 +76,19 @@ input[type="number"] {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Emp Id <span style="color: red;">*</span> </label>
                                 <input type="text" name="emp_id" id="emp_id" class="form-control input-sm required"
-                                    value="<?= isset($emp_info->emp_id)?>" required>
+                                    value="<?= isset($emp_info->emp_id) ? $emp_info->emp_id : '' ?>" required>
                                 <?php echo form_error('emp_id');?>
                             </div>
                         </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label> Punch Card No. <span style="color: red;">*</span> </label>
-                                <input type="text" name="proxi_id" id="proxi_id" value="<?= set_value('proxi_id') ?>"
-                                    required readonly class="form-control input-sm required"
-                                    value="<?= isset($emp_info->proxi_id)?>" required>
-                                <?php echo form_error('proxi_id');?>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Name (Bangla) <span style="color: red;">*</span> </label>
-                                <input type="text" name="name_bn" id="name_bn"
-                                    class="form-control input-sm bangla_name required" value="<?= isset($emp_info->name_bn)?>"
-                                    required>
-                                <?php echo form_error('name_bn');?>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label>Name (English) <span style="color: red;">*</span> </label>
                                 <input type="text" name="name_en" id="name_en"
-                                    class="form-control input-sm english_name required" value="<?= isset($emp_info->name_en)?>"
+                                    class="form-control input-sm english_name required" value="<?= isset($emp_info->name_en) ? $emp_info->name_en : '' ?>"
                                     required>
                                 <?php echo form_error('name_en');?>
                             </div>
@@ -110,28 +96,16 @@ input[type="number"] {
                     </div>
 
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Date Of Birth <span style="color: red;">*</span> </label>
                                 <input type="text" name="emp_dob" id="emp_dob" class="date form-control input-sm required"
-                                    value="<?= isset($emp_info->emp_dob)?>" required>
+                                    value="<?= isset($emp_info->emp_dob) ? $emp_info->emp_dob : '' ?>" required>
                                 <?php echo form_error('emp_dob');?>
                             </div>
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Gender <span style="color: red;">*</span> </label>
-                                <?php echo form_error('gender');?>
-                                <select name="gender" id="gender" class="form-control input-sm required" required>
-                                    <option value="">select</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Common">Common</option>
-                                </select>
-                            </div>
-                        </div>
 
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Personal Mobile <span style="color: red;">*</span> </label>
                                 <input type="text" name="personal_mobile" id="personal_mobile"
@@ -139,7 +113,7 @@ input[type="number"] {
                                 <?php echo form_error('personal_mobile');?>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Bank account.<span style="color: red;">*</span> </label>
                                 <input type="text" name="bank_bkash_no" id="bank_bkash_no" class="form-control input-sm required"
@@ -706,11 +680,32 @@ function emp_id_search(id = null) {
 
 <script type="text/javascript">
 $(document).ready(function() {
-    //Designation dropdown
-    $('#emp_id').change(function() {
-        var emp_id = $('#emp_id').val();
-        $("#proxi_id").empty();
+    // Auto-sync Punch Card No (proxi_id) with Emp Id
+    $('#emp_id').on('input change keyup', function() {
+        var emp_id = $(this).val();
         $('#proxi_id').val(emp_id);
+    });
+
+    // Auto-sync Name Bangla with Name English if Bangla is empty
+    $('#name_en').on('input change keyup', function() {
+        var name_en = $(this).val();
+        var name_bn = $('#name_bn').val();
+        if (!name_bn || $('#name_bn').data('auto_synced')) {
+            $('#name_bn').val(name_en).data('auto_synced', true);
+        }
+    });
+
+    // Ensure hidden inputs have values before form submit
+    $('#form_id').on('submit', function() {
+        if (!$('#proxi_id').val()) {
+            $('#proxi_id').val($('#emp_id').val());
+        }
+        if (!$('#name_bn').val()) {
+            $('#name_bn').val($('#name_en').val());
+        }
+        if (!$('#gender').val()) {
+            $('#gender').val('Male');
+        }
     });
 
 
