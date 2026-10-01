@@ -578,8 +578,8 @@
                             <label>Employee Type <span style="color: red;">*</span> </label>
                             <select name="emp_type" id="emp_type" class="form-control input-sm required" required="">
                                 <option value="">-- Select one --</option>
-                                <option value="1">Worker</option>
-                                <option value="2">Staff</option>
+                                <option value="1">Office</option>
+                                <option value="2">Factory</option>
                             </select>
                         </div>
                     </div>
