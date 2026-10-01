@@ -162,7 +162,8 @@
                 <div class='multitab-section'>
                     <ul class="nav nav-tabs" id="myTabs">
                         <li class="active"><a href="#daily" data-toggle="tab">Salary Reports</a></li>
-                        <li><a href="#earn_leave" data-toggle="tab"> Earn Leave Reports</a></li>
+                        <!-- <li><a href="#earn_leave" data-toggle="tab"> Earn Leave Reports</a></li> -->
+                        <li><a href="#others" data-toggle="tab">Others</a></li>
                     </ul>
                     <div class="tab-content">
                         <!-- salary report  -->
@@ -230,6 +231,7 @@
                         </div>
                         <!-- salary report end  -->
 
+                        <!--
                         <div class="tab-pane fade" id="earn_leave">
                             <?php if(in_array(199,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_earn_leave_payment_buyer()">Earn Leave Payment Sheet</button>
@@ -240,6 +242,27 @@
                             <?php if(in_array(201,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_earn_leave_summery()">Earn Leave Summery Sheet</button>
                             <?php } ?>
+                        </div>
+                        -->
+
+                        <div class="tab-pane fade" id="others">
+                            <?php if(in_array(206,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="grid_festival_bonus()">Festival Bonus</button>
+                            <?php } ?>
+                            <?php if(in_array(207,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="grid_festival_bonus_summary()">Festival Bonus Summary</button>
+                            <?php } ?>
+                            <?php /*
+                            <?php if(in_array(208,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="grid_festival_bonus_summary_sec_wise()">Festival Bonus Summary(Sec)</button>
+                            <?php } ?>
+                            <?php if(in_array(209,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="advance_salary_report()">Advance Salary Sheet</button>
+                            <?php } ?>
+                            <?php if(in_array(210,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="act_advance_salary_sheet()">Act. Adv. Sal. Sheet</button>
+                            <?php } ?>
+                            */ ?>
                         </div>
                     </div>
                 </div>
@@ -292,7 +315,60 @@
         });
     </script>
 
+    <?php /*
     <script type="text/javascript">
+        function advance_salary_report(){
+            var ajaxRequest;
+            try{
+                ajaxRequest = new XMLHttpRequest();
+            }catch (e){
+                try{
+                    ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");
+                }catch (e) {
+                    try{
+                        ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");
+                    }catch (e){
+                        alert("Your browser broke!");
+                        return false;
+                    }
+                }
+            }
+
+            var checkboxes = document.getElementsByName('emp_id[]');
+            var sql = get_checked_value(checkboxes);
+            let emp_id = sql.split(",");
+            if (emp_id == '') {
+                alert('Please select employee Id');
+                return false;
+            }
+            unit_id = document.getElementById('unit_id').value;
+            if (unit_id == '') {
+                alert('Please select Unit');
+                return false;
+            }
+            salary_month = document.getElementById('salary_month').value;
+            if (salary_month == '') {
+                alert('Please select month');
+                return false;
+            }
+
+            var data = "unit_id=" + unit_id + "&emp_id=" + emp_id + "&salary_month=" + salary_month; 
+            url =  hostname+"salary_report_con/advance_salary_report/";
+
+            ajaxRequest.open("POST", url, true);
+            ajaxRequest.setRequestHeader("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+            ajaxRequest.send(data);
+            ajaxRequest.onreadystatechange = function(){
+                if(ajaxRequest.readyState == 4){
+                    var resp = ajaxRequest.responseText;
+
+                    advance_salary_sheet = window.open('', '_blank', 'menubar=1,resizable=1,scrollbars=1,width=1600,height=800');
+                    advance_salary_sheet.document.write(resp);
+                }
+            }
+        }
+    </script>
+    */ ?>
         // on load employee
         function grid_emp_list() {
             var unit = document.getElementById('unit_id').value;

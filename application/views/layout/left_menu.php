@@ -202,6 +202,7 @@
           <?php } ?>
 
           <?php if(in_array(30,$acl)) { ?>
+            <?php /*
             <li class="<?= activate_method('alert_msg_list') ?>">
               <a href="<?=base_url('attn_process_con/alert_msg_list')?>" class="anchor_cls">
                 <i class="fa fa-bell"></i> Alert List
@@ -210,6 +211,7 @@
                 </span>
               </a>
             </li>
+            */ ?>
 
             <li class="<?= activate_method('grid_window') ?>">
               <a href="<?=base_url('attn_process_con/grid_window')?>" class="anchor_cls">
@@ -235,11 +237,13 @@
           <?php } ?>
 
           <?php if(in_array(32,$acl)) { ?>
+            <?php /*
             <li class="<?= activate_method('adv_salary_report') ?>">
               <a href="<?=base_url('salary_process_con/adv_salary_report')?>" class="anchor_cls">
                 <i class="fa fa-hand-o-right"></i> Adv. Salary
               </a>
             </li>
+            */ ?>
           <?php } ?>
 
           <?php if(in_array(33,$acl)) { ?>

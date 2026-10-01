@@ -148,6 +148,7 @@
                 </ul>
                 <div class="tab-content">
                     <!-- salary report  -->
+                    <?php /*
                     <div class="tab-pane fade in active" id="daily">
                         <?php if(in_array(206,$acl)) { ?>
                         <button class="btn input-sm sbtn" onclick="grid_festival_bonus()">Festival Bonus</button>
@@ -168,6 +169,7 @@
                         <!-- <button class="btn input-sm sbtn" onclick="grid_comprative_salary_statement()">Comparative Statement</button> -->
                         <?php } ?>
                     </div>
+                    */ ?>
                     <!-- Others Benefit Report end -->
                 </div>
             </div>
