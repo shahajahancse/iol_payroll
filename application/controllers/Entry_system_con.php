@@ -2882,12 +2882,12 @@ class Entry_system_con extends CI_Controller
                     pr_emp_per_info.name_bn,
                 ');
         $this->db->from('pr_emp_com_info');
-        $this->db->join('emp_designation as deg', 'deg.id = pr_emp_com_info.emp_desi_id', 'left');
+        $this->db->join('emp_designation as deg', 'deg.id = pr_emp_com_info.emp_desi_id AND deg.hide_status = 1', 'left');
         $this->db->join('pr_units', 'pr_units.unit_id = pr_emp_com_info.unit_id', 'left');
         $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_emp_com_info.emp_id', 'left');
-        $this->db->where('deg.hide_status', 1);
         $this->db->where('pr_units.unit_id', $unit);
         $this->db->where('pr_emp_com_info.emp_cat_id', 1);
+        $this->db->order_by('CAST(pr_emp_com_info.emp_id AS UNSIGNED)', 'ASC');
         // dd($this->db->get()->result());
         return $this->db->get();
     }

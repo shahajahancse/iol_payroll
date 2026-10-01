@@ -12,36 +12,20 @@ class Common_model extends CI_Model{
 	function salary_structure($gross_salary)
 	{
 		$data = array();
-		$date = date('Y-m-d');
-		if($date > '2018-11-31')
-		{
-			$data['medical_allow'] 	= 750;
-			$data['trans_allow'] 	= 450;
-			$data['food_allow'] 	= 1250;
-			$total_salary_allow 	= $data['medical_allow'] + $data['trans_allow'] + $data['food_allow'];
-			$data['gross_salary'] 	= $gross_salary;
-			$basic_salary 			= (($gross_salary - $total_salary_allow) / 1.5);
-			$data['basic_sal'] 	   = round($basic_salary);
-			$data['house_rent']    = round($basic_salary * 50 / 100);
-			$data['ot_rate']       = round(($data['basic_sal'] * 2  / 208),2);
-			//$data['ot_rate']       = round(($gross_salary - $data['basic_sal']/1.5 * 208),2);
-			$data['stamp'] = 0;
+		$data['gross_salary']  = $gross_salary;
+		$data['basic_sal'] 	   = round($gross_salary * 0.60);
+		$data['house_rent']    = round($gross_salary * 0.20);
+		$data['medical_allow'] = round($gross_salary * 0.10);
+		$data['food_allow']    = round($gross_salary * 0.05);
+		$data['trans_allow']   = round($gross_salary * 0.05);
 
-		}else{
-
-			$data['medical_allow'] 	= 250;
-			$data['trans_allow'] 	= 200;
-			$data['food_allow'] 	= 650;
-			$total_salary_allow 	= $data['medical_allow'] + $data['trans_allow'] + $data['food_allow'];
-			$data['gross_salary'] 	= $gross_salary;
-			$basic_salary 			= (($gross_salary - $total_salary_allow) / 1.4);
-			$data['basic_sal'] 	   = round($basic_salary);
-			$data['house_rent']    = round($basic_salary * 40 / 100);
-			$data['ot_rate']       = round(($data['basic_sal'] * 2  / 208),2);
-			$data['stamp'] = 0;
-
+		$sum = $data['basic_sal'] + $data['house_rent'] + $data['medical_allow'] + $data['food_allow'] + $data['trans_allow'];
+		if ($sum != $gross_salary) {
+			$data['trans_allow'] = $gross_salary - ($data['basic_sal'] + $data['house_rent'] + $data['medical_allow'] + $data['food_allow']);
 		}
-		// dd($basic_salary/71.15);
+
+		$data['ot_rate']       = round(($data['basic_sal'] * 2 / 208), 2);
+		$data['stamp']         = 0;
 
 
 		if($gross_salary == 0)

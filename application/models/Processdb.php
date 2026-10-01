@@ -243,7 +243,7 @@ class Processdb extends CI_Model{
 		$dob = date("Y-m-d", strtotime($this->input->post('emp_dob')));
 		$per_data = array(
 			'name_bn' 			=> $this->input->post('name_bn'),
-			'name_en' 			=> $this->input->post('name_bn'),
+			'name_en' 			=> $this->input->post('name_en') ? $this->input->post('name_en') : $this->input->post('name_bn'),
 			'emp_dob' 			=> $dob,
 			'gender' 			=> $this->input->post('gender'),
 			'personal_mobile'	=> $this->input->post('personal_mobile'),
@@ -2115,8 +2115,7 @@ class Processdb extends CI_Model{
 		$d = $this->db->select('com.*, per.*,deg.*')
 					->from('pr_emp_com_info as com')
 					->join('pr_emp_per_info as per','com.emp_id = per.emp_id', 'left')
-					->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left')
-					// ->where('deg.hide_status', 1)
+					->join('emp_designation as deg', 'deg.id = com.emp_desi_id AND deg.hide_status = 1', 'left')
 					->where('com.emp_id',$emp_id)
 					->get()->row();
 
