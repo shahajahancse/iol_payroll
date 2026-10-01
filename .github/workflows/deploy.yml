@@ -24,4 +24,5 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftp
           port: 21
+          security: loose
           # server-dir: /   # Set subfolder path here if needed (e.g., /public_html/)
