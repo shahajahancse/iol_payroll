@@ -54,8 +54,8 @@
                                 <i class="fa fa-cog" style="font-size: 22px; color: #006ba3 !important;"></i>
                             </a>
                             <ul class="dropdown-menu  pull-right" role="menu" aria-labelledby="user-options">
-                                <li><a href="<?=base_url()?>change_password"><i
-                                            class="fa fa-lock"></i>&nbsp;&nbsp;Change Password</a></li>
+                                <!-- <li><a href="<?=base_url()?>change_password"><i
+                                            class="fa fa-lock"></i>&nbsp;&nbsp;Change Password</a></li> -->
 
                                 <li><a href="<?=base_url()?>logout_FE"><i class="fa fa-power-off"></i>&nbsp;&nbsp;Log
                                         Out</a></li>
