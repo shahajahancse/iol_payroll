@@ -34,39 +34,18 @@
     <div class="col-md-8">
         <div class="row tablebox" style="display: block;">
             <!-- <h3 style="font-weight: 600;"><?= $title ?></h3> -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Unit <span style="color: red;">*</span> </label>
-                    <select name="unit_id" id="unit_id" class="form-control input-sm">
-                        <option value="">Select Unit</option>
-                        <?php 
-							foreach ($dept as $row) {
-								if($row['unit_id'] == $user_data->unit_name){
-								$select_data="selected";
-								}else{
-                                    if ($user_data->level != "All") {
-                                        continue;
-                                    }
-								}  
-								echo '<option '.$select_data.'  value="'.$row['unit_id'].'">'.$row['unit_name'].
-								'</option>';
-							}
-						?>
-                    </select>
-                </div>
-            </div>
+            <input type="hidden" name="unit_id" id="unit_id" value="1">
             <!-- department -->
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Department </label>
                     <select class="form-control input-sm dept" id='dept' name='dept'>
-                        <?php if (!empty($user_data->unit_name)) { 
-										$dpts = $this->db->where('unit_id', $user_data->unit_name)->get('emp_depertment'); ?>
+                        <?php 
+                            $dpts = $this->db->where('unit_id', 1)->get('emp_depertment'); ?>
                         <option value=''>Select Department</option>
                         <?php foreach ($dpts->result() as $key => $val) { ?>
                         <option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
-                        <?php } } ?>
-                        <option value=''>Select Department</option>
+                        <?php } ?>
                     </select>
                 </div>
             </div>
@@ -79,15 +58,8 @@
                     </select>
                 </div>
             </div>
-            <!-- line -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="control-label">Line </label>
-                    <select class="form-control input-sm line" id='line' name='line'>
-                        <option value=''></option>
-                    </select>
-                </div>
-            </div>
+            <!-- line (hidden) -->
+            <input type="hidden" class="line" id="line" name="line" value="0">
             <!-- Designation -->
             <div class="col-md-6">
                 <div class="form-group">

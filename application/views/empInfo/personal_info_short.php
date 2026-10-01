@@ -162,7 +162,7 @@ input[type="number"] {
                         $depts = $this->db->get('emp_depertment')->result();
                     ?>
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Department <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_dept_id');?>
@@ -175,7 +175,7 @@ input[type="number"] {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Section <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_sec_id');?>
@@ -185,7 +185,7 @@ input[type="number"] {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3" style="padding-left: 0px !important;">
+                        <!-- <div class="col-md-3" style="padding-left: 0px !important;">
                             <div class="form-group">
                                 <label>Line<span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_line_id');?>
@@ -194,8 +194,9 @@ input[type="number"] {
                                     <option value="">-- Select one --</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="col-md-3" style="padding-left: 0px !important;">
+                        </div> -->
+                        <input type="hidden" name="emp_line_id" id="emp_line_id" value="1">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Designation<span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_desi_id');?>
@@ -273,7 +274,7 @@ input[type="number"] {
                     </div>
                     </div>
 
-                    <div class="row">
+                    <!-- <div class="row">
                         <?php //dd($shifts); ?>
                         <div class="col-md-3">
                             <div class="form-group">
@@ -334,7 +335,12 @@ input[type="number"] {
                                 </select>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
+                    <input type="hidden" name="position_id" id="position_id" value="1">
+                    <input type="hidden" name="salary_type" id="salary_type" value="1">
+                    <input type="hidden" name="salary_draw" id="salary_draw" value="1">
+                    <input type="hidden" name="lunch" id="lunch" value="1">
+                    <input type="hidden" name="transport" id="transport" value="1">
 
                     <div class="row" <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(!in_array(10,$acl)) {echo '';} else { echo 'style="display:none;"';}?>>
                         <div class="col-md-2">
@@ -579,12 +585,8 @@ function set_desi_item() {
         // Set a delay of 0.5 seconds before updating emp_sec_id
         setTimeout(function() {
             $('#emp_sec_id').val(emp_sec_id).trigger('change');
-            // Set another delay of 0.5 seconds before updating emp_line_id
             setTimeout(function() {
-                $('#emp_line_id').val(emp_line_id).trigger('change');
-                setTimeout(function() {
-                    $('#emp_desi_id').val(emp_desi_id);
-                }, 500);
+                $('#emp_desi_id').val(emp_desi_id);
             }, 500);
         }, 500);
     }, 500);
@@ -750,39 +752,38 @@ $(document).ready(function() {
         });
     });
 
-    //Line dropdown
+    // Section change populates Designation dropdown directly
     $('#emp_sec_id').change(function() {
-        $('.emp_line_id').addClass('form-control input-sm');
-        $(".emp_line_id > option").remove();
+        $('.emp_desi_id').addClass('form-control input-sm');
         $(".emp_desi_id > option").remove();
-        var id = $('#emp_sec_id').val();
+        var unit_id = $('#unit_id').val() || 1;
         $.ajax({
             type: "POST",
-            url: hostname + "common/ajax_line_by_sec_id/" + id,
+            url: hostname + "common/ajax_designation_by_unit/" + unit_id,
             success: function(func_data) {
-                $('.emp_line_id').append("<option value=''>-- Select District --</option>");
+                $('.emp_desi_id').append("<option value=''>-- Select Designation --</option>");
                 $.each(func_data, function(id, name) {
                     var opt = $('<option />');
                     opt.val(id);
                     opt.text(name);
-                    $('.emp_line_id').append(opt);
+                    $('.emp_desi_id').append(opt);
                 });
             }
         });
     });
 
-    //section dropdown
+    // Department change populates Section dropdown
     $('#emp_dept_id').change(function() {
         $('.emp_sec_id').addClass('form-control input-sm');
         $(".emp_sec_id > option").remove();
-        $(".emp_line_id > option").remove();
+        $(".emp_desi_id > option").remove();
         var id = $('#emp_dept_id').val();
-        var unit_id = $('#unit_id').val();
+        var unit_id = $('#unit_id').val() || 1;
         $.ajax({
             type: "POST",
             url: hostname + "common/ajax_section_by_dept_id/" + id + '/' + unit_id,
             success: function(func_data) {
-                $('.emp_sec_id').append("<option value=''>-- Select District --</option>");
+                $('.emp_sec_id').append("<option value=''>-- Select Section --</option>");
                 $.each(func_data, function(id, name) {
                     var opt = $('<option />');
                     opt.val(id);
