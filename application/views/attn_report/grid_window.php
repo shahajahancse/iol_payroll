@@ -412,9 +412,11 @@
 							<?php if(in_array(103,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="id_card(2)">ID Card English</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(104,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_job_card()">Job Card</button>
 							<?php } ?>
+							*/ ?>
 
 
 							<?php if(in_array(105,$acl)) { ?>
@@ -426,6 +428,7 @@
 							<?php if(in_array(107,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_left_report()">Left Report</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(108,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_general_info()">General Report</button>
 							<?php } ?>
@@ -443,6 +446,8 @@
 							<?php if(in_array(112,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="worker_register()">Worker Register</button>
 							<?php } ?>
+							*/ ?>
+
 							<?php if(in_array(113,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_emp_job_application()">Job Application</button>
 							<?php } ?>
@@ -450,7 +455,7 @@
 							<button class="btn input-sm sbtn" onclick="join_letter()">Joining Letter</button>
 							<?php } ?>
 
-
+							<?php /*
 							<?php if(in_array(115,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_letter_report(1)">Letter 1 <span class="badge bg-red " style="color:#fff !important" id="letter1_count">0</span></button>
 							<?php } ?>
@@ -460,6 +465,8 @@
 							<?php if(in_array(117,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_letter_report(3)">Letter 3 <span class="badge bg-red" style="color:#fff !important" id="letter3_count">0</span></button>
 							<?php } ?>
+							*/ ?>
+
 							<?php if(in_array(118,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_employee_information()">Employee Information</button>
 							<?php } ?>
@@ -470,6 +477,8 @@
 							<?php if(in_array(120,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_incre_prom_report(2)">Promotion Letter</button>
 							<?php } ?>
+
+							<?php /*
 							<?php if(in_array(121,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_incre_prom_report(3)">Line Letter</button>
 							<?php } ?>
@@ -480,11 +489,14 @@
 							<?php if(in_array(123,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_final_satalment()">Final Settlement</button>
 							<?php } ?>
+							*/ ?>
 
 							<!-- actual job card -->
 							<?php if(in_array(124,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_eot_actual()">Job Card Actual </button>
 							<?php } ?>
+
+							<?php /*
 							<!-- max 2 eot -->
 							<?php if(in_array(125,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_extra_ot_9pm()">Job Card.</button>
@@ -515,7 +527,7 @@
 							<?php if(in_array(121,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_employee_background()">Employee Background</button>
                             <?php } ?>
-							<!-- roster list end  -->
+							*/ ?>
 						</div>
 					</div>
 				</div>
