@@ -25,6 +25,7 @@ class Setting_con extends CI_Controller {
 		if ($this->session->userdata('logged_in') == false) {
             redirect("authentication");
         }
+		$this->db->where('status', 1);
 		$this->db->order_by('id', 'desc');
 		$this->data['data'] = $this->db->get('member_acl_list')->result();
         $this->data['username'] = $this->data['user_data']->id_number;
@@ -48,7 +49,7 @@ class Setting_con extends CI_Controller {
 	}
 
 	function acl_access_add(){
-		if ($this->db->insert('member_acl_list', array('acl_name' => $this->input->post('acl_name'), 'type' => $this->input->post('type')))) {
+		if ($this->db->insert('member_acl_list', array('acl_name' => $this->input->post('acl_name'), 'type' => $this->input->post('type'), 'status' => 1))) {
 			$this->session->set_flashdata('success', 'ACL Added Successfully');
 		}else{
 			$this->session->set_flashdata('failuer', 'ACL Added Failed');
@@ -97,6 +98,7 @@ class Setting_con extends CI_Controller {
             redirect("authentication");
         }
 		$id = $this->data['username'] = $this->data['user_data']->id;
+		$this->db->where('status', 1);
 		$this->db->order_by('id', 'desc');
 		$this->db->where_in('type', [1,2,5]);
 		$this->data['access_list'] = $this->db->get('member_acl_list')->result();
@@ -208,6 +210,7 @@ class Setting_con extends CI_Controller {
 		$id = $this->input->post('id');
 		$type = $this->input->post('type');
 
+		$this->db->where('status', 1);
 		$this->db->order_by('id', 'desc');
 		if ($type == 1) {
 			$this->db->where_in('type', [1,2,5]);

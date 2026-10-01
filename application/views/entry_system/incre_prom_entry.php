@@ -120,7 +120,7 @@
                     <input class="btn btn-primary" onclick='toggleSection("special")' type="button" value="Special" />
                     <input class="btn btn-primary" onclick='toggleSection("increment")' type="button" value="Increment" />
                     <input class="btn btn-info" onclick='toggleSection("promotion")' type="button" value="Promotion" />
-                    <input class="btn btn-success" onclick='toggleSection("line_change")' type="button" value="Line" />
+                    <!-- <input class="btn btn-success" onclick='toggleSection("line_change")' type="button" value="Line" /> -->
                 </div><!-- /input-group -->
             </div><!-- /.col-lg-6 -->
         </div><!-- /.row -->

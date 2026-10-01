@@ -141,6 +141,7 @@
             </div><!-- /.col-lg-4 -->
 
         </div><!-- /.row -->
+        <?php /*
         <div class="row nav_head" style="margin-top:20px">
             <div class="col-lg-4" style="padding-lef: 0px !important; padding-right: 0px !important;">
                 <span style="font-size: 20px;">Earn Leave Process </span>
@@ -193,6 +194,7 @@
             </div><!-- /.col-lg-4 -->
 
         </div>
+        */ ?>
 		<div class="row nav_head" style="margin-top:20px">
             <div class="col-lg-3" style="padding-lef: 0px !important; padding-right: 0px !important;">
                 <span style="font-size: 20px;">Festival Bonus</span>

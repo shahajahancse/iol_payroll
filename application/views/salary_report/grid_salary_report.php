@@ -162,11 +162,13 @@
                 <div class='multitab-section'>
                     <ul class="nav nav-tabs" id="myTabs">
                         <li class="active"><a href="#daily" data-toggle="tab">Salary Reports</a></li>
-                        <li><a href="#earn_leave" data-toggle="tab"> Earn Leave Reports</a></li>
+                        <!-- <li><a href="#earn_leave" data-toggle="tab"> Earn Leave Reports</a></li> -->
+                        <li><a href="#others" data-toggle="tab">Others</a></li>
                     </ul>
                     <div class="tab-content">
                         <!-- salary report  -->
                         <div class="tab-pane fade in active" id="daily">
+                            <?php /*
                             <?php if(in_array(180,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="salary_sheet_com()">Salary Sheet</button>
                             <?php } ?>
@@ -179,6 +181,7 @@
                             <?php if(in_array(183,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="sec_sal_summary_com()">Sec Wise Salary Summary</button>
                             <?php } ?>
+                            */ ?>
 
                             <?php if(in_array(184,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="actual_salary_sheet()">Actual Salary Sheet</button>
@@ -206,6 +209,7 @@
                             <button class="btn input-sm sbtn" onclick="actual_eot_sheet_bank()">Actual EOT Bank</button>
                             <?php } ?>
 
+                            <?php /*
                             <?php if(in_array(192,$acl)) { ?>
                                 <button class="btn input-sm sbtn" onclick="eot_sheet_com_9()">EOT Sheet.</button>
                             <?php } ?>
@@ -215,9 +219,11 @@
                             <?php if(in_array(194,$acl)) { ?>
                                 <button class="btn input-sm sbtn" onclick="eot_sheet_com_all()">EOT Sheet!</button>
                             <?php } ?>
+                            */ ?>
                             <?php if(in_array(195,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_monthly_stop_sheet()">Stop Salary Sheet</button>
                             <?php } ?>
+                            <?php /*
                             <?php if(in_array(196,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_salary_sheet_with_eot_bank()">Mobile Banking Report</button>
                             <?php } ?>
@@ -227,9 +233,11 @@
                             <?php if(in_array(198,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_salary_sheet_with_eot_bank()">Monthly Weekend/Holiday Report</button>
                             <?php } ?>
+                            */ ?>
                         </div>
                         <!-- salary report end  -->
 
+                        <!--
                         <div class="tab-pane fade" id="earn_leave">
                             <?php if(in_array(199,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_earn_leave_payment_buyer()">Earn Leave Payment Sheet</button>
@@ -240,6 +248,27 @@
                             <?php if(in_array(201,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_earn_leave_summery()">Earn Leave Summery Sheet</button>
                             <?php } ?>
+                        </div>
+                        -->
+
+                        <div class="tab-pane fade" id="others">
+                            <?php if(in_array(206,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="grid_festival_bonus()">Festival Bonus</button>
+                            <?php } ?>
+                            <?php if(in_array(207,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="grid_festival_bonus_summary()">Festival Bonus Summary</button>
+                            <?php } ?>
+                            <?php /*
+                            <?php if(in_array(208,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="grid_festival_bonus_summary_sec_wise()">Festival Bonus Summary(Sec)</button>
+                            <?php } ?>
+                            <?php if(in_array(209,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="advance_salary_report()">Advance Salary Sheet</button>
+                            <?php } ?>
+                            <?php if(in_array(210,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="act_advance_salary_sheet()">Act. Adv. Sal. Sheet</button>
+                            <?php } ?>
+                            */ ?>
                         </div>
                     </div>
                 </div>
