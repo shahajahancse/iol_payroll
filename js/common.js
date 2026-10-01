@@ -1,108 +1,62 @@
 function salary_structure_cal(){
-   var ajaxRequest;  // The variable that makes Ajax possible!
-   try{
-      // Opera 8.0+, Firefox, Safari
-      ajaxRequest = new XMLHttpRequest();
-   }catch (e){
-      // Internet Explorer Browsers
-      try{
-         ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");
-      }catch (e) {
-         try{
-            ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");
-         }catch (e){
-            // Something went wrong
-            alert("Your browser broke!");
-            return false;
-         }
+   var gsal = parseFloat(document.getElementById('gross_sal').value) || 0;
+
+   if (gsal > 0) { 
+      var bsal = Math.round(gsal * 0.60);
+      var hrent = Math.round(gsal * 0.20);
+      var mallow = Math.round(gsal * 0.10);
+      var food = Math.round(gsal * 0.05);
+      var trans_allow = Math.round(gsal * 0.05);
+      
+      // Ensure total equals gross without rounding mismatch
+      var sum = bsal + hrent + mallow + food + trans_allow;
+      if (sum !== gsal) {
+         trans_allow = gsal - (bsal + hrent + mallow + food);
       }
+
+      if (document.getElementById('basic_sal')) document.getElementById('basic_sal').value = bsal;
+      if (document.getElementById('house_rent')) document.getElementById('house_rent').value = hrent;
+      if (document.getElementById('medical')) document.getElementById('medical').value = mallow;
+      if (document.getElementById('food')) document.getElementById('food').value = food;
+      if (document.getElementById('trans_allow')) document.getElementById('trans_allow').value = trans_allow;
+
+      if (document.getElementById('com_gross_sal')) document.getElementById('com_gross_sal').value = gsal;
+      if (document.getElementById('basic_sall')) document.getElementById('basic_sall').value = bsal;
+      if (document.getElementById('house_rentt')) document.getElementById('house_rentt').value = hrent;
+      if (document.getElementById('medicall')) document.getElementById('medicall').value = mallow;
+      if (document.getElementById('foodd')) document.getElementById('foodd').value = food;
+      if (document.getElementById('trans_alloww')) document.getElementById('trans_alloww').value = trans_allow;
    }
-   var gsal = document.getElementById('gross_sal').value;
-   var com_gsal = document.getElementById('com_gross_sal').value;
-
-
-  
-
-
-
-
-   //==================================BGMEA Salary Rule=================================
-   today = new Date().toISOString().slice(0, 10);
-   if (today >= '2023-12-01') {
-      var mallow = 750;
-      var trans_allow = 450;
-      var lunch_allow = 1250;
-   } else {
-      var mallow = 600;
-      var trans_allow = 350;
-      var lunch_allow = 900;
-   }
-   document.getElementById('medical').value = mallow;
-   document.getElementById('trans_allow').value = trans_allow;
-   document.getElementById('food').value = lunch_allow;
-
-   document.getElementById('medicall').value = mallow;
-   document.getElementById('trans_alloww').value = trans_allow;
-   document.getElementById('foodd').value = lunch_allow;
-
-
-   if (gsal) { 
-      var bsal = Math.round((gsal - (mallow + trans_allow + lunch_allow)) / 1.5);
-      document.getElementById('basic_sal').value = bsal;
-      var hrent = Math.round(gsal - (mallow + trans_allow + lunch_allow + bsal));
-      document.getElementById('house_rent').value = hrent;
-   }
-   if(com_gsal) { 
-      var com_bsal = Math.round((com_gsal - (mallow + trans_allow + lunch_allow)) / 1.5);
-      document.getElementById('basic_sall').value = com_bsal;
-      var com_hrent = Math.round(com_gsal - (mallow + trans_allow + lunch_allow + com_bsal));
-      document.getElementById('house_rentt').value = com_hrent;
-   }
-   $('#com_gross_sal').val($('#gross_sal').val())
-   $('#basic_sall').val($('#basic_sal').val())
-   $('#house_rentt').val($('#house_rent').val())
-   //==================================LOCAL Salary Rule==================================
 }
+
 function salary_structure_cal2(){
+   var com_gsal = parseFloat(document.getElementById('com_gross_sal').value) || 0;
 
-   //var gsal = document.getElementById('gross_sal').value;
-   var com_gsal = document.getElementById('com_gross_sal').value;
-   //==================================BGMEA Salary Rule=================================
-   today = new Date().toISOString().slice(0, 10);
-   if (today >= '2023-12-01') {
-      var mallow = 750;
-      var trans_allow = 450;
-      var lunch_allow = 1250;
-   } else {
-      var mallow = 600;
-      var trans_allow = 350;
-      var lunch_allow = 900;
+   if (com_gsal > 0) { 
+      var com_bsal = Math.round(com_gsal * 0.60);
+      var com_hrent = Math.round(com_gsal * 0.20);
+      var com_mallow = Math.round(com_gsal * 0.10);
+      var com_food = Math.round(com_gsal * 0.05);
+      var com_trans_allow = Math.round(com_gsal * 0.05);
+
+      var sum = com_bsal + com_hrent + com_mallow + com_food + com_trans_allow;
+      if (sum !== com_gsal) {
+         com_trans_allow = com_gsal - (com_bsal + com_hrent + com_mallow + com_food);
+      }
+
+      if (document.getElementById('gross_sal')) document.getElementById('gross_sal').value = com_gsal;
+      if (document.getElementById('basic_sal')) document.getElementById('basic_sal').value = com_bsal;
+      if (document.getElementById('house_rent')) document.getElementById('house_rent').value = com_hrent;
+      if (document.getElementById('medical')) document.getElementById('medical').value = com_mallow;
+      if (document.getElementById('food')) document.getElementById('food').value = com_food;
+      if (document.getElementById('trans_allow')) document.getElementById('trans_allow').value = com_trans_allow;
+
+      if (document.getElementById('basic_sall')) document.getElementById('basic_sall').value = com_bsal;
+      if (document.getElementById('house_rentt')) document.getElementById('house_rentt').value = com_hrent;
+      if (document.getElementById('medicall')) document.getElementById('medicall').value = com_mallow;
+      if (document.getElementById('foodd')) document.getElementById('foodd').value = com_food;
+      if (document.getElementById('trans_alloww')) document.getElementById('trans_alloww').value = com_trans_allow;
    }
-  //  document.getElementById('medical').value = mallow;
-  //  document.getElementById('trans_allow').value = trans_allow;
-  //  document.getElementById('food').value = lunch_allow;
-
-   document.getElementById('medicall').value = mallow;
-   document.getElementById('trans_alloww').value = trans_allow;
-   document.getElementById('foodd').value = lunch_allow;
-
-
-  //  if (gsal) { 
-  //     var bsal = Math.round((gsal - (mallow + trans_allow + lunch_allow)) / 1.5);
-  //     document.getElementById('basic_sal').value = bsal;
-  //     var hrent = Math.round(gsal - (mallow + trans_allow + lunch_allow + bsal));
-  //     document.getElementById('house_rent').value = hrent;
-  //  }
-   if(com_gsal) { 
-      var com_bsal = Math.round((com_gsal - (mallow + trans_allow + lunch_allow)) / 1.5);
-      document.getElementById('basic_sall').value = com_bsal;
-      var com_hrent = Math.round(com_gsal - (mallow + trans_allow + lunch_allow + com_bsal));
-      document.getElementById('house_rentt').value = com_hrent;
-   }
-   //$('#com_gross_sal').val($('#gross_sal').val())
-  //  $('#basic_sall').val($('#basic_sal').val())
-  //  $('#house_rentt').val($('#house_rent').val())
-   //==================================LOCAL Salary Rule==================================
 }
 
 function attendance_process(){

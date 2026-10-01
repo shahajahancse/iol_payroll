@@ -62,39 +62,18 @@
 
             <div class="row tablebox" style="display: block; margin-bottom: 10px;">
                 <h3 class="h3" style="font-weight: 600;">Select Category</h3>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Unit <span style="color: red;">*</span> </label>
-                        <select name="unit_id" id="unit_id" class="form-control input-sm">
-                            <option value="">Select Unit</option>
-                            <?php
-                                foreach ($dept as $row) {
-                                    if($row['unit_id'] == $user_data->unit_name){
-                                        $select_data="selected";
-                                    }else{
-                                        if ($user_data->level != "All") {
-                                            continue;
-                                        }
-                                    }
-                                    echo '<option '.$select_data.'  value="'.$row['unit_id'].'">'.$row['unit_name'].
-                                    '</option>';
-                                }
-                            ?>
-                        </select>
-                    </div>
-                </div>
+                <input type="hidden" name="unit_id" id="unit_id" value="1">
                 <!-- department -->
                 <div class="col-md-6">
                     <div class="form-group">
                         <label>Department </label>
                         <select class="form-control input-sm dept" id='dept' name='dept'>
-                            <?php if (!empty($user_data->unit_name)) {
-                                $dpts = $this->db->where('unit_id', $user_data->unit_name)->get('emp_depertment'); ?>
+                            <?php 
+                                $dpts = $this->db->where('unit_id', 1)->get('emp_depertment'); ?>
                             <option value=''>Select Department</option>
                             <?php foreach ($dpts->result() as $key => $val) { ?>
                             <option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
-                            <?php } } ?>
-                            <option value=''>Select Department</option>
+                            <?php } ?>
                         </select>
                     </div>
                 </div>
@@ -107,15 +86,8 @@
                         </select>
                     </div>
                 </div>
-                <!-- line -->
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label class="control-label">Line </label>
-                        <select class="form-control input-sm line" id='line' name='line'>
-                            <option value=''></option>
-                        </select>
-                    </div>
-                </div>
+                <!-- line (hidden) -->
+                <input type="hidden" class="line" id="line" name="line" value="0">
                 <!-- Designation -->
                 <div class="col-md-6">
                     <div class="form-group">
@@ -162,11 +134,13 @@
                 <div class='multitab-section'>
                     <ul class="nav nav-tabs" id="myTabs">
                         <li class="active"><a href="#daily" data-toggle="tab">Salary Reports</a></li>
-                        <li><a href="#earn_leave" data-toggle="tab"> Earn Leave Reports</a></li>
+                        <!-- <li><a href="#earn_leave" data-toggle="tab"> Earn Leave Reports</a></li> -->
+                        <li><a href="#others" data-toggle="tab">Others</a></li>
                     </ul>
                     <div class="tab-content">
                         <!-- salary report  -->
                         <div class="tab-pane fade in active" id="daily">
+                            <?php /*
                             <?php if(in_array(180,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="salary_sheet_com()">Salary Sheet</button>
                             <?php } ?>
@@ -179,6 +153,7 @@
                             <?php if(in_array(183,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="sec_sal_summary_com()">Sec Wise Salary Summary</button>
                             <?php } ?>
+                            */ ?>
 
                             <?php if(in_array(184,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="actual_salary_sheet()">Actual Salary Sheet</button>
@@ -206,6 +181,7 @@
                             <button class="btn input-sm sbtn" onclick="actual_eot_sheet_bank()">Actual EOT Bank</button>
                             <?php } ?>
 
+                            <?php /*
                             <?php if(in_array(192,$acl)) { ?>
                                 <button class="btn input-sm sbtn" onclick="eot_sheet_com_9()">EOT Sheet.</button>
                             <?php } ?>
@@ -215,9 +191,11 @@
                             <?php if(in_array(194,$acl)) { ?>
                                 <button class="btn input-sm sbtn" onclick="eot_sheet_com_all()">EOT Sheet!</button>
                             <?php } ?>
+                            */ ?>
                             <?php if(in_array(195,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_monthly_stop_sheet()">Stop Salary Sheet</button>
                             <?php } ?>
+                            <?php /*
                             <?php if(in_array(196,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_salary_sheet_with_eot_bank()">Mobile Banking Report</button>
                             <?php } ?>
@@ -227,9 +205,11 @@
                             <?php if(in_array(198,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_salary_sheet_with_eot_bank()">Monthly Weekend/Holiday Report</button>
                             <?php } ?>
+                            */ ?>
                         </div>
                         <!-- salary report end  -->
 
+                        <!--
                         <div class="tab-pane fade" id="earn_leave">
                             <?php if(in_array(199,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_earn_leave_payment_buyer()">Earn Leave Payment Sheet</button>
@@ -240,6 +220,27 @@
                             <?php if(in_array(201,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_earn_leave_summery()">Earn Leave Summery Sheet</button>
                             <?php } ?>
+                        </div>
+                        -->
+
+                        <div class="tab-pane fade" id="others">
+                            <?php if(in_array(206,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="grid_festival_bonus()">Festival Bonus</button>
+                            <?php } ?>
+                            <?php if(in_array(207,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="grid_festival_bonus_summary()">Festival Bonus Summary</button>
+                            <?php } ?>
+                            <?php /*
+                            <?php if(in_array(208,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="grid_festival_bonus_summary_sec_wise()">Festival Bonus Summary(Sec)</button>
+                            <?php } ?>
+                            <?php if(in_array(209,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="advance_salary_report()">Advance Salary Sheet</button>
+                            <?php } ?>
+                            <?php if(in_array(210,$acl)) { ?>
+                            <button class="btn input-sm sbtn" onclick="act_advance_salary_sheet()">Act. Adv. Sal. Sheet</button>
+                            <?php } ?>
+                            */ ?>
                         </div>
                     </div>
                 </div>

@@ -571,6 +571,7 @@ function report(id, type){
                 obj.forEach(element => {
                     var lid = ''
 
+                    /*
                     if (element.status == 1) {
                         <?php if(in_array(116,$acl)) { ?>
                         lid+= `<li><a class="btn btn-sm" onclick="report(${element.emp_id}, 1)">Satalement Acc</a></li>`
@@ -590,6 +591,7 @@ function report(id, type){
                     }else{
                         lid+= `<li><a class="btn btn-sm" data-toggle="modal" data-target="#myModal" onclick="final_satalment(${element.emp_id})">Add Final Satalment</a></li>`
                     }
+                    */
                     lid+= `<li><a class="btn btn-sm" href="<?=base_url('entry_system_con/resign_delete/')?>${element.emp_id}">Delete</a></li>`
 
                     $('#tbody').append(`<tr>

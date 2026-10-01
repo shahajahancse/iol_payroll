@@ -18,7 +18,14 @@ class Setup_con extends CI_Controller
             redirect("authentication");
         }
         $this->data['user_data'] = $this->session->userdata('data');
-        // dd($this->data['user_data']
+
+        $this->db->query("UPDATE pr_units SET 
+            unit_name = 'Islam Oxygen Limited',
+            unit_name_bangla = 'ইসলাম অক্সিজেন লিমিটেড',
+            unit_add = '11/1 Tarabo, Rupgonj, Narayangonj',
+            unit_add_bangla = '১১/১ তারাবো, রূপগঞ্জ, নারায়ণগঞ্জ'
+            WHERE unit_id = 1 AND unit_name != 'Islam Oxygen Limited'");
+
         if (!check_acl_list($this->data['user_data']->id, 2)) {
             echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
             redirect("payroll_con");
@@ -1454,11 +1461,11 @@ class Setup_con extends CI_Controller
         $this->form_validation->set_rules('desig_name', 'Designation Name English', 'required');
         // $this->form_validation->set_rules('desig_bangla', 'Designation Bangla', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
-        $this->form_validation->set_rules('attn_id', 'Attendence Bonus', 'required');
-        $this->form_validation->set_rules('holiday_weekend_id', 'Holiday Weekend', 'required');
-        $this->form_validation->set_rules('iftar_id', 'Iftar Allowance', 'required');
-        $this->form_validation->set_rules('night_al_id', 'Night Allowance', 'required');
-        $this->form_validation->set_rules('tiffin_id', 'Tiffin Allowance', 'required');
+        // $this->form_validation->set_rules('attn_id', 'Attendence Bonus', 'required');
+        // $this->form_validation->set_rules('holiday_weekend_id', 'Holiday Weekend', 'required');
+        // $this->form_validation->set_rules('iftar_id', 'Iftar Allowance', 'required');
+        // $this->form_validation->set_rules('night_al_id', 'Night Allowance', 'required');
+        // $this->form_validation->set_rules('tiffin_id', 'Tiffin Allowance', 'required');
 
         if ($this->form_validation->run() == TRUE) {
             $formArray = array(
@@ -1468,11 +1475,11 @@ class Setup_con extends CI_Controller
                 // 'line_id' => $this->input->post('emp_line_id'),
                 'desig_name' => $this->input->post('desig_name'),
                 'desig_bangla' => $this->input->post('desig_bangla'),
-                'attn_id' => $this->input->post('attn_id'),
-                'holiday_weekend_id' => $this->input->post('holiday_weekend_id'),
-                'iftar_id' => $this->input->post('iftar_id'),
-                'night_al_id' => $this->input->post('night_al_id'),
-                'tiffin_id' => $this->input->post('tiffin_id'),
+                'attn_id' => $this->input->post('attn_id') ? $this->input->post('attn_id') : 0,
+                'holiday_weekend_id' => $this->input->post('holiday_weekend_id') ? $this->input->post('holiday_weekend_id') : 0,
+                'iftar_id' => $this->input->post('iftar_id') ? $this->input->post('iftar_id') : 0,
+                'night_al_id' => $this->input->post('night_al_id') ? $this->input->post('night_al_id') : 0,
+                'tiffin_id' => $this->input->post('tiffin_id') ? $this->input->post('tiffin_id') : 0,
                 'desig_desc' => $this->input->post('desig_desc'),
                 // 'group_id' => $this->input->post('group_id'),
             );
@@ -1497,11 +1504,11 @@ class Setup_con extends CI_Controller
         $this->form_validation->set_rules('desig_name', 'Designation Name English', 'required');
         // $this->form_validation->set_rules('desig_bangla', 'Designation Bangla', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
-        $this->form_validation->set_rules('attn_id', 'Attendence Bonus', 'required');
-        $this->form_validation->set_rules('holiday_weekend_id', 'Holiday Weekend', 'required');
-        $this->form_validation->set_rules('iftar_id', 'Iftar Allowance', 'required');
-        $this->form_validation->set_rules('night_al_id', 'Night Allowance', 'required');
-        $this->form_validation->set_rules('tiffin_id', 'Tiffin Allowance', 'required');
+        // $this->form_validation->set_rules('attn_id', 'Attendence Bonus', 'required');
+        // $this->form_validation->set_rules('holiday_weekend_id', 'Holiday Weekend', 'required');
+        // $this->form_validation->set_rules('iftar_id', 'Iftar Allowance', 'required');
+        // $this->form_validation->set_rules('night_al_id', 'Night Allowance', 'required');
+        // $this->form_validation->set_rules('tiffin_id', 'Tiffin Allowance', 'required');
 
         $this->db->select('pr_units.*');
         $this->data['pr_units'] = $this->db->get('pr_units')->result();
@@ -1529,11 +1536,11 @@ class Setup_con extends CI_Controller
                 'unit_id'            => $this->input->post('unit_id'),
                 'desig_name'         => $this->input->post('desig_name'),
                 'desig_bangla'       => $this->input->post('desig_bangla'),
-                'attn_id'            => $this->input->post('attn_id'),
-                'holiday_weekend_id' => $this->input->post('holiday_weekend_id'),
-                'iftar_id'           => $this->input->post('iftar_id'),
-                'night_al_id'        => $this->input->post('night_al_id'),
-                'tiffin_id'          => $this->input->post('tiffin_id'),
+                'attn_id'            => $this->input->post('attn_id') ? $this->input->post('attn_id') : 0,
+                'holiday_weekend_id' => $this->input->post('holiday_weekend_id') ? $this->input->post('holiday_weekend_id') : 0,
+                'iftar_id'           => $this->input->post('iftar_id') ? $this->input->post('iftar_id') : 0,
+                'night_al_id'        => $this->input->post('night_al_id') ? $this->input->post('night_al_id') : 0,
+                'tiffin_id'          => $this->input->post('tiffin_id') ? $this->input->post('tiffin_id') : 0,
                 'desig_desc'         => $this->input->post('desig_desc'),
 
                 // 'group_id'           => $this->input->post('group_id'),
@@ -1800,7 +1807,7 @@ class Setup_con extends CI_Controller
             $formArray['tiffin_break2'] = $this->input->post('tiffin_break2');
             $formArray['tiffin_minute2'] = $this->input->post('tiffin_minute2');
             $formArray['random_minute'] = $this->input->post('random_minute');
-            $formArray['of_day'] = json_encode($this->input->post('of_day'));
+            // $formArray['of_day'] = json_encode($this->input->post('of_day'));
 
             $this->Crud_model->shiftschedule_add($formArray);
             $this->session->set_flashdata('success', 'Record add successfully!');

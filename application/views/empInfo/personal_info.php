@@ -78,9 +78,9 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label> Punch Card No. <span style="color: red;">*</span> </label>
-                                <input type="text" name="proxi_id" id="proxi_id" value="<?= set_value('proxi_id') ?>"
-                                    required readonly class="form-control input-sm required"
-                                    value="<?= isset($emp_info->proxi_id)?>" required>
+                                <input type="text" name="proxi_id" id="proxi_id"
+                                    class="form-control input-sm required"
+                                    value="<?= isset($emp_info->proxi_id) ? $emp_info->proxi_id : set_value('proxi_id')?>" required>
                                 <?php echo form_error('proxi_id');?>
                             </div>
                         </div>
@@ -578,8 +578,8 @@
                             <label>Employee Type <span style="color: red;">*</span> </label>
                             <select name="emp_type" id="emp_type" class="form-control input-sm required" required="">
                                 <option value="">-- Select one --</option>
-                                <option value="1">Worker</option>
-                                <option value="2">Staff</option>
+                                <option value="1">Office</option>
+                                <option value="2">Factory</option>
                             </select>
                         </div>
                     </div>
@@ -640,7 +640,7 @@
                                 <label>Gross Salary <span style="color: red;">*</span> </label>
                                 <?php echo form_error('gross_sal');?>
                                 <input type="text" onkeyup="salary_structure_cal()" onchange="salary_structure_cal()" name="gross_sal" id="gross_sal"
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -648,7 +648,7 @@
                                 <label>Basic Salary </label>
                                 <?php echo form_error('basic_sal');?>
                                 <input type="text" name="basic_sal" id="basic_sal" disabled
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -656,7 +656,7 @@
                                 <label>House </label>
                                 <?php echo form_error('house_rent');?>
                                 <input type="text" name="house_rent" id="house_rent" disabled
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
 
@@ -664,8 +664,7 @@
                             <div class="form-group">
                                 <label>Medical </label>
                                 <?php echo form_error('medical');?>
-                                <input type="text" name="medical" id="medical" disabled class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="medical" id="medical" disabled class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-1">
@@ -673,24 +672,23 @@
                                 <label>Transport </label>
                                 <?php echo form_error('trans_allow');?>
                                 <input type="text" name="trans_allow" id="trans_allow" disabled
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label> Food </label>
                                 <?php echo form_error('food');?>
-                                <input type="text" name="food" id="food" disabled class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="food" id="food" disabled class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
                             <label style="white-space: nowrap">Ot Entitle </label>
                             <?php echo form_error('ot_entitle');?>
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="0" class="form-check-input"
-                                style="display: inline; margin-right: 10px;" required>Yes
+                                style="display: inline; margin-right: 10px;">Yes
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="1" class="form-check-input"
-                                style="display: inline; margin-right: 10px;" required checked>No
+                                style="display: inline; margin-right: 10px;" checked>No
                         </div>
                     </div>
                     <div class="row">

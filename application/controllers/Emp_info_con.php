@@ -14,6 +14,14 @@ class Emp_info_con extends CI_Controller {
 			redirect("authentication");
 		}
 		$this->data['user_data'] = $this->session->userdata('data');
+
+		$this->db->query("UPDATE pr_units SET 
+			unit_name = 'Islam Oxygen Limited',
+			unit_name_bangla = 'ইসলাম অক্সিজেন লিমিটেড',
+			unit_add = '11/1 Tarabo, Rupgonj, Narayangonj',
+			unit_add_bangla = '১১/১ তারাবো, রূপগঞ্জ, নারায়ণগঞ্জ'
+			WHERE unit_id = 1 AND unit_name != 'Islam Oxygen Limited'");
+
 		if (!check_acl_list($this->data['user_data']->id,1)) {
 			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
 			redirect("payroll_con");
@@ -51,10 +59,10 @@ class Emp_info_con extends CI_Controller {
 		} else {
 			$this->db->select('emp_id');
 			$this->db->where('unit_id', $unit_id);
-			$this->db->order_by('emp_id', 'desc');
+			$this->db->order_by('CAST(emp_id AS UNSIGNED)', 'desc', FALSE);
 			$this->db->limit(1);
 			$query = $this->db->get('pr_emp_com_info');
-			echo $query->row()->emp_id;
+			echo ($query->num_rows() > 0) ? $query->row()->emp_id : '';
 		}
 	}
 

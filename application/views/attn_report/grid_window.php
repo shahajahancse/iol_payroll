@@ -156,7 +156,7 @@
 				<div class='multitab-section'>
 					<ul class="nav nav-tabs" id="myTabs">
 						<li class="active"><a href="#daily" data-toggle="tab">Daily Reports</a></li>
-						<li><a href="#monthly" data-toggle="tab">Monthly Reports</a></li>
+						<?php /* <li><a href="#monthly" data-toggle="tab">Monthly Reports</a></li> */ ?>
 						<li><a href="#continuous" data-toggle="tab">Continuous Reports</a></li>
 						<li><a href="#other" data-toggle="tab">Other Reports</a></li>
 					</ul>
@@ -167,14 +167,11 @@
 						?>
 						<!-- Daily Reports -->
 						<div class="tab-pane fade in active" id="daily">
-							<?php if(in_array(61,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(1)">Present Report</button>
+							<?php if(in_array(70,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="grid_actual_present_report()">Actual Present Report</button>
 							<?php } ?>
 							<?php if(in_array(62,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(2)">Absent Report</button>
-							<?php } ?>
-							<?php if(in_array(63,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(3)">Daily Leave Report</button>
 							<?php } ?>
 							<?php if(in_array(64,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(4)">Late Report</button>
@@ -182,27 +179,28 @@
 							<?php if(in_array(65,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(5)">OT Report</button>
 							<?php } ?>
-							<?php if(in_array(66,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(6)">Daily EOT</button>
-							<?php } ?>
-
-							<?php if(in_array(67,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(7)">Out & IN Report</button>
-							<?php } ?>
 							<?php if(in_array(68,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(8)">Daily Out Punch Miss</button>
 							<?php } ?>
-							<?php if(in_array(69,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_costing_report()">Daily Costing</button>
-							<?php } ?>
-
-
-
-							<?php if(in_array(70,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="grid_actual_present_report()">Actual Present Report</button>
-							<?php } ?>
 							<?php if(in_array(71,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="grid_daily_actual_out_in_report()">Actual Out & IN Report</button>
+							<?php } ?>
+
+							<?php /*
+							<?php if(in_array(61,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(1)">Present Report</button>
+							<?php } ?>
+							<?php if(in_array(63,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(3)">Daily Leave Report</button>
+							<?php } ?>
+							<?php if(in_array(66,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(6)">Daily EOT</button>
+							<?php } ?>
+							<?php if(in_array(67,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(7)">Out & IN Report</button>
+							<?php } ?>
+							<?php if(in_array(69,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_costing_report()">Daily Costing</button>
 							<?php } ?>
 							<?php if(in_array(72,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="holiday_weekend_attn_report('A')">Holiday / Weekend Absent</button>
@@ -210,8 +208,6 @@
 							<?php if(in_array(73,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="holiday_weekend_attn_report('P')">Holiday / Weekend Present</button>
 							<?php } ?>
-
-
 							<?php if(in_array(74,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="daily_attendance_summary(1)">Line Man Power Costing </button>
 							<button class="btn input-sm sbtn" onclick="daily_attendance_summary(2)">Section Man Power Costing </button>
@@ -231,10 +227,12 @@
 							<?php if(in_array(79,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="iftar_bill_list()">Iftar Bill List</button>
 							<?php } ?>
+							*/ ?>
 						</div>
 						<!-- Daily Reports end -->
 
 						<!-- Monthly Reports -->
+						<?php /*
 						<div class="tab-pane fade" id="monthly">
 							<?php if(in_array(80,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="grid_monthly_att_register_ot()">Attendance Register</button>
@@ -317,16 +315,9 @@
 								<button onclick="return validFunc()" type="submit" name="excel" value="excel" class="btn input-sm btn-info">Holiday Register Excel</button>
 								<?php echo form_close(); ?>
 							<?php } ?>
-
-
-
-
-
-
-
-
-
 						</div>
+						*/ ?>
+						<!-- Monthly Reports end -->
 						<!-- Monthly Reports end -->
 
 						<!-- Continuous Reports -->
@@ -366,19 +357,23 @@
 							<?php if(in_array(89,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_prom_report()">Promotion Report</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(90,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_line_report('line')">Line Change Report</button>
 							<?php } ?>
 							<?php if(in_array(91,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_line_report('section')">Section Change Report</button>
 							<?php } ?>
+							*/ ?>
 							<?php if(in_array(92,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_ot_eot_report()">OT / EOT Report</button>
 							<?php } ?>
 
+							<?php /*
 							<?php if(in_array(93,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_costing_report()">Continuous Costing Report</button>
 							<?php } ?>
+							*/ ?>
 
 							<?php if(in_array(94,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="last_increment_promotion(1)">Last Increment Check</button>
@@ -389,6 +384,7 @@
 							<?php if(in_array(96,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="increment_able_employee()">Increment able employee</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(97,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="unit_transferred_list(1)">Unit transfer list</button>
 							<?php } ?>
@@ -404,6 +400,7 @@
 							<?php if(in_array(101,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="emp_conformation_list(3)">Conformation Letter</button>
 							<?php } ?>
+							*/ ?>
 						</div>
 						<!-- Continuous Reports end -->
 
@@ -415,9 +412,11 @@
 							<?php if(in_array(103,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="id_card(2)">ID Card English</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(104,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_job_card()">Job Card</button>
 							<?php } ?>
+							*/ ?>
 
 
 							<?php if(in_array(105,$acl)) { ?>
@@ -429,6 +428,7 @@
 							<?php if(in_array(107,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_left_report()">Left Report</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(108,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_general_info()">General Report</button>
 							<?php } ?>
@@ -446,6 +446,8 @@
 							<?php if(in_array(112,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="worker_register()">Worker Register</button>
 							<?php } ?>
+							*/ ?>
+
 							<?php if(in_array(113,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_emp_job_application()">Job Application</button>
 							<?php } ?>
@@ -453,7 +455,7 @@
 							<button class="btn input-sm sbtn" onclick="join_letter()">Joining Letter</button>
 							<?php } ?>
 
-
+							<?php /*
 							<?php if(in_array(115,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_letter_report(1)">Letter 1 <span class="badge bg-red " style="color:#fff !important" id="letter1_count">0</span></button>
 							<?php } ?>
@@ -463,6 +465,8 @@
 							<?php if(in_array(117,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_letter_report(3)">Letter 3 <span class="badge bg-red" style="color:#fff !important" id="letter3_count">0</span></button>
 							<?php } ?>
+							*/ ?>
+
 							<?php if(in_array(118,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_employee_information()">Employee Information</button>
 							<?php } ?>
@@ -473,6 +477,8 @@
 							<?php if(in_array(120,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_incre_prom_report(2)">Promotion Letter</button>
 							<?php } ?>
+
+							<?php /*
 							<?php if(in_array(121,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_incre_prom_report(3)">Line Letter</button>
 							<?php } ?>
@@ -483,11 +489,14 @@
 							<?php if(in_array(123,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_final_satalment()">Final Settlement</button>
 							<?php } ?>
+							*/ ?>
 
 							<!-- actual job card -->
 							<?php if(in_array(124,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_eot_actual()">Job Card Actual </button>
 							<?php } ?>
+
+							<?php /*
 							<!-- max 2 eot -->
 							<?php if(in_array(125,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_extra_ot_9pm()">Job Card.</button>
@@ -518,7 +527,7 @@
 							<?php if(in_array(121,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_employee_background()">Employee Background</button>
                             <?php } ?>
-							<!-- roster list end  -->
+							*/ ?>
 						</div>
 					</div>
 				</div>
