@@ -176,12 +176,12 @@
 
       <!-- Attendance -->
       <?php if(in_array(3,$acl)) { ?>
-      <li class="start <?= activate_class('attn_process_con') ?>">
+      <li class="start <?= activate_class(array('attn_process_con', 'iclock')) ?>">
         <a href="javascript:;">
           <i class="fa fa-clock-o"></i>
           <span class="title">Attendance</span>
           <span class="selected"></span>
-          <span class="arrow <?= arrow_open('attn_process_con') ?>"></span>
+          <span class="arrow <?= arrow_open(array('attn_process_con', 'iclock')) ?>"></span>
         </a>
 
         <ul class="sub-menu">
@@ -189,6 +189,12 @@
             <li class="<?= activate_method('file_upload') ?>">
               <a href="<?=base_url('attn_process_con/file_upload')?>">
                 <i class="fa fa-upload"></i> File Upload
+              </a>
+            </li>
+
+            <li class="<?= activate_method('device_list') ?>">
+              <a href="<?=base_url('iclock/device_list')?>" class="anchor_cls">
+                <i class="fa fa-hdd-o"></i> ADMS Devices
               </a>
             </li>
           <?php } ?>
@@ -216,12 +222,6 @@
             <li class="<?= activate_method('grid_window') ?>">
               <a href="<?=base_url('attn_process_con/grid_window')?>" class="anchor_cls">
                 <i class="fa fa-bar-chart"></i> Reports
-              </a>
-            </li>
-
-            <li class="<?= activate_method('device_list') ?>">
-              <a href="<?=base_url('iclock/device_list')?>" class="anchor_cls">
-                <i class="fa fa-hdd-o"></i> ADMS Devices
               </a>
             </li>
           <?php } ?>
