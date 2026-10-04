@@ -551,6 +551,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(49,$acl)) { ?>
             <li class="<?= activate_method('activity_log') ?>">
               <a href="<?=base_url('setting_con/activity_log')?>" class="anchor_cls" id="activity_log">
@@ -558,6 +559,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
         </ul>
       </li>
       <?php } ?>
