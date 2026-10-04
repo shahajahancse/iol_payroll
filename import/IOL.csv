@@ -1,0 +1,89 @@
+Emp. Type,EMPLOYEE NAME,Section,Department,DESIGNATION,Shift,JOINING,CARD NO,GROSS SALARY,BASIC SALARY,HOUSE RENT,MEDICAL ALLOWANCE,CONVEYANCE,FOOD ALLOWANCE, OT RATE 
+Office,Md. Abdus Salam,Finance & Accounts,Finance & Accounts,Deputy Manager,General,09-Jul-19,2001,"30,000","18,000","6,000","3,000","1,500","1,500", No OT 
+Office,Misuk Ahammed,Finance & Accounts,Finance & Accounts,Asstt.  Manager Accounts,General,15-Mar-22,2002,"30,000","18,000","6,000","3,000","1,500","1,500", No OT 
+Factory,Md. Majedur Rahman,Billing,Finance & Accounts,Executive,Billing,15-Oct-22,2003,"17,000","10,200","3,400","1,700",850,850,98
+Office,Md. Masud Rana,IT,Administration,Executive,General,01-Jan-20,3001,"26,265","15,759","5,253","2,627","1,313","1,313", No OT 
+Office,Md. Ripon Islam,General Administration,Administration,Office Assistant,General,01-Jan-21,3002,"12,000","7,200","2,400","1,200",600,600, No OT 
+Factory,Md. Shahjalal,General Administration,Administration,Imam,Single,01-Dec-20,3003,"8,500","5,100","1,700",850,425,425, No OT 
+Factory,Md. Firu Sheikh,General Administration,Administration,Cleaner,General 2,10-Jan-10,3004,"17,000","10,200","3,400","1,700",850,850,98
+Factory,Kajol Dass,General Administration,Administration,Suiper,Single,01-Dec-21,3005,"5,000","3,000","1,000",500,250,250, No OT 
+Office,Nargis Akter,General Administration,Administration,Cook,Single,01-Oct-26,3006,"9,500","5,700","1,900",950,475,475, No OT 
+Factory,Rajia Sultana,General Administration,Administration,Cook,Single,05-Jan-20,3007,"6,000","3,600","1,200",600,300,300, No OT 
+Factory,Shefaly Akter,General Administration,Administration,Cook,Single,08-Jan-20,3008,"4,000","2,400",800,400,200,200, No OT 
+Factory,Md. Shamim,General Administration,Administration,MD Sir Driver,No Punch,14-Jul-26,3009,"24,000","14,400","4,800","2,400","1,200","1,200", No OT 
+Factory,Md. Sujon,General Administration,Administration,MD Sir Driver,No Punch,01-Feb-26,3010,"24,000","14,400","4,800","2,400","1,200","1,200", No OT 
+Factory,Md. Abul Hossain,Security,Administration,Security Incharge,Shift A,28-Jan-08,3011,"16,000","9,600","3,200","1,600",800,800,92
+Factory,Md. Suruj Miah,Security,Administration,Asst. Security Incharge,Shift B,28-Jan-00,3012,"13,700","8,220","2,740","1,370",685,685,79
+Factory,Md. Al Amin,Security,Administration,Asst. Security Incharge,Shift C,05-Sep-21,3013,"13,500","8,100","2,700","1,350",675,675,78
+Factory,Md. Abdus Salam,Security,Administration,Security Guard,Shift A,04-Feb-06,3014,"12,000","7,200","2,400","1,200",600,600,69
+Factory,Md. Ibrahim Khalil,Security,Administration,Security Guard,Shift B,05-Dec-19,3015,"10,500","6,300","2,100","1,050",525,525,61
+Factory,Md. Sharafat Uddin,Security,Administration,Security Guard,Shift C,06-Jul-23,3016,"10,500","6,300","2,100","1,050",525,525,61
+Factory,Md. Rezuanul Hoque,Security,Administration,Security Guard,Shift B,07-Jul-23,3017,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Md. Rofiqul hoque,Security,Administration,Security Guard,Shift C,05-Sep-24,3018,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Abdul Haque Badol,Security,Administration,Security Guard,Shift A,19-Feb-26,3019,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Md. Anowar,Security,Administration,Security Guard,Shift C,02-Sep-26,3020,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Md. Azizul Haque,Transport & Vehicle Maintenance,Administration,Driver,Single,11-Jun-25,3021,"20,000","12,000","4,000","2,000","1,000","1,000",115
+Factory,Md. Kamrul Islam,Transport & Vehicle Maintenance,Administration,Driver,Shift 12 B,01-Jan-17,3022,"13,000","7,800","2,600","1,300",650,650,75
+Factory,Md. Maruf,Transport & Vehicle Maintenance,Administration,Driver,Shift 12 A,30-Aug-26,3023,"13,500","8,100","2,700","1,350",675,675,78
+Factory,Md. Hasan,Transport & Vehicle Maintenance,Administration,Driver,Shift 12 A,06-Jun-26,3024,"12,500","7,500","2,500","1,250",625,625,72
+Factory,Md. Sujon,Transport & Vehicle Maintenance,Administration,Driver,Shift 12 A,19-Dec-23,3025,"12,000","7,200","2,400","1,200",600,600,69
+Factory,Md. Jannat Mia,Transport & Vehicle Maintenance,Administration,Driver,Shift 12 B,11-Jun-26,3026,"12,000","7,200","2,400","1,200",600,600,69
+Factory,Md. Sujon Hossain,Transport & Vehicle Maintenance,Administration,Helper,Shift 12 A,13-May-23,3027,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Md. Azizul Islam,Transport & Vehicle Maintenance,Administration,Helper,Single,01-Mar-22,3028,"16,500","9,900","3,300","1,650",825,825,95
+Factory,Md Rubel,Transport & Vehicle Maintenance,Administration,Helper,Shift 12 A,01-Jun-22,3029,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Md. Jaber,Transport & Vehicle Maintenance,Administration,Helper,Shift 12 A,20-May-22,3030,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Md. Faysal,Transport & Vehicle Maintenance,Administration,Helper,Shift 12 B,22-Sep-23,3031,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Md. Nayeem,Transport & Vehicle Maintenance,Administration,Helper,Shift 12 B,18-Jun-25,3032,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Md. Shahadat,Transport & Vehicle Maintenance,Administration,Vehicle Mechanic,General 2,01-Jan-17,3034,"16,000","9,600","3,200","1,600",800,800,92
+Factory,Md. Sha Alam,Transport & Vehicle Maintenance,Administration,Vehicle Mechanic,General 2,05-Mar-20,3035,"23,000","13,800","4,600","2,300","1,150","1,150",133
+Office,Md. Imdadul Haque,Sales & Marketing,Sales & Marketing,Manager,General,22-Mar-22,4001,"50,000","30,000","10,000","5,000","2,500","2,500", No OT 
+Factory,Md. Swokat Ali,Laboratory,Quality Control,Manager,General,01-Oct-18,5001,"45,893","27,536","9,179","4,589","2,295","2,295", No OT 
+Factory,Onjon Nokrok,Testing,Quality Control,Test Man,General 2,01-Jan-19,5002,"28,485","17,091","5,697","2,849","1,424","1,424",164
+Factory,Md. Ismail,Production,Production,Operator,Shift A,01-Nov-25,6001,"25,000","15,000","5,000","2,500","1,250","1,250",144
+Factory,Md Shahin Miah,Production,Production,Assistant Operator,Shift B,01-Sep-20,6002,"13,000","7,800","2,600","1,300",650,650,75
+Factory,Md. Bellal Hossain,Production,Production,Assistant Operator,Shift C,06-Jan-11,6003,"13,992","8,395","2,798","1,399",700,700,81
+Factory,Md. Maynul  Islam,Production,Production,Supervisor,Shift 12 A,13-Jan-20,6004,"17,500","10,500","3,500","1,750",875,875,101
+Factory,Md. Sakib,Production,Production,Assistant Supervisor,Shift 12 A,08-Aug-25,6005,"14,000","8,400","2,800","1,400",700,700,81
+Factory,Md. Monayem,Production,Production,Assistant Supervisor,Shift 12 B,01-Feb-26,6006,"13,000","7,800","2,600","1,300",650,650,75
+Factory,Md. Nannu Prodhan,Utility & Maintenance,Production,Maintenance Man,General 2,01-Jun-11,6007,"18,520","11,112","3,704","1,852",926,926,107
+Factory,Sree Pran Jebon,Utility & Maintenance,Production,Maintenance Man,General 2,01-Feb-14,6008,"16,400","9,840","3,280","1,640",820,820,95
+Factory,Md. Sha Alom,Utility & Maintenance,Production,Generator Mechanic,Single,01-Jan-13,6009,"10,000","6,000","2,000","1,000",500,500,58
+Factory,Md. Tariqul Islam,Filling,Production,Fillingman,Shift C,15-Nov-11,6010,"13,100","7,860","2,620","1,310",655,655,76
+Factory,Md. Mizanur Rahman,Filling,Production,Fillingman,Shift A,01-Oct-14,6011,"13,100","7,860","2,620","1,310",655,655,76
+Factory,Md.Mukul Miah,Filling,Production,Fillingman,Shift A,01-Mar-15,6012,"14,100","8,460","2,820","1,410",705,705,81
+Factory,Md. Abu Taleb,Filling,Production,Fillingman,Shift C,01-May-10,6013,"14,300","8,580","2,860","1,430",715,715,83
+Factory,Md. Aslam Hossain,Filling,Production,Fillingman,Shift B,05-Jun-16,6014,"12,100","7,260","2,420","1,210",605,605,70
+Factory,Md. Sahadat Ali,Filling,Production,Fillingman,Shift B,01-Nov-20,6015,"10,900","6,540","2,180","1,090",545,545,63
+Factory,Md. Shahajalal,Filling,Production,Fillingman,Shift A,20-Mar-21,6016,"10,800","6,480","2,160","1,080",540,540,62
+Factory,Md. Rofiqul Islam,Filling,Production,Fillingman,Shift C,25-Jul-21,6017,"11,100","6,660","2,220","1,110",555,555,64
+Factory,Md. Din Islam,Filling,Production,Fillingman,Shift C,02-Feb-22,6018,"10,600","6,360","2,120","1,060",530,530,61
+Factory,Md. Babul Hossain,Filling,Production,Fillingman,Shift C,16-Apr-25,6019,"13,000","7,800","2,600","1,300",650,650,75
+Factory,Md. Billal Hossain,Filling,Production,Fillingman,Shift B,25-Sep-25,6020,"10,500","6,300","2,100","1,050",525,525,61
+Factory,Md. Nishad,Filling,Production,Fillingman,Shift A,12-Sep-26,6021,"10,500","6,300","2,100","1,050",525,525,61
+Factory,Md. Samsul Alam,Filling,Production,Fillingman,Shift A,01-Mar-23,6022,"10,900","6,540","2,180","1,090",545,545,63
+Factory,Md. Asgar Ali,Filling,Production,Fillingman,Shift C,15-Jul-26,6023,"10,500","6,300","2,100","1,050",525,525,61
+Factory,Md. Babul Hossain 2,Filling,Production,Fillingman,Shift B,06-Aug-26,6024,"10,500","6,300","2,100","1,050",525,525,61
+Factory,Md. Rumman,Filling,Production,Fillingman,Shift A,25-Apr-26,6025,"10,500","6,300","2,100","1,050",525,525,61
+Factory,Md. Nayeem,Filling,Production,Fillingman,Shift B,01-Sep-26,6026,"10,500","6,300","2,100","1,050",525,525,61
+Factory,no entry,Filling,Production,Fillingman,No Punch,01-01-70,6027,"10,500","6,300","2,100","1,050",525,525,61
+Factory,Md. Ab Sattar (Death),Handling / Loading,Production,Loader,No Punch,11-Jan-20,6028,"8,000","4,800","1,600",800,400,400,46
+Factory,Md. Alamgir,'Handling / Loading,Production,Loader,Shift B,05-Feb-10,6029,"13,400","8,040","2,680","1,340",670,670,77
+Factory,Md. Daud,'Handling / Loading,Production,Loader,Shift B,02-Jan-14,6030,"13,000","7,800","2,600","1,300",650,650,75
+Factory,Md. Bashar,'Handling / Loading,Production,Loader,Shift C,15-Apr-19,6031,"13,000","7,800","2,600","1,300",650,650,75
+Office,Md.Rubel,'Handling / Loading,Production,Loader,Shift A,07-Nov-20,6032,"12,500","7,500","2,500","1,250",625,625,72
+Factory,Md. Hafez Alam,'Handling / Loading,Production,Loader,Shift C,03-Feb-20,6033,"12,000","7,200","2,400","1,200",600,600,69
+Factory,Md. Raju,'Handling / Loading,Production,Loader,Shift B,02-Feb-18,6034,"13,400","8,040","2,680","1,340",670,670,77
+Factory,Md. Safayet,'Handling / Loading,Production,Loader,Shift C,03-Jun-23,6035,"12,000","7,200","2,400","1,200",600,600,69
+Factory,Md. Ramjan,'Handling / Loading,Production,Loader,Shift A,06-Sep-26,6036,"11,000","6,600","2,200","1,100",550,550,63
+Factory,Md. Golam Hossain,'Handling / Loading,Production,Loader,Shift B,03-Dec-23,6037,"12,000","7,200","2,400","1,200",600,600,69
+Factory,Md. Noor Alam,'Handling / Loading,Production,Loader,Shift C,03-Dec-22,6038,"13,000","7,800","2,600","1,300",650,650,75
+Factory,Md. Tuhin,'Handling / Loading,Production,Loader,Shift B,06-Jun-26,6039,"11,000","6,600","2,200","1,100",550,550,63
+Factory,Abdullah,'Handling / Loading,Production,Loader,Shift A,13-Jun-26,6040,"11,200","6,720","2,240","1,120",560,560,65
+Factory,Md. Majharul,'Handling / Loading,Production,Loader,Shift C,11-Aug-26,6041,"11,000","6,600","2,200","1,100",550,550,63
+Factory,Md. Sakib,'Handling / Loading,Production,Loader,Shift A,01-Aug-25,6042,"10,500","6,300","2,100","1,050",525,525,61
+Factory,Md. Nayeem,'Handling / Loading,Production,Loader,Shift A,20-Jan-26,6043,"10,500","6,300","2,100","1,050",525,525,61
+Factory,no entry,'Handling / Loading,Production,Loader,No Punch,01-01-70,6044,"11,000","6,600","2,200","1,100",550,550,63
+Factory,Md. Ibrahim ,'Handling / Loading,Production,Loader,Shift B,15-Jun-26,6045,"11,000","6,600","2,200","1,100",550,550,63
+Factory,Md. Ashik,'Handling / Loading,Production,Loader,Shift C,05-Aug-26,6046,"11,000","6,600","2,200","1,100",550,550,63
+Factory,Md. Sujon Fokir,'Handling / Loading,Production,Loader,Shift A,03-Feb-26,6047,"11,500","6,900","2,300","1,150",575,575,66
+Factory,Md. Shaharul Islam,Store,Store,Store Keeper,General 3,10-Mar-19,7001,"19,000","11,400","3,800","1,900",950,950,110

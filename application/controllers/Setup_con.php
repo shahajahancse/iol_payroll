@@ -608,12 +608,12 @@ class Setup_con extends CI_Controller
         $this->form_validation->set_rules('sec_name_bn', 'Section Bangla Name', 'trim|required');
         $this->form_validation->set_rules('depertment_id', 'Department', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
-        $this->form_validation->set_rules('group_one', '', 'required');
-        $this->form_validation->set_rules('group_two', '', 'required');
-        $this->form_validation->set_rules('group_three', '', 'required');
-        $this->form_validation->set_rules('group_four', '', 'required');
-        $this->form_validation->set_rules('group_five', '', 'required');
-        $this->form_validation->set_rules('group_six', '', 'required');
+        // $this->form_validation->set_rules('group_one', '', 'required');
+        // $this->form_validation->set_rules('group_two', '', 'required');
+        // $this->form_validation->set_rules('group_three', '', 'required');
+        // $this->form_validation->set_rules('group_four', '', 'required');
+        // $this->form_validation->set_rules('group_five', '', 'required');
+        // $this->form_validation->set_rules('group_six', '', 'required');
         if ($this->form_validation->run() == false) {
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $this->session->set_flashdata('failure', $this->form_validation->error_array());
@@ -633,12 +633,12 @@ class Setup_con extends CI_Controller
                 'sec_name_bn'  => $this->input->post('sec_name_bn'),
                 'depertment_id'=> $this->input->post('depertment_id'),
                 'unit_id'      => $this->input->post('unit_id'),
-                'group_one'    => $this->input->post('group_one'),
-                'group_two'    => $this->input->post('group_two'),
-                'group_three'  => $this->input->post('group_three'),
-                'group_four'   => $this->input->post('group_four'),
-                'group_five'   => $this->input->post('group_five'),
-                'group_six'    => $this->input->post('group_six'),
+                'group_one'    => $this->input->post('group_one') ? $this->input->post('group_one') : 0,
+                'group_two'    => $this->input->post('group_two') ? $this->input->post('group_two') : 0,
+                'group_three'  => $this->input->post('group_three') ? $this->input->post('group_three') : 0,
+                'group_four'   => $this->input->post('group_four') ? $this->input->post('group_four') : 0,
+                'group_five'   => $this->input->post('group_five') ? $this->input->post('group_five') : 0,
+                'group_six'    => $this->input->post('group_six') ? $this->input->post('group_six') : 0,
             );
 
             if ($this->db->insert('emp_section', $formArray)) {
@@ -668,12 +668,12 @@ class Setup_con extends CI_Controller
         $this->form_validation->set_rules('sec_name_bn', 'Section Bangla Name', 'trim|required');
         $this->form_validation->set_rules('depertment_id', 'Department', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
-        $this->form_validation->set_rules('group_one', 'Operator Budget', 'required');
-        $this->form_validation->set_rules('group_two', 'Man Power', 'required');
-        $this->form_validation->set_rules('group_three', 'Man Power', 'required');
-        $this->form_validation->set_rules('group_four', 'Man Power', 'required');
-        $this->form_validation->set_rules('group_five', 'Man Power', 'required');
-        $this->form_validation->set_rules('group_six', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_one', 'Operator Budget', 'required');
+        // $this->form_validation->set_rules('group_two', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_three', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_four', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_five', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_six', 'Man Power', 'required');
 
         if ($this->form_validation->run() == false) {
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -694,12 +694,12 @@ class Setup_con extends CI_Controller
                 'sec_name_bn'  => $this->input->post('sec_name_bn'),
                 'depertment_id'=> $this->input->post('depertment_id'),
                 'unit_id'      => $this->input->post('unit_id'),
-                'group_one'    => $this->input->post('group_one'),
-                'group_two'    => $this->input->post('group_two'),
-                'group_three'  => $this->input->post('group_three'),
-                'group_four'   => $this->input->post('group_four'),
-                'group_five'   => $this->input->post('group_five'),
-                'group_six'    => $this->input->post('group_six'),
+                'group_one'    => $this->input->post('group_one') ? $this->input->post('group_one') : 0,
+                'group_two'    => $this->input->post('group_two') ? $this->input->post('group_two') : 0,
+                'group_three'  => $this->input->post('group_three') ? $this->input->post('group_three') : 0,
+                'group_four'   => $this->input->post('group_four') ? $this->input->post('group_four') : 0,
+                'group_five'   => $this->input->post('group_five') ? $this->input->post('group_five') : 0,
+                'group_six'    => $this->input->post('group_six') ? $this->input->post('group_six') : 0,
             );
             $this->db->where('id', $secId);
             if ($this->db->update('emp_section', $formArray)) {
