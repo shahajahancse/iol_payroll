@@ -29,83 +29,56 @@
         <div class="row tablebox" style="display: block;"> 
             <!-- <h3 style="font-weight: 600;"><?= $title ?></h3> -->
             <h3></h3>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Unit <span style="color: red;">*</span> </label>
-                    <select name="unit_id" id="unit_id" class="form-control input-sm">
-                        <option value="">Select Unit</option>
-                        <?php
-							foreach ($dept as $row) {
-								if($row['unit_id'] == $user_data->unit_name){
-								$select_data="selected";
-								}else{
-                                    if ($user_data->level != "All") {
-                                        continue;
-                                    }
-								}
-								echo '<option '.$select_data.'  value="'.$row['unit_id'].'">'.$row['unit_name'].
-								'</option>';
-							}
-						?>
-                    </select>
+                <input type="hidden" name="unit_id" id="unit_id" value="1">
+                <!-- department -->
+                <div class="col-md-6">
+                    <div class="form-group" style="margin-bottom: 10px !important;">
+                        <label>Department </label>
+                        <select class="form-control input-sm dept" id='dept' name='dept'>
+                            <?php 
+                                $dpts = $this->db->where('unit_id', 1)->get('emp_depertment'); ?>
+                                <option value=''>Select Department</option>
+                                <?php foreach ($dpts->result() as $key => $val) { ?>
+                                    <option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
+                            <?php } ?>
+                        </select>
+                    </div>
+                </div>
+                <!-- section -->
+                <div class="col-md-6">
+                    <div class="form-group" style="margin-bottom: 10px !important;">
+                        <label class="control-label">Section </label>
+                        <select class="form-control input-sm section" id='section' name='section'>
+                            <option value=''></option>
+                        </select>
+                    </div>
+                </div>
+                <!-- line (hidden) -->
+                <input type="hidden" class="line" id="line" name="line" value="0">
+                <!-- Designation -->
+                <div class="col-md-6">
+                    <div class="form-group" style="margin-bottom: 10px !important;">
+                        <label class="control-label">Designation</label>
+                        <select class="form-control input-sm desig" id='desig' name='desig' onChange="grid_emp_list()">
+                            <option value=''></option>
+                        </select>
+                    </div>
+                </div>
+                <!-- status -->
+                <div class="col-md-6">
+                    <?php $categorys = $this->db->get('emp_category_status')->result(); ?>
+                    <div class="form-group" style="margin-bottom: 10px !important;">
+                        <label class="control-label">Status </label>
+                        <select name="status" id="status" class="form-control input-sm" onChange="grid_emp_list()">
+                            <option value="">All Employee</option>
+                            <?php foreach ($categorys as $key => $row) { ?>
+                                <option value="<?= $row->id ?>" <?= ($row->id == 1) ? 'selected' : '' ?>><?= $row->status_type; ?>
+                                </option>
+                            <?php } ?>
+                        </select>
+                    </div>
                 </div>
             </div>
-            <!-- department -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Department </label>
-                    <select class="form-control input-sm dept" id='dept' name='dept'>
-                        <?php if (!empty($user_data->unit_name)) {
-										$dpts = $this->db->where('unit_id', $user_data->unit_name)->get('emp_depertment'); ?>
-                        <option value=''>Select Department</option>
-                        <?php foreach ($dpts->result() as $key => $val) { ?>
-                        <option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
-                        <?php } } ?>
-                    </select>
-                </div>
-            </div>
-            <!-- section -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="control-label">Section </label>
-                    <select class="form-control input-sm section" id='section' name='section'>
-                        <option value=''></option>
-                    </select>
-                </div>
-            </div>
-            <!-- line -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="control-label">Line </label>
-                    <select class="form-control input-sm line" id='line' name='line'>
-                        <option value=''></option>
-                    </select>
-                </div>
-            </div>
-            <!-- Designation -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="control-label">Designation</label>
-                    <select class="form-control input-sm desig" id='desig' name='desig' onChange="grid_emp_list()">
-                        <option value=''></option>
-                    </select>
-                </div>
-            </div>
-            <!-- status -->
-            <div class="col-md-6">
-                <?php $categorys = $this->db->get('emp_category_status')->result(); ?>
-                <div class="form-group">
-                    <label class="control-label">Status </label>
-                    <select name="status" id="status" class="form-control input-sm" onChange="grid_emp_list()">
-                        <option value="">All Employee</option>
-                        <?php foreach ($categorys as $key => $row) { ?>
-                        <option value="<?= $row->id ?>" <?= ($row->id==1)?'selected':'' ?>><?= $row->status_type; ?>
-                        </option>
-                        <?php } ?>
-                    </select>
-                </div>
-            </div>
-        </div>
         <br>
         <div id="loader" align="center" style="margin:0 auto; overflow:hidden; display:none; margin-top:10px;">
             <img src="<?php echo base_url('images/ajax-loader.gif');?>" />
