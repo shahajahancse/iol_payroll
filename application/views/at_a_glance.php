@@ -264,8 +264,12 @@
             <div class="dash-card__content">
                 <div class="dash-card__row"><span class="dash-card__title">Department</span><span
                         class="dash-card__value" id="total_department">0</span></div>
+                <!--
                 <div class="dash-card__row"><span class="dash-card__title">Line</span><span class="dash-card__value"
                         id="total_line">0</span></div>
+                -->
+                <div class="dash-card__row"><span class="dash-card__title">Others</span><span class="dash-card__value"
+                        id="total_others">0</span></div>
             </div>
         </div>
         <div class="dash-card dash-card--blue2">
