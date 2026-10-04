@@ -195,9 +195,15 @@ class Iclock extends CI_Controller {
      * Admin view page to monitor connected ZKTeco ADMS devices
      */
     public function device_list() {
-        $this->data['devices'] = $this->db->order_by('last_activity', 'DESC')->get('iclock_devices')->result();
-        $this->data['title'] = 'ADMS Devices';
-        $this->data['subview'] = 'attn_report/adms_device_list';
+        if ($this->session->userdata('logged_in') == false) {
+            redirect("authentication");
+        }
+        $this->data['user_data'] = $this->session->userdata('data');
+        $this->data['username']  = !empty($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : '';
+        $this->data['devices']   = $this->db->order_by('last_activity', 'DESC')->get('iclock_devices')->result();
+        $this->data['title']     = 'ADMS Devices';
+        $this->data['subview']   = 'attn_report/adms_device_list';
         $this->load->view('layout/template', $this->data);
     }
 }
+
