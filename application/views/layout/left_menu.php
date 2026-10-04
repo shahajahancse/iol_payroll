@@ -218,6 +218,12 @@
                 <i class="fa fa-bar-chart"></i> Reports
               </a>
             </li>
+
+            <li class="<?= activate_method('device_list') ?>">
+              <a href="<?=base_url('iclock/device_list')?>" class="anchor_cls">
+                <i class="fa fa-hdd-o"></i> ADMS Devices
+              </a>
+            </li>
           <?php } ?>
         </ul>
       </li>

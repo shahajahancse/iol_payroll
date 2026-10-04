@@ -98,3 +98,18 @@ $route['api/user/login'] = 'api/auth/login'; // login Route
 $route['api/user/dashboard'] = 'api/dashboard/index'; // dashboard Route
 $route['api/dashboard/common-data'] = 'api/dashboard/common_data';
 
+/*
+| -------------------------------------------------------------------------
+| ZKTeco ADMS (Push SDK) Protocol Routes for SenseFace 4A & Devices
+| -------------------------------------------------------------------------
+*/
+$route['iclock/cdata'] = 'iclock/cdata';
+$route['iclock/cdata.aspx'] = 'iclock/cdata';
+$route['iclock/cdata.php'] = 'iclock/cdata';
+$route['iclock/getrequest'] = 'iclock/getrequest';
+$route['iclock/devicecmd'] = 'iclock/devicecmd';
+$route['iclock/registry'] = 'iclock/registry';
+$route['iclock/push'] = 'iclock/push';
+$route['iclock/device_list'] = 'iclock/device_list';
+$route['iclock/(:any)'] = 'iclock/$1';
+
