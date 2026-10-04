@@ -357,11 +357,13 @@
               </a>
             </li>
 
+            <!--
             <li class="<?= activate_method('line') ?>">
               <a href="<?=base_url('setup_con/line')?>" class="anchor_cls">
                 <i class="fa fa-arrows-h"></i> Line
               </a>
             </li>
+            -->
 
             <li class="<?= activate_method('designation') ?>">
               <a href="<?=base_url('setup_con/designation')?>" class="anchor_cls">
