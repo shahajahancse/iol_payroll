@@ -723,28 +723,6 @@
                 $('input:checkbox').not(this).prop('checked', this.checked);
             });
 
-            //Designation dropdown
-            $('#line').change(function() {
-                $('.desig').addClass('form-control input-sm');
-                $(".desig > option").remove();
-                var id = $('#line').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_designation_by_line_id/" + id,
-                    success: function(func_data) {
-                        $('.desig').append("<option value=''>-- Select Designation --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.desig').append(opt);
-                        });
-                    }
-                });
-                // load employee
-                grid_emp_list();
-            });
-
             // Load designation by unit on section change
             $('#section').change(function() {
                 $('.desig').addClass('form-control input-sm');
