@@ -91,8 +91,16 @@ class Attn_process_model extends CI_Model{
 
 
                 $table = 'att_'.date('Y_m',strtotime($process_date));
-                $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
-				$out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
+                if (strtolower(trim($shift_name)) == 'single') {
+                    $in_time  = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'ASC', $table);
+                    $out_time = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'DESC', $table);
+                    if ($in_time != '' && $in_time == $out_time) {
+                        $out_time = '00:00:00';
+                    }
+                } else {
+                    $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
+                    $out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
+                }
 
 				if (empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
 					$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
@@ -153,9 +161,13 @@ class Attn_process_model extends CI_Model{
 				}elseif (in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))){
 					// No Punch Policy: auto present
 					$attn_status = "P";
-				}elseif (strtolower($shift_name) == 'single' && ($in_time != '' || $out_time != '')){
-					// Single Punch Policy: single punch at any time counted as present
-					$attn_status = "P";
+				}elseif (strtolower(trim($shift_name)) == 'single'){
+					// Single Punch Policy: single punch at any time during 24 hrs (00:00:00 to 23:59:59) counted as present, otherwise absent
+					if ($in_time != '' || ($out_time != '' && $out_time != '00:00:00')) {
+						$attn_status = "P";
+					} else {
+						$attn_status = "A";
+					}
 				}elseif ((strtolower($sec_name) == 'billing' || strtolower($shift_name) == 'billing') && ($in_time != '' || $out_time != '')){
 					// Billing Section Policy: Record In-Punch at any time, Present if total duration >= 8 hrs (480 mins)
 					$work_mins = 0;
