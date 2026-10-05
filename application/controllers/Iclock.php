@@ -10,10 +10,28 @@ class Iclock extends CI_Controller {
     }
 
     /**
-     * Helper to log all incoming ADMS requests to application/logs/iclock_debug.log
+     * Dynamic log file path getter (respects CodeIgniter $config['log_path'])
+     */
+    private function get_log_file_path() {
+        $config_path = $this->config->item('log_path');
+        if (!empty($config_path)) {
+            $dir = rtrim($config_path, '/\\') . '/';
+        } else {
+            $dir = APPPATH . 'logs/';
+        }
+
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+
+        return $dir . 'iclock_debug.log';
+    }
+
+    /**
+     * Helper to log all incoming ADMS requests
      */
     private function log_debug($endpoint, $extra_info = '') {
-        $log_file = APPPATH . 'logs/iclock_debug.log';
+        $log_file = $this->get_log_file_path();
         $time = date('Y-m-d H:i:s');
         $ip = $this->input->ip_address();
         $method = $this->input->method(TRUE);
@@ -250,7 +268,7 @@ class Iclock extends CI_Controller {
         if ($this->session->userdata('logged_in') == false) {
             redirect("authentication");
         }
-        $log_file = APPPATH . 'logs/iclock_debug.log';
+        $log_file = $this->get_log_file_path();
 
         if ($this->input->get('action') === 'clear') {
             @file_put_contents($log_file, '');
@@ -280,7 +298,7 @@ class Iclock extends CI_Controller {
         $this->data['devices']   = $this->db->order_by('last_activity', 'DESC')->get('iclock_devices')->result();
         $this->data['title']     = 'ADMS Devices';
         
-        $log_file = APPPATH . 'logs/iclock_debug.log';
+        $log_file = $this->get_log_file_path();
         if (file_exists($log_file)) {
             $this->data['log_content'] = file_get_contents($log_file);
         } else {
