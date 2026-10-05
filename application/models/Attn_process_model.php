@@ -105,6 +105,7 @@ class Attn_process_model extends CI_Model{
                         $out_time = '00:00:00';
                     }
                 } else {
+                    // General, General 2, General 3 & Standard Shifts: Normal schedule in/out calculation
                     $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
                     $out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
                 }
