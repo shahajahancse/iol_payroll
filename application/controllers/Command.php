@@ -1010,7 +1010,6 @@ class Command extends CI_Controller {
 			$data['emp_dept_id'] = $dept_id;
 			$data['emp_sec_id'] = $sec_id;
 			$data['emp_line_id'] = $line_id;
-			$data['attn_sum_line_id'] = '';
 			$data['emp_desi_id'] = $desg_id;
 			$data['emp_sal_gra_id'] = $emp_sal_gra_id;
 			$data['emp_cat_id'] = 1;

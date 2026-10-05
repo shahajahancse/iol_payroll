@@ -123,7 +123,7 @@
 				<td rowspan="2" width="15" height="20px"><div align="center"><strong>SL N0</strong></div></td>
 				<td rowspan="2" width="150" height="20px"><strong align="center">Name, Desig, DOJ</strong></td>
 				<td rowspan="2" width="14" height="20px"><div align="center"><strong>Card No</strong></div></td>
-				<td rowspan="2" width="14" height="20px"><div align="center"><strong>L.No</strong></div></td>
+				<td rowspan="2" width="14" height="20px"><div align="center"><strong>Sec</strong></div></td>
 				<td rowspan="2" width="14" height="20px"><div align="center"><strong>Grade</strong></div></td>
 				<td colspan="6" width="20" height="20px"><div align="center"><strong>Salary</strong></div></td>
 				<td rowspan="2" width="20">M. Days</td>
@@ -221,7 +221,7 @@
 				echo "</td>";
 
 				echo "<td>";
-				print_r($value[$k]->line_name_en);
+				print_r($value[$k]->sec_name_en);
 				echo "</td>";
 
 				/*echo '<td>';

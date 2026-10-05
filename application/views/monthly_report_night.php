@@ -27,7 +27,7 @@
             <th>Emp Id </th>
             <th>Name</th>
             <th>designation</th>
-            <th>Line</th>
+            <th>Section</th>
             <?php
                 $last_date = date("t", strtotime("$year_month"));
                 for ( $k=1 ; $k <= $last_date; $k++ ){
@@ -46,7 +46,7 @@
             echo "</td><td style='text-align:center;'>";
             echo $value[$i]['desig_name'];
             echo "</td><td style='text-align:center;'>";
-            echo $value[$i]['line_name_en'];
+            echo $value[$i]['sec_name_en'];
             echo "</td>";
             $total_night_bill_allow = 0;
 

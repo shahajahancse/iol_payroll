@@ -26,7 +26,7 @@ Salary Summery Report</span>
 <br />
 <br />
 <table border="1" cellpadding="0" cellspacing="0" align="center" style="font-size:13px;">
-<th>SL</th><th>Emp ID</th><th>Punch Card No.</th><th>Employee Name</th> <th>Designation</th><th>DOJ</th> <th>Department</th> <th>Section</th> <th>Line No. </th> <th>Shift</th>
+<th>SL</th><th>Emp ID</th><th>Punch Card No.</th><th>Employee Name</th> <th>Designation</th><th>DOJ</th> <th>Department</th> <th>Section</th> <th>Shift</th>
 <th>Basic Salary</th><th>House Rent</th><th>Medical Allow.</th><th>Gross Salary</th>
 
 <?php
@@ -73,9 +73,6 @@ for($i=0; $i<$count; $i++ )
 	echo $values["sec_name"][$i];
 	echo "</td>";
 	
-	echo "<td >";
-	echo $values["line_name"][$i];
-	echo "</td>";
 	
 	echo "<td >";
 	echo $values["emp_shift"][$i];

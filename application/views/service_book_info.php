@@ -180,21 +180,6 @@ for($i=0;$i < $row_count;$i++)
 	</td>
 </tr>
 <tr height="12px"></tr>
-<tr style=" font-size:15px; font-weight: bold;">
-	<td width="7px;">
-		
-	</td>
-	<td width="170px;" style="background: #BFBFFF">
-		Line
-	</td>
-	<td >
-		
-	</td>
-	<td style="background: #DFDFFF">
-		<?php echo $values["line_name"][$i];?>
-	</td>
-</tr>
-<tr height="12px"></tr>
 <tr  style=" font-size:15px; font-weight: bold;">
 	<td width="7px;">
 		
@@ -398,7 +383,6 @@ $num_rows = $query->num_rows();
     <th> Effective Date</th>
     <th> Dept </th>
     <th> Section </th>
-    <th> Line </th>
     <th> Designation </th>
     <th> Inc. Amt. </th>
     <th> Salary </th>
@@ -411,7 +395,6 @@ $num_rows = $query->num_rows();
     <td> <?php echo date("d-M-Y",strtotime($values["doj"][$i]));?> </td>
     <td> <?php echo $values["dept_name"][$i];?> </td>
     <td> <?php echo $values["sec_name"][$i];?> </td>
-    <td> <?php echo $values["line_name"][$i];?> </td>
     <td> <?php echo $values["desig_name"][$i];?> </td>
     <td> <?php echo "0";?> </td>
     <td> <?php echo $values["gross_sal"][$i];?> </td>
@@ -426,7 +409,6 @@ $num_rows = $query->num_rows();
     <td> <?php echo date("d-M-Y",strtotime($values["doj"][$i]));?> </td>
     <td> <?php echo $this->common_model->get_dept_name($rows->prev_dept);?> </td>
     <td> <?php echo $this->common_model->get_section_name($rows->prev_section);?> </td>
-    <td> <?php echo $this->common_model->get_line_name($rows->prev_line);?> </td>
     <td> <?php echo $this->common_model->get_desig_name($rows->prev_desig);?> </td>
     <td> <?php echo "0";//$this->common_model->get_grade_name($rows->prev_grade);?> </td>
     <td> <?php echo $rows->prev_salary;?> </td>
@@ -438,7 +420,6 @@ $num_rows = $query->num_rows();
     <td> <?php echo date("d-M-Y",strtotime($rows->effective_month));?> </td>
     <td> <?php echo $this->common_model->get_dept_name($rows->new_dept);?> </td>
     <td> <?php echo $this->common_model->get_section_name($rows->new_section);?> </td>
-    <td> <?php echo $this->common_model->get_line_name($rows->new_line);?> </td>
     <td> <?php echo $this->common_model->get_desig_name($rows->new_desig);?> </td>
     <td> <?php echo $rows->new_salary-$rows->prev_salary;//$this->common_model->get_grade_name($rows->new_grade);?> </td>
     <td> <?php echo $rows->new_salary;?> </td>

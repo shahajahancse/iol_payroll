@@ -31,7 +31,6 @@
 		<th class="text-center unicode-to-bijoy">Name</th>
 		<th class="text-center unicode-to-bijoy">Department</th>
 		<th class="text-center unicode-to-bijoy">Designation</th>
-		<th class="text-center unicode-to-bijoy">Line</th>
 		<th class="text-center unicode-to-bijoy">Section</th>
 		<th class="text-center unicode-to-bijoy">Join Date</th>
 		<th class="text-center unicode-to-bijoy">Grade</th>
@@ -56,7 +55,6 @@
 			<td class="text-center unicode-to-bijoy"><?php echo $row->name_en?></td>
 			<td class="text-center unicode-to-bijoy"><?php echo $row->dept_name?></td>
 			<td class="text-center unicode-to-bijoy"><?php echo $row->desig_name?></td>
-			<td class="text-center unicode-to-bijoy" style="white-space:nowrap"><?php echo $row->line_name_en?></td>
 			<td class="text-center unicode-to-bijoy"><?php echo $row->sec_name_en;?></td>
 			<td class="text-center unicode-to-bijoy"><?php echo date('d/m/Y',strtotime($row->emp_join_date))?></td>
 			<td class="text-center unicode-to-bijoy"><?php echo $row->gr_name =='None'? 'None':$row->gr_name?></td>

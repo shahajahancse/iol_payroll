@@ -18,13 +18,13 @@
             <table class="table table-bordered table-striped table-hover">
                 <thead>
                     <tr style="background: #0177bc; color: white;">
-                        <th>#</th>
-                        <th>Device SN (Serial Number)</th>
-                        <th>Device Model</th>
-                        <th>IP Address</th>
-                        <th>Total Punches Uploaded</th>
-                        <th>Last Activity / Heartbeat</th>
-                        <th>Status</th>
+                        <th style="background-color: #0177bc !important; color: #ffffff !important;">#</th>
+                        <th style="background-color: #0177bc !important; color: #ffffff !important;">Device SN (Serial Number)</th>
+                        <th style="background-color: #0177bc !important; color: #ffffff !important;">Device Model</th>
+                        <th style="background-color: #0177bc !important; color: #ffffff !important;">IP Address</th>
+                        <th style="background-color: #0177bc !important; color: #ffffff !important;">Total Punches Uploaded</th>
+                        <th style="background-color: #0177bc !important; color: #ffffff !important;">Last Activity / Heartbeat</th>
+                        <th style="background-color: #0177bc !important; color: #ffffff !important;">Status</th>
                     </tr>
                 </thead>
                 <tbody>

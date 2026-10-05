@@ -1919,7 +1919,6 @@ class Entry_system_con extends CI_Controller
             'emp_dept_id' => $pr_emp_com_info->emp_dept_id,
             'emp_sec_id' => $pr_emp_com_info->emp_sec_id,
             'emp_line_id' => $pr_emp_com_info->emp_line_id,
-            'attn_sum_line_id' => $pr_emp_com_info->attn_sum_line_id,
             'emp_desi_id' => $pr_emp_com_info->emp_desi_id,
             'emp_sal_gra_id' => $pr_emp_com_info->emp_sal_gra_id,
             'emp_cat_id' => $pr_emp_com_info->emp_cat_id,

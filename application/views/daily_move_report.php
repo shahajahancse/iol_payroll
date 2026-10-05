@@ -88,14 +88,6 @@ for($i = 0; $i<$count;$i++)
 	echo "<td >";
 	echo $values["sec_name"][$i];
 	echo "</td>";
-	echo "</tr>";
-	echo "<tr>";
-	echo "<td>";
-	echo "<strong>Line :</strong>";
-	echo "</td>";
-	echo "<td>";
-	echo $values["line_name"][$i];
-	echo "</td>";
 	echo "<td>";
 	echo "<strong>Desig :</strong>";
 	echo "</td>";

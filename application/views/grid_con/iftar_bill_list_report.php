@@ -30,7 +30,7 @@
 				<th style="padding:4px;">Emp Name</th>
 				<!-- <th style="padding:4px">Department</th>
 				<th style="padding:4px">Section</th> -->
-				<th style="padding:4px">Line</th>
+				<th style="padding:4px">Section</th>
 				<th style="padding:4px">Designation</th>
 				<th style="padding:4px">Day</th>
 				<th style="padding:4px">ifter Allowance</th>
@@ -46,7 +46,7 @@
 					<td style="text-align:center;   padding:2px"><?php echo $r->name_en?></td>
 					<!-- <td style="text-align:left;   padding:2px"><?php echo $r->dept_bangla?></td>
 					<td style="text-align:center;   padding:2px"><?php echo $r->sec_name_en?></td> -->
-					<td style="text-align:center;   padding:2px"><?php echo $r->line_name_en?></td>
+					<td style="text-align:center;   padding:2px"><?php echo $r->sec_name_en?></td>
 					<td style="text-align:center;   padding:2px"><?php echo $r->desig_name?></td>
 					<td style="text-align:center;   padding:2px"><?php echo $r->ifter_day?></td>
 					<td style="text-align:center;   padding:2px"><?php echo $r->ifter_amount?></td>

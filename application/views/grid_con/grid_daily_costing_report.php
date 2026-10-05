@@ -37,7 +37,7 @@
 					<th style="padding:4px;">Emp ID</th>
 					<th style="padding:4px;">Employee Name</th>
 					<th style="padding:4px;">Designation</th>
-					<th style="padding:4px;">Line</th>
+					<th style="padding:4px;">Section</th>
 					<th style="padding:4px;">Status</th>
 					<th style="padding:4px;">Gross Sal</th>
 					<th style="padding:4px;">Per Day Salary</th>
@@ -68,7 +68,7 @@
 				<?php foreach ($values as $key => $row) {
 					if ($emp_line_id != $row->emp_line_id) {
 					echo "<tr bgcolor='#CCCCCC'>";
-					echo "<td colspan='17' style='font-size:16px; font-weight:bold;'>Line :".$row->line_name."</td>";
+					echo "<td colspan='17' style='font-size:16px; font-weight:bold;'>Section :".$row->line_name."</td>";
 					echo "</tr>";
 					}
 				?>

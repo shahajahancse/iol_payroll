@@ -10,6 +10,14 @@ $default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id)
     right: 0;
     left: auto;
 }
+#emp_table thead th {
+    background-color: #0177bc !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    vertical-align: middle;
+    border-bottom: 2px solid #015c91 !important;
+    white-space: nowrap;
+}
 </style>
 <div class="content">
     <div class="row tablebox" style="display: block; padding: 20px; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">

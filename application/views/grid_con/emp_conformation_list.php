@@ -35,7 +35,6 @@
 				<th style="padding:2px 10px;">ID</th>
 				<th style="padding:4px;">Emp Name</th>
 				<th style="padding:4px">Designation</th>
-				<th style="padding:4px">Line</th>
 				<th style="padding:4px">Section</th>
 				<th style="padding:4px">Department</th>
 				<th style="padding:4px">Joining Date</th>
@@ -51,7 +50,6 @@
 					<td style="text-align:center; padding:10px"><?php echo $row->emp_id?></td>
 					<td style="text-align:left;   padding:10px"><?php echo $row->name_en?></td>
 					<td style="text-align:left;   padding:10px"><?php echo $row->desig_name?></td>
-					<td style="text-align:left;   padding:10px"><?php echo $row->line_name_en?></td>
 					<td style="text-align:left;   padding:10px"><?php echo $row->sec_name_en?></td>
 					<td style="text-align:left;   padding:10px"><?php echo $row->dept_name?></td>
 					<td style="text-align:left;   padding:10px"><?php echo date('d-m-Y', strtotime($row->emp_join_date)) ?></td>
