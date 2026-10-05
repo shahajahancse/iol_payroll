@@ -28,7 +28,7 @@ class Iclock extends CI_Controller {
     }
 
     /**
-     * Helper to log all incoming ADMS requests
+     * Helper to log incoming ADMS requests (only called when punch logs are present)
      */
     private function log_debug($endpoint, $extra_info = '') {
         $log_file = $this->get_log_file_path();
@@ -301,13 +301,10 @@ class Iclock extends CI_Controller {
                                  ->get('pr_emp_com_info')
                                  ->row();
 
-            if (!empty($emp_info)) {
+            if (!empty($emp_info) && !empty($emp_info->emp_id)) {
                 $grid_emp_id = array($emp_info->emp_id);
                 $unit_id = $emp_info->unit_id;
                 $this->Attn_process_model->attn_process($process_date, $unit_id, $grid_emp_id);
-            } else {
-                // Fallback: process by proxi_id directly
-                $this->Attn_process_model->attn_process($process_date, null, array($proxi_id));
             }
         } catch (Exception $e) {
             log_message('error', 'ADMS Auto Attn Process Error: ' . $e->getMessage());
@@ -387,5 +384,3 @@ class Iclock extends CI_Controller {
         $this->load->view('layout/template', $this->data);
     }
 }
-
-
