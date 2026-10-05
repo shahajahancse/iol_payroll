@@ -79,7 +79,6 @@ class Iclock extends CI_Controller {
 
         // 1. GET Request: Device Handshake / Heartbeat Init
         if ($method === 'GET' && empty($raw_data)) {
-            $this->log_debug('cdata (GET Handshake)', "SN: {$sn} | Table: {$table}");
             if (!empty($sn)) {
                 $response = "GET OPTION FROM: {$sn}\n" .
                             "Stamp=99999999\n" .
@@ -103,11 +102,11 @@ class Iclock extends CI_Controller {
 
         // 2. Attendance Logs Transmission (POST or GET with raw payload)
         $processed_count = 0;
+        $has_punch_data = false;
         $debug_details = [];
 
         if (!empty($raw_data)) {
             $lines = explode("\n", str_replace("\r", "", trim($raw_data)));
-            $debug_details[] = "Total lines in raw payload: " . count($lines);
 
             foreach ($lines as $idx => $line) {
                 $line = trim($line);
@@ -146,13 +145,10 @@ class Iclock extends CI_Controller {
                     } else if (isset($kv['date']) && !empty($kv['date'])) {
                         $date_time = $kv['date'];
                     }
-
-                    $debug_details[] = "Line #{$idx} (Key-Value): PIN=" . var_export($proxi_id, true) . ", Time=" . var_export($date_time, true);
                 } 
                 // Mode 2: Positional columns format (e.g. 3012\t2026-10-05 09:57:59)
                 else {
                     $parts = preg_split('/\s+/', $line);
-                    $debug_details[] = "Line #{$idx} (Positional): Parts count: " . count($parts) . " [" . implode(' | ', $parts) . "]";
 
                     if (count($parts) >= 2) {
                         if (strtoupper($parts[0]) === 'ATTLOG' || strtoupper($parts[0]) === 'OPERLOG') {
@@ -172,6 +168,7 @@ class Iclock extends CI_Controller {
                 }
 
                 if (!empty($proxi_id) && $proxi_id !== 'No.' && !empty($date_time)) {
+                    $has_punch_data = true;
                     $inserted = $this->insert_attendance_punch($proxi_id, $date_time);
                     if ($inserted) {
                         $processed_count++;
@@ -179,20 +176,19 @@ class Iclock extends CI_Controller {
                     } else {
                         $debug_details[] = " -> SKIPPED: Duplicate or DB error for User PIN {$proxi_id} @ {$date_time}";
                     }
-                } else {
-                    $debug_details[] = " -> SKIPPED: Could not extract valid proxi_id & date_time";
                 }
             }
-        } else {
-            $debug_details[] = "No payload / raw data received.";
         }
 
         if (!empty($sn) && $processed_count > 0) {
             $this->db->query("UPDATE iclock_devices SET total_records = total_records + {$processed_count} WHERE sn = " . $this->db->escape($sn));
         }
 
-        $extra_log = implode("\n", $debug_details) . "\nTotal processed: {$processed_count}";
-        $this->log_debug('cdata (Payload)', $extra_log);
+        // Only log to file if actual punch logs were received in request
+        if ($has_punch_data || $processed_count > 0) {
+            $extra_log = implode("\n", $debug_details) . "\nTotal processed: {$processed_count}";
+            $this->log_debug('cdata (Punch Received)', $extra_log);
+        }
 
         echo "OK: " . $processed_count;
     }
@@ -205,7 +201,6 @@ class Iclock extends CI_Controller {
         if (!empty($sn)) {
             $this->update_device_info($sn);
         }
-        $this->log_debug('getrequest', "SN: {$sn}");
         echo "OK";
     }
 
@@ -217,7 +212,6 @@ class Iclock extends CI_Controller {
         if (!empty($sn)) {
             $this->update_device_info($sn);
         }
-        $this->log_debug('devicecmd', "SN: {$sn}");
         echo "OK";
     }
 
@@ -229,13 +223,10 @@ class Iclock extends CI_Controller {
         if (!empty($sn)) {
             $this->update_device_info($sn);
         }
-        $raw_input = file_get_contents('php://input');
-        $this->log_debug('registry', "SN: {$sn}\nPayload: {$raw_input}");
         echo "RegistryCode=1\n";
     }
 
     public function push() {
-        $this->log_debug('push');
         echo "OK";
     }
 
@@ -244,12 +235,10 @@ class Iclock extends CI_Controller {
         if (!empty($sn)) {
             $this->update_device_info($sn);
         }
-        $this->log_debug('fdata');
         echo "OK";
     }
 
     public function query() {
-        $this->log_debug('query');
         echo "OK";
     }
 
@@ -287,6 +276,7 @@ class Iclock extends CI_Controller {
                 'date_time' => $date_time
             );
             return $this->db->insert($att_table, $data);
+            // here call attendance process 
         }
 
         return false;
