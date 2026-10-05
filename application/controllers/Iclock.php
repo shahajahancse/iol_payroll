@@ -113,29 +113,60 @@ class Iclock extends CI_Controller {
                 $line = trim($line);
                 if (empty($line)) continue;
 
-                // Handle tab or space separated lines
-                $parts = preg_split('/\s+/', $line);
-                $debug_details[] = "Line #{$idx}: '{$line}' -> Parts count: " . count($parts) . " [" . implode(' | ', $parts) . "]";
-
                 $proxi_id = null;
                 $date_time = null;
 
-                if (count($parts) >= 2) {
-                    // Check if line starts with header string (e.g. ATTLOG)
-                    if (strtoupper($parts[0]) === 'ATTLOG' || strtoupper($parts[0]) === 'OPERLOG') {
-                        array_shift($parts); // Remove header keyword
+                // Mode 1: Key=Value pairs format (e.g. table=rtlog -> time=2026-10-05 09:57:59\tpin=3012...)
+                if (strpos($line, '=') !== false) {
+                    $items = (strpos($line, "\t") !== false) ? explode("\t", $line) : explode(' ', $line);
+                    $kv = array();
+                    foreach ($items as $item) {
+                        $item = trim($item);
+                        if (empty($item)) continue;
+                        $pair = explode('=', $item, 2);
+                        if (count($pair) == 2) {
+                            $key = strtolower(trim($pair[0]));
+                            $val = trim($pair[1]);
+                            $kv[$key] = $val;
+                        }
                     }
 
-                    if (count($parts) >= 2) {
-                        $proxi_id = trim($parts[0]);
+                    // Extract PIN
+                    if (isset($kv['pin']) && !empty($kv['pin'])) {
+                        $proxi_id = $kv['pin'];
+                    } else if (isset($kv['userpin']) && !empty($kv['userpin'])) {
+                        $proxi_id = $kv['userpin'];
+                    } else if (isset($kv['userid']) && !empty($kv['userid'])) {
+                        $proxi_id = $kv['userid'];
+                    }
 
-                        // Format 1: Parts 1 and 2 form Date and Time (e.g., "2026-10-05" "09:50:00")
-                        if (isset($parts[1]) && isset($parts[2]) && preg_match('/^\d{4}[-\/]\d{2}[-\/]\d{2}$/', $parts[1]) && preg_match('/^\d{2}:\d{2}:\d{2}$/', $parts[2])) {
-                            $date_time = str_replace('/', '-', $parts[1]) . ' ' . $parts[2];
-                        } 
-                        // Format 2: Part 1 contains both Date and Time (e.g., "2026-10-05 09:50:00")
-                        else if (preg_match('/^\d{4}[-\/]\d{2}[-\/]\d{2} \d{2}:\d{2}:\d{2}$/', $parts[1])) {
-                            $date_time = str_replace('/', '-', $parts[1]);
+                    // Extract Time / Date
+                    if (isset($kv['time']) && !empty($kv['time'])) {
+                        $date_time = $kv['time'];
+                    } else if (isset($kv['date']) && !empty($kv['date'])) {
+                        $date_time = $kv['date'];
+                    }
+
+                    $debug_details[] = "Line #{$idx} (Key-Value): PIN=" . var_export($proxi_id, true) . ", Time=" . var_export($date_time, true);
+                } 
+                // Mode 2: Positional columns format (e.g. 3012\t2026-10-05 09:57:59)
+                else {
+                    $parts = preg_split('/\s+/', $line);
+                    $debug_details[] = "Line #{$idx} (Positional): Parts count: " . count($parts) . " [" . implode(' | ', $parts) . "]";
+
+                    if (count($parts) >= 2) {
+                        if (strtoupper($parts[0]) === 'ATTLOG' || strtoupper($parts[0]) === 'OPERLOG') {
+                            array_shift($parts);
+                        }
+
+                        if (count($parts) >= 2) {
+                            $proxi_id = trim($parts[0]);
+
+                            if (isset($parts[1]) && isset($parts[2]) && preg_match('/^\d{4}[-\/]\d{2}[-\/]\d{2}$/', $parts[1]) && preg_match('/^\d{2}:\d{2}:\d{2}$/', $parts[2])) {
+                                $date_time = str_replace('/', '-', $parts[1]) . ' ' . $parts[2];
+                            } else if (preg_match('/^\d{4}[-\/]\d{2}[-\/]\d{2} \d{2}:\d{2}:\d{2}$/', $parts[1])) {
+                                $date_time = str_replace('/', '-', $parts[1]);
+                            }
                         }
                     }
                 }
