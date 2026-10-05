@@ -150,7 +150,7 @@ class Attn_process_model extends CI_Model{
 					$attn_status = "H";
 				}elseif ($process_date == $weekend || $weekend === true){
 					$attn_status = "W";
-				}elseif (strtolower($shift_name) == 'no punch'){
+				}elseif (in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))){
 					// No Punch Policy: auto present
 					$attn_status = "P";
 				}elseif (strtolower($shift_name) == 'single' && ($in_time != '' || $out_time != '')){
