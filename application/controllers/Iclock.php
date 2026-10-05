@@ -275,11 +275,43 @@ class Iclock extends CI_Controller {
                 'proxi_id'  => $proxi_id,
                 'date_time' => $date_time
             );
-            return $this->db->insert($att_table, $data);
-            // here call attendance process 
+            $inserted = $this->db->insert($att_table, $data);
+            if ($inserted) {
+                $this->run_auto_attn_process($proxi_id, $date_time);
+            }
+            return $inserted;
         }
 
         return false;
+    }
+
+    /**
+     * Trigger attendance process after a punch log is successfully inserted
+     */
+    private function run_auto_attn_process($proxi_id, $date_time) {
+        try {
+            $process_date = date('Y-m-d', strtotime($date_time));
+            if (empty($process_date)) return;
+
+            $this->load->model('Attn_process_model');
+
+            // Find matching employee by proxi_id
+            $emp_info = $this->db->select('emp_id, unit_id')
+                                 ->where('proxi_id', $proxi_id)
+                                 ->get('pr_emp_com_info')
+                                 ->row();
+
+            if (!empty($emp_info)) {
+                $grid_emp_id = array($emp_info->emp_id);
+                $unit_id = $emp_info->unit_id;
+                $this->Attn_process_model->attn_process($process_date, $unit_id, $grid_emp_id);
+            } else {
+                // Fallback: process by proxi_id directly
+                $this->Attn_process_model->attn_process($process_date, null, array($proxi_id));
+            }
+        } catch (Exception $e) {
+            log_message('error', 'ADMS Auto Attn Process Error: ' . $e->getMessage());
+        }
     }
 
     /**
