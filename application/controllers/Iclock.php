@@ -82,15 +82,18 @@ class Iclock extends CI_Controller {
             $this->log_debug('cdata (GET Handshake)', "SN: {$sn} | Table: {$table}");
             if (!empty($sn)) {
                 $response = "GET OPTION FROM: {$sn}\n" .
-                            "Stamp=9999\n" .
-                            "OpStamp=9999\n" .
-                            "ErrorDelay=60\n" .
-                            "Delay=30\n" .
-                            "TransTimes=00:00;14:00\n" .
+                            "Stamp=99999999\n" .
+                            "OpStamp=99999999\n" .
+                            "PhotoStamp=99999999\n" .
+                            "ErrorDelay=30\n" .
+                            "Delay=10\n" .
+                            "TransTimes=00:00;23:59\n" .
                             "TransInterval=1\n" .
                             "TransFlag=1111111111\n" .
                             "Realtime=1\n" .
-                            "Encrypt=0\n";
+                            "Encrypt=0\n" .
+                            "ServerVer=3.4.1\n" .
+                            "PushProtVer=1.0\n";
                 echo $response;
             } else {
                 echo "OK";
@@ -188,12 +191,34 @@ class Iclock extends CI_Controller {
     }
 
     public function registry() {
-        $this->log_debug('registry');
-        echo "OK";
+        $sn = $this->input->get_post('SN');
+        if (empty($sn)) {
+            $sn = $this->input->get_post('sn');
+        }
+        if (!empty($sn)) {
+            $this->update_device_info($sn);
+        }
+        $raw_input = file_get_contents('php://input');
+        $this->log_debug('registry', "SN: {$sn}\nPayload: {$raw_input}");
+        echo "RegistryCode=1\n";
     }
 
     public function push() {
         $this->log_debug('push');
+        echo "OK";
+    }
+
+    public function fdata() {
+        $sn = $this->input->get_post('SN');
+        if (!empty($sn)) {
+            $this->update_device_info($sn);
+        }
+        $this->log_debug('fdata');
+        echo "OK";
+    }
+
+    public function query() {
+        $this->log_debug('query');
         echo "OK";
     }
 
