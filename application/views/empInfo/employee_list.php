@@ -1,3 +1,16 @@
+<?php
+$default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id) ? $units[0]->unit_id : '');
+?>
+<style>
+.table-responsive {
+    overflow-x: auto;
+    min-height: 380px;
+}
+.table-responsive .dropdown-menu {
+    right: 0;
+    left: auto;
+}
+</style>
 <div class="content">
     <div class="row tablebox" style="display: block; padding: 20px; background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #0177bc; padding-bottom: 10px;">
@@ -18,8 +31,10 @@
                     <label style="font-size: 12px; font-weight: 600; color: #495057;">Unit</label>
                     <select id="filter_unit" class="form-control input-sm">
                         <option value="">All Units</option>
-                        <?php if (!empty($units)) { foreach ($units as $u) { ?>
-                            <option value="<?= $u->unit_id ?>"><?= $u->unit_name ?></option>
+                        <?php if (!empty($units)) { foreach ($units as $u) { 
+                            $selected = ($default_unit_id == $u->unit_id) ? 'selected' : '';
+                        ?>
+                            <option value="<?= $u->unit_id ?>" <?= $selected ?>><?= $u->unit_name ?></option>
                         <?php } } ?>
                     </select>
                 </div>
@@ -87,7 +102,7 @@
                         <th>Mobile</th>
                         <th>Joining Date</th>
                         <th style="width: 70px; text-align: center;">Status</th>
-                        <th style="width: 140px; text-align: center;">Actions</th>
+                        <th style="width: 100px; text-align: center;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="emp_tbody">
@@ -181,7 +196,7 @@ $(document).ready(function() {
 
     $('#btn_reset').click(function() {
         $('#search_input').val('');
-        $('#filter_unit').val('');
+        $('#filter_unit').val('<?= $default_unit_id ?>');
         $('#filter_dept').val('');
         $('#filter_sec').val('');
         $('#filter_desig').val('');
@@ -243,8 +258,15 @@ $(document).ready(function() {
                         html += '<td>' + join_date + '</td>';
                         html += '<td class="text-center">' + status_badge + '</td>';
                         html += '<td class="text-center">';
-                        html += '<button type="button" class="btn btn-xs btn-info btn-view-details" data-empid="' + emp.emp_id + '" style="margin-right:4px;"><i class="fa fa-eye"></i> View</button>';
-                        html += '<a href="<?= site_url("emp_info_con/personal_info_short") ?>?emp_id=' + emp.emp_id + '" class="btn btn-xs btn-warning"><i class="fa fa-pencil"></i> Edit</a>';
+                        html += '<div class="btn-group">';
+                        html += '  <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="font-weight:600; color:#0177bc; border-color:#0177bc; padding:3px 8px;">';
+                        html += '    Action <span class="caret"></span>';
+                        html += '  </button>';
+                        html += '  <ul class="dropdown-menu dropdown-menu-right" role="menu" style="min-width:130px; text-align:left; box-shadow:0 4px 10px rgba(0,0,0,0.15); font-size:12px;">';
+                        html += '    <li><a href="javascript:;" class="btn-view-details" data-empid="' + emp.emp_id + '" style="color:#0177bc; padding:6px 15px;"><i class="fa fa-eye" style="margin-right:6px; width:14px;"></i> View Details</a></li>';
+                        html += '    <li><a href="<?= site_url("emp_info_con/personal_info_short") ?>?emp_id=' + emp.emp_id + '" style="color:#f0ad4e; padding:6px 15px;"><i class="fa fa-pencil" style="margin-right:6px; width:14px;"></i> Edit Profile</a></li>';
+                        html += '  </ul>';
+                        html += '</div>';
                         html += '</td>';
                         html += '</tr>';
                     });

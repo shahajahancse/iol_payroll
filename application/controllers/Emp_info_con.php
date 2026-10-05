@@ -506,8 +506,10 @@ class Emp_info_con extends CI_Controller {
         if ($this->session->userdata('logged_in') == false) {
             redirect("authentication");
         }
-        $this->data['user_data'] = $this->session->userdata('data');
-        $this->data['username']  = !empty($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : '';
+        $this->data['user_data']  = $this->session->userdata('data');
+        $this->data['username']   = !empty($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : '';
+        $this->data['user_unit']  = !empty($this->data['user_data']->unit_name) ? $this->data['user_data']->unit_name : '';
+        $this->data['user_level'] = !empty($this->data['user_data']->level) ? $this->data['user_data']->level : '';
 
         // Dropdown options for filters
         $this->data['units']        = $this->db->select('unit_id, unit_name')->get('pr_units')->result();
