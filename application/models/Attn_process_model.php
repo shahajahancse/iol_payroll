@@ -252,6 +252,12 @@ class Attn_process_model extends CI_Model{
 								$eot_hour = 8;
 							}
 						}
+						// Shift 12 Night, Shift 12 Morning Max OT limit = 4 hours
+						if (in_array(strtolower(trim($shift_name)), array('shift 12 night', 'shift 12 morning', '12 night', '12 morning', 'shift12 night', 'shift12 morning', 'shift 12night', 'shift 12morning'))) {
+							if ($eot_hour > 4) {
+								$eot_hour = 4;
+							}
+						}
 
 					} else {
 
@@ -294,6 +300,13 @@ class Attn_process_model extends CI_Model{
 							if (in_array(strtolower(trim($shift_name)), array('shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc'))) {
 								if ($eot_hour > 6) {
 									$eot_hour = 6;
+								}
+								$tot_hour = $ot_hour + $eot_hour;
+							}
+							// Shift 12 Night, Shift 12 Morning Max OT limit = 4 hours total (2 hrs OT + max 2 hrs EOT)
+							if (in_array(strtolower(trim($shift_name)), array('shift 12 night', 'shift 12 morning', '12 night', '12 morning', 'shift12 night', 'shift12 morning', 'shift 12night', 'shift 12morning'))) {
+								if ($eot_hour > 2) {
+									$eot_hour = 2;
 								}
 								$tot_hour = $ot_hour + $eot_hour;
 							}
