@@ -55,8 +55,8 @@
                 <div class="col-md-2 col-sm-6">
                     <label style="font-size: 12px; font-weight: 600; color: #495057;">Status</label>
                     <select id="filter_status" class="form-control input-sm">
-                        <option value="">All Status</option>
-                        <option value="1" selected>Regular / Active</option>
+                        <option value="" selected>All Status</option>
+                        <option value="1">Regular / Active</option>
                         <option value="2">Left</option>
                         <option value="3">Resigned</option>
                     </select>
@@ -185,7 +185,7 @@ $(document).ready(function() {
         $('#filter_dept').val('');
         $('#filter_sec').val('');
         $('#filter_desig').val('');
-        $('#filter_status').val('1');
+        $('#filter_status').val('');
         load_employees();
     });
 
