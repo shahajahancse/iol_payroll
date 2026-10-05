@@ -509,10 +509,10 @@ class Emp_info_con extends CI_Controller {
         $this->data['user_data'] = $this->session->userdata('data');
         $this->data['username']  = !empty($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : '';
 
-        // Dropdown options for filters
+        // Dropdown options for filters using actual table names (emp_depertment, emp_section, emp_designation, pr_units)
         $this->data['units']        = $this->db->select('unit_id, unit_name')->get('pr_units')->result();
-        $this->data['departments']  = $this->db->select('dept_id, dept_name')->order_by('dept_name', 'ASC')->get('pr_dept')->result();
-        $this->data['sections']     = $this->db->select('sec_id, sec_name')->order_by('sec_name', 'ASC')->get('pr_section')->result();
+        $this->data['departments']  = $this->db->select('*')->order_by('dept_name', 'ASC')->get('emp_depertment')->result();
+        $this->data['sections']     = $this->db->select('*')->get('emp_section')->result();
         $this->data['designations'] = $this->db->select('id, desig_name')->where('hide_status', 1)->order_by('desig_name', 'ASC')->get('emp_designation')->result();
 
         $this->data['title']   = 'Employee List';
@@ -545,14 +545,14 @@ class Emp_info_con extends CI_Controller {
             per.personal_mobile,
             u.unit_name,
             d.dept_name,
-            s.sec_name,
+            s.sec_name_en as sec_name,
             deg.desig_name
         ');
         $this->db->from('pr_emp_com_info as com');
         $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
         $this->db->join('pr_units as u', 'u.unit_id = com.unit_id', 'left');
-        $this->db->join('pr_dept as d', 'd.dept_id = com.emp_dept_id', 'left');
-        $this->db->join('pr_section as s', 's.sec_id = com.emp_sec_id', 'left');
+        $this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+        $this->db->join('emp_section as s', 's.sec_id = com.emp_sec_id OR s.id = com.emp_sec_id', 'left');
         $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
 
         if (!empty($unit_id)) {
@@ -604,7 +604,7 @@ class Emp_info_con extends CI_Controller {
             per.*,
             u.unit_name,
             d.dept_name,
-            s.sec_name,
+            s.sec_name_en as sec_name,
             deg.desig_name,
             l.line_name_en,
             g.gr_name
@@ -612,8 +612,8 @@ class Emp_info_con extends CI_Controller {
         $this->db->from('pr_emp_com_info as com');
         $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
         $this->db->join('pr_units as u', 'u.unit_id = com.unit_id', 'left');
-        $this->db->join('pr_dept as d', 'd.dept_id = com.emp_dept_id', 'left');
-        $this->db->join('pr_section as s', 's.sec_id = com.emp_sec_id', 'left');
+        $this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+        $this->db->join('emp_section as s', 's.sec_id = com.emp_sec_id OR s.id = com.emp_sec_id', 'left');
         $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
         $this->db->join('emp_line_num as l', 'l.id = com.emp_line_id', 'left');
         $this->db->join('pr_grade as g', 'g.gr_id = com.emp_sal_gra_id', 'left');
