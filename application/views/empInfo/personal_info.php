@@ -536,7 +536,7 @@
                             </div>
                         </div>
                         <?php $shifts = $this->db->where('unit_id',$user_data->unit_name)->get('pr_emp_shift')->result(); ?>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Emp Shift <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_shift');?>
@@ -558,6 +558,21 @@
                                 <?php echo form_error('emp_join_date');?>
                             </div>
                         </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Off Day / Weekend <span style="color: red;">*</span> </label>
+                                <?php echo form_error('weekend');?>
+                                <select name="weekend" id="weekend" class="form-control input-sm required" required>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                    <option value="Sunday">Sunday</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <?php $sl_grade = $this->db->get('pr_grade')->result(); ?>
                         <div class="col-md-2">
@@ -573,7 +588,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                         <div class="form-group">
                             <label>Employee Type <span style="color: red;">*</span> </label>
                             <select name="emp_type" id="emp_type" class="form-control input-sm required" required="">
@@ -1084,9 +1099,9 @@ function set_desi_item() {
 
 
 
-    //$("#emp_dob").datepicker("setDate", emp_dob);
     $("#nomi_age").datepicker("setDate", new Date(nomi_age));
     $("#emp_join_date").datepicker("setDate", new Date(emp_join_date));
+    $('#weekend').val(localStorage.getItem('weekend')).trigger('change');
 
     $('#nomi_district').val(nomi_district).trigger('change');
     setTimeout(function() {
@@ -1221,7 +1236,7 @@ function emp_id_search(id = null) {
                     "emp_sec_id", "emp_line_id", "emp_desi_id", "emp_sal_gra_id", "emp_type",
                     "emp_cat_id", "proxi_id", "emp_shift", "gross_sal",
                     "com_gross_sal", "ot_entitle", "com_ot_entitle", "transport", "img_source",
-                    "lunch", "att_bonus", "salary_draw", "salary_type", "emp_join_date",
+                    "lunch", "att_bonus", "salary_draw", "salary_type", "emp_join_date", "weekend",
                     "ref_district", "refer_village", "ref_thana", "ref_post","hight","symbol"
                 ];
                 // Filter the data based on keysToFilter
@@ -1235,7 +1250,7 @@ function emp_id_search(id = null) {
                             key == 'per_thana' || key == 'per_post' || key == 'pre_post' || key ==
                             'nomi_post' || key == 'ref_thana' || key == 'ref_post' || key ==
                             'ref_district' || key == 'emp_dob' || key == 'nomi_age' || key ==
-                            'emp_join_date' || key == 'hight' || key == 'ot_entitle' || key == 'com_ot_entitle' ||key == 'nomi_nid_bc_check'|| key == 'nid_dob_check' || key == 'com_gross_sal'|| key == 'gross_sal'
+                            'emp_join_date' || key == 'weekend' || key == 'hight' || key == 'ot_entitle' || key == 'com_ot_entitle' ||key == 'nomi_nid_bc_check'|| key == 'nid_dob_check' || key == 'com_gross_sal'|| key == 'gross_sal'
                         ) {
                             localStorage.setItem(key, data[key]);
                         } else if (key == 'img_source') {

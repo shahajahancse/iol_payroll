@@ -1016,6 +1016,7 @@ class Command extends CI_Controller {
 			$data['emp_type'] = '';
 			$data['proxi_id'] = $emp_id;
 			$data['emp_shift'] = '';
+			$data['weekend'] = 'Friday';
 			$data['gross_sal'] = $salary;
 			$data['com_gross_sal'] = '';
 			$data['ot_entitle'] = '';

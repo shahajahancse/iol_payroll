@@ -1924,6 +1924,7 @@ class Entry_system_con extends CI_Controller
             'emp_cat_id' => $pr_emp_com_info->emp_cat_id,
             'proxi_id' => $pr_emp_com_info->proxi_id,
             'emp_shift' => $pr_emp_com_info->emp_shift,
+            'weekend' => isset($pr_emp_com_info->weekend) ? $pr_emp_com_info->weekend : 'Friday',
             'gross_sal' => $pr_emp_com_info->gross_sal,
             'com_gross_sal' => $pr_emp_com_info->com_gross_sal,
             'ot_entitle' => $pr_emp_com_info->ot_entitle,

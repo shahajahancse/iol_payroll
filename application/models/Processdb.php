@@ -9,6 +9,10 @@ class Processdb extends CI_Model{
 		/* Standard Libraries */
 		$this->load->model('log_model');
 		$this->load->model('common_model');
+
+		if (!$this->db->field_exists('weekend', 'pr_emp_com_info')) {
+			$this->db->query("ALTER TABLE `pr_emp_com_info` ADD `weekend` VARCHAR(20) NULL DEFAULT 'Friday' AFTER `emp_shift`");
+		}
 	}
 
 	//==================================Employee Information Insert==============================
@@ -42,6 +46,7 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal'),
 			'com_gross_sal'		=> $this->input->post('gross_sal'),
 			'monitor_con'		=> 2,
@@ -225,6 +230,7 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal'),
 			'com_gross_sal'		=> $this->input->post('gross_sal'),
 			'monitor_con'		=> 2,
@@ -283,6 +289,7 @@ class Processdb extends CI_Model{
 
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'emp_join_date'		=> $ejd,
 			'emp_sal_gra_id'  	=> $this->input->post('emp_sal_gra_id'),
 			'salary_type'		=> $this->input->post('salary_type'),
@@ -539,6 +546,7 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal'),
 			'com_gross_sal'		=> $this->input->post('com_gross_sal'),
 
