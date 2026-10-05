@@ -97,6 +97,13 @@ class Attn_process_model extends CI_Model{
                     if ($in_time != '' && $in_time == $out_time) {
                         $out_time = '00:00:00';
                     }
+                } elseif (strtolower(trim($shift_name)) == 'billing' || strtolower(trim($sec_name)) == 'billing') {
+                    $next_day = date('Y-m-d', strtotime($process_date . ' + 1 days'));
+                    $in_time  = $this->time_check_in("$process_date 07:00:00", "$next_day 06:00:00", $emp_id, 'ASC', $table);
+                    $out_time = $this->time_check_in("$process_date 07:00:00", "$next_day 12:00:00", $emp_id, 'DESC', $table);
+                    if ($in_time != '' && $in_time == $out_time) {
+                        $out_time = '00:00:00';
+                    }
                 } else {
                     $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
                     $out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
@@ -168,17 +175,31 @@ class Attn_process_model extends CI_Model{
 					} else {
 						$attn_status = "A";
 					}
-				}elseif ((strtolower($sec_name) == 'billing' || strtolower($shift_name) == 'billing') && ($in_time != '' || $out_time != '')){
-					// Billing Section Policy: Record In-Punch at any time, Present if total duration >= 8 hrs (480 mins)
+				}elseif ((strtolower(trim($sec_name)) == 'billing' || strtolower(trim($shift_name)) == 'billing') && ($in_time != '' || ($out_time != '' && $out_time != '00:00:00'))){
+					// Billing Section/Shift Policy:
+					// In-start between 07:00 AM to 06:00 AM (next day).
+					// General Duty = 8 hrs (480 mins). > 8 hrs = Overtime, < 8 hrs = Early Out (3 days = 1 day salary deduction).
+					$attn_status = "P";
 					$work_mins = 0;
-					if ($in_time != '' && $out_time != '' && strtotime($out_time) > strtotime($in_time)) {
+					if ($in_time != '' && $out_time != '' && $out_time != '00:00:00' && strtotime($out_time) > strtotime($in_time)) {
 						$work_mins = round((strtotime($out_time) - strtotime($in_time)) / 60);
 					}
+
 					if ($work_mins >= 480) {
-						$attn_status = "P";
+						// Work >= 8 hours -> Calculate Overtime
+						$extra_mins = $work_mins - 480;
+						$ot_hour = floor($extra_mins / 60);
+						if ($extra_mins % 60 >= $ot_last_hour) {
+							$ot_hour += 1;
+						}
+						$tot_hour = $ot_hour;
+						if ($ot_hour > 2) {
+							$eot_hour = $ot_hour - 2;
+							$ot_hour = 2;
+						}
 					} else {
-						$attn_status = "P";
-						$early_exit  = 1;
+						// Work < 8 hours -> Early Exit
+						$early_exit = 1;
 						// Cumulative Policy: 3 Early Exits = 1 day absence salary deduction
 						$m_start = date('Y-m-01', strtotime($process_date));
 						$prev_early_exits = $this->db->where('emp_id', $emp_id)
