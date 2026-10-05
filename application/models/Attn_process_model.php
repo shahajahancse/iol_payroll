@@ -246,6 +246,12 @@ class Attn_process_model extends CI_Model{
 						if ($minute % 60 >= $ot_last_hour) {
 							$eot_hour = $eot_hour + 1;
 						}
+						// Shift A, Shift B, Shift C Max OT limit = 8 hours
+						if (in_array(strtolower(trim($shift_name)), array('shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc'))) {
+							if ($eot_hour > 8) {
+								$eot_hour = 8;
+							}
+						}
 
 					} else {
 
@@ -283,6 +289,13 @@ class Attn_process_model extends CI_Model{
 							if ($ot_hour > 2) {
 								$eot_hour = $ot_hour - 2;
 								$ot_hour = 2;
+							}
+							// Shift A, Shift B, Shift C Max OT limit = 8 hours total (2 hrs OT + max 6 hrs EOT)
+							if (in_array(strtolower(trim($shift_name)), array('shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc'))) {
+								if ($eot_hour > 6) {
+									$eot_hour = 6;
+								}
+								$tot_hour = $ot_hour + $eot_hour;
 							}
 							// dd($eot_hour);
 							// 9pm EOT Calculation
