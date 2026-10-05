@@ -30,6 +30,11 @@
           <?php } ?> -->
 
           <?php if(in_array(12,$acl)) { ?>
+            <li class="<?= activate_method('employee_list') ?>">
+              <a href="<?=base_url('emp_info_con/employee_list')?>">
+                <i class="fa fa-users"></i> Employee List
+              </a>
+            </li>
             <li class="start <?= activate_method('personal_info_short') ?>">
               <a href="<?=base_url('emp_info_con/personal_info_short')?>">
                 <i class="fa fa-address-book"></i> Add Employee
