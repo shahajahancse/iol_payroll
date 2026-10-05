@@ -27,18 +27,7 @@ $default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id)
                     <label style="font-size: 12px; font-weight: 600; color: #495057;">Search ID / Name / Mobile</label>
                     <input type="text" id="search_input" class="form-control input-sm" placeholder="ID, Punch ID, Name, Mobile...">
                 </div>
-                <div class="col-md-2 col-sm-6" style="margin-bottom: 10px;">
-                    <label style="font-size: 12px; font-weight: 600; color: #495057;">Unit</label>
-                    <select id="filter_unit" class="form-control input-sm">
-                        <option value="">All Units</option>
-                        <?php if (!empty($units)) { foreach ($units as $u) { 
-                            $selected = ($default_unit_id == $u->unit_id) ? 'selected' : '';
-                        ?>
-                            <option value="<?= $u->unit_id ?>" <?= $selected ?>><?= $u->unit_name ?></option>
-                        <?php } } ?>
-                    </select>
-                </div>
-                <div class="col-md-2 col-sm-6" style="margin-bottom: 10px;">
+                <div class="col-md-3 col-sm-6" style="margin-bottom: 10px;">
                     <label style="font-size: 12px; font-weight: 600; color: #495057;">Department</label>
                     <select id="filter_dept" class="form-control input-sm">
                         <option value="">All Departments</option>
@@ -47,7 +36,7 @@ $default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id)
                         <?php } } ?>
                     </select>
                 </div>
-                <div class="col-md-2 col-sm-6" style="margin-bottom: 10px;">
+                <div class="col-md-3 col-sm-6" style="margin-bottom: 10px;">
                     <label style="font-size: 12px; font-weight: 600; color: #495057;">Section</label>
                     <select id="filter_sec" class="form-control input-sm">
                         <option value="">All Sections</option>
@@ -196,7 +185,6 @@ $(document).ready(function() {
 
     $('#btn_reset').click(function() {
         $('#search_input').val('');
-        $('#filter_unit').val('<?= $default_unit_id ?>');
         $('#filter_dept').val('');
         $('#filter_sec').val('');
         $('#filter_desig').val('');
@@ -215,7 +203,6 @@ $(document).ready(function() {
 
         var params = {
             search: $('#search_input').val(),
-            unit_id: $('#filter_unit').val(),
             dept_id: $('#filter_dept').val(),
             sec_id: $('#filter_sec').val(),
             desig_id: $('#filter_desig').val(),
