@@ -3,7 +3,7 @@
         <div class="row tablebox" style="display: block; padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="font-weight: 600; margin: 0;">ADMS Devices (SenseFace 4A Push Server)</h3>
-                <span class="label label-success" style="font-size: 14px; padding: 6px 12px;">Push Server Active</span>
+                <span class="label label-success" style="font-size: 14px; padding: 6px 12px; background-color: #28a745; color: #ffffff; border-radius: 4px; display: inline-block;">Push Server Active</span>
             </div>
 
             <div class="alert alert-info">
@@ -37,13 +37,13 @@
                                 <td><strong><?= $dev->sn ?></strong></td>
                                 <td><?= $dev->device_name ?></td>
                                 <td><?= $dev->ip_address ?></td>
-                                <td><span class="badge badge-info" style="font-size:14px; background:#007bff;"><?= $dev->total_records ?></span></td>
+                                <td><span class="badge badge-info" style="font-size:14px; background:#007bff; color:#ffffff; padding:4px 8px; border-radius:10px;"><?= $dev->total_records ?></span></td>
                                 <td><?= date('d-M-Y h:i:s A', strtotime($dev->last_activity)) ?></td>
                                 <td>
                                     <?php if ($is_online) { ?>
-                                        <span class="label label-success" style="padding: 4px 8px;">Online</span>
+                                        <span class="label label-success" style="padding: 4px 10px; background-color: #28a745; color: #ffffff; border-radius: 4px; font-weight: 600; display: inline-block;">Online</span>
                                     <?php } else { ?>
-                                        <span class="label label-default" style="padding: 4px 8px; background: #6c757d; color:white;">Offline</span>
+                                        <span class="label label-danger" style="padding: 4px 10px; background-color: #dc3545; color: #ffffff; border-radius: 4px; font-weight: 600; display: inline-block;">Offline</span>
                                     <?php } ?>
                                 </td>
                             </tr>
@@ -57,6 +57,23 @@
                     <?php } ?>
                 </tbody>
             </table>
+
+            <div style="margin-top: 30px; border-top: 2px solid #e9ecef; padding-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="font-weight: 600; margin: 0;"><i class="fa fa-terminal"></i> Live ADMS Request & Punch Log Debugger</h4>
+                    <div>
+                        <a href="<?= site_url('iclock/device_list') ?>" class="btn btn-sm btn-primary" style="margin-right: 5px;"><i class="fa fa-refresh"></i> Refresh Log</a>
+                        <a href="<?= site_url('iclock/view_log?action=clear') ?>" class="btn btn-sm btn-danger" onclick="return confirm('Clear debug log?');" style="margin-right: 5px;"><i class="fa fa-trash"></i> Clear Log</a>
+                        <a href="<?= site_url('iclock/view_log') ?>" target="_blank" class="btn btn-sm btn-default"><i class="fa fa-external-link"></i> Raw File</a>
+                    </div>
+                </div>
+                <p class="text-muted" style="font-size: 13px;">
+                    This log captures every HTTP GET/POST request sent by your SenseFace 4A device to <code>/iclock/cdata</code>. Use this to inspect exact payload formats when punches are made.
+                </p>
+                <div style="background: #1e1e1e; color: #00ff66; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;">
+                    <?= !empty($log_content) ? htmlspecialchars($log_content) : 'No incoming ADMS device requests logged yet. Perform a punch on the device or wait for next heartbeat interval.' ?>
+                </div>
+            </div>
         </div>
     </div>
 </div>

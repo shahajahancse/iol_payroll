@@ -10,6 +10,33 @@ class Iclock extends CI_Controller {
     }
 
     /**
+     * Helper to log all incoming ADMS requests to application/logs/iclock_debug.log
+     */
+    private function log_debug($endpoint, $extra_info = '') {
+        $log_file = APPPATH . 'logs/iclock_debug.log';
+        $time = date('Y-m-d H:i:s');
+        $ip = $this->input->ip_address();
+        $method = $this->input->method(TRUE);
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $raw_input = file_get_contents('php://input');
+        $get = json_encode($_GET);
+        $post = json_encode($_POST);
+
+        $log_entry = "==================================================\n";
+        $log_entry .= "[{$time}] IP: {$ip} | Method: {$method} | Endpoint: {$endpoint}\n";
+        $log_entry .= "URI: {$uri}\n";
+        $log_entry .= "GET Params: {$get}\n";
+        $log_entry .= "POST Params: {$post}\n";
+        $log_entry .= "RAW INPUT BODY:\n" . (empty($raw_input) ? "(empty)\n" : "{$raw_input}\n");
+        if (!empty($extra_info)) {
+            $log_entry .= "PROCESSING LOGS:\n{$extra_info}\n";
+        }
+        $log_entry .= "==================================================\n\n";
+
+        @file_put_contents($log_file, $log_entry, FILE_APPEND);
+    }
+
+    /**
      * ADMS Main Communication Endpoint
      * Handles device handshake (GET) and attendance logs push (POST)
      */
@@ -27,8 +54,14 @@ class Iclock extends CI_Controller {
             $this->update_device_info($sn);
         }
 
+        $raw_data = file_get_contents('php://input');
+        if (empty($raw_data)) {
+            $raw_data = isset($_POST['data']) ? $_POST['data'] : '';
+        }
+
         // 1. GET Request: Device Handshake / Heartbeat Init
-        if ($method === 'GET') {
+        if ($method === 'GET' && empty($raw_data)) {
+            $this->log_debug('cdata (GET Handshake)', "SN: {$sn} | Table: {$table}");
             if (!empty($sn)) {
                 $response = "GET OPTION FROM: {$sn}\n" .
                             "Stamp=9999\n" .
@@ -47,52 +80,67 @@ class Iclock extends CI_Controller {
             return;
         }
 
-        // 2. POST Request: Attendance Logs Transmission
-        $raw_data = file_get_contents('php://input');
-
-        if (empty($raw_data)) {
-            $raw_data = isset($_POST['data']) ? $_POST['data'] : '';
-        }
-
+        // 2. Attendance Logs Transmission (POST or GET with raw payload)
         $processed_count = 0;
+        $debug_details = [];
 
         if (!empty($raw_data)) {
             $lines = explode("\n", str_replace("\r", "", trim($raw_data)));
+            $debug_details[] = "Total lines in raw payload: " . count($lines);
 
-            foreach ($lines as $line) {
+            foreach ($lines as $idx => $line) {
                 $line = trim($line);
                 if (empty($line)) continue;
 
-                // Typical ZKTeco ADMS ATTLOG line format:
-                // PIN \t TIMESTAMP \t STATUS \t VERIFY_TYPE ...
-                // e.g. "3011\t2026-10-04 17:10:05\t0\t1\t0\t0\t0"
+                // Handle tab or space separated lines
                 $parts = preg_split('/\s+/', $line);
+                $debug_details[] = "Line #{$idx}: '{$line}' -> Parts count: " . count($parts) . " [" . implode(' | ', $parts) . "]";
+
+                $proxi_id = null;
+                $date_time = null;
 
                 if (count($parts) >= 2) {
-                    $proxi_id = trim($parts[0]);
-
-                    // Check if second and third parts form a date & time string
-                    if (isset($parts[1]) && isset($parts[2]) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $parts[1]) && preg_match('/^\d{2}:\d{2}:\d{2}$/', $parts[2])) {
-                        $date_time = $parts[1] . ' ' . $parts[2];
-                    } else if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $parts[1])) {
-                        $date_time = $parts[1];
-                    } else {
-                        // Skip invalid header / non-log line
-                        continue;
+                    // Check if line starts with header string (e.g. ATTLOG)
+                    if (strtoupper($parts[0]) === 'ATTLOG' || strtoupper($parts[0]) === 'OPERLOG') {
+                        array_shift($parts); // Remove header keyword
                     }
 
-                    if (!empty($proxi_id) && $proxi_id !== 'No.' && !empty($date_time)) {
-                        if ($this->insert_attendance_punch($proxi_id, $date_time)) {
-                            $processed_count++;
+                    if (count($parts) >= 2) {
+                        $proxi_id = trim($parts[0]);
+
+                        // Format 1: Parts 1 and 2 form Date and Time (e.g., "2026-10-05" "09:50:00")
+                        if (isset($parts[1]) && isset($parts[2]) && preg_match('/^\d{4}[-\/]\d{2}[-\/]\d{2}$/', $parts[1]) && preg_match('/^\d{2}:\d{2}:\d{2}$/', $parts[2])) {
+                            $date_time = str_replace('/', '-', $parts[1]) . ' ' . $parts[2];
+                        } 
+                        // Format 2: Part 1 contains both Date and Time (e.g., "2026-10-05 09:50:00")
+                        else if (preg_match('/^\d{4}[-\/]\d{2}[-\/]\d{2} \d{2}:\d{2}:\d{2}$/', $parts[1])) {
+                            $date_time = str_replace('/', '-', $parts[1]);
                         }
                     }
                 }
+
+                if (!empty($proxi_id) && $proxi_id !== 'No.' && !empty($date_time)) {
+                    $inserted = $this->insert_attendance_punch($proxi_id, $date_time);
+                    if ($inserted) {
+                        $processed_count++;
+                        $debug_details[] = " -> SUCCESS: Inserted User PIN {$proxi_id} @ {$date_time}";
+                    } else {
+                        $debug_details[] = " -> SKIPPED: Duplicate or DB error for User PIN {$proxi_id} @ {$date_time}";
+                    }
+                } else {
+                    $debug_details[] = " -> SKIPPED: Could not extract valid proxi_id & date_time";
+                }
             }
+        } else {
+            $debug_details[] = "No payload / raw data received.";
         }
 
         if (!empty($sn) && $processed_count > 0) {
             $this->db->query("UPDATE iclock_devices SET total_records = total_records + {$processed_count} WHERE sn = " . $this->db->escape($sn));
         }
+
+        $extra_log = implode("\n", $debug_details) . "\nTotal processed: {$processed_count}";
+        $this->log_debug('cdata (Payload)', $extra_log);
 
         echo "OK: " . $processed_count;
     }
@@ -105,6 +153,7 @@ class Iclock extends CI_Controller {
         if (!empty($sn)) {
             $this->update_device_info($sn);
         }
+        $this->log_debug('getrequest', "SN: {$sn}");
         echo "OK";
     }
 
@@ -116,14 +165,17 @@ class Iclock extends CI_Controller {
         if (!empty($sn)) {
             $this->update_device_info($sn);
         }
+        $this->log_debug('devicecmd', "SN: {$sn}");
         echo "OK";
     }
 
     public function registry() {
+        $this->log_debug('registry');
         echo "OK";
     }
 
     public function push() {
+        $this->log_debug('push');
         echo "OK";
     }
 
@@ -192,6 +244,31 @@ class Iclock extends CI_Controller {
     }
 
     /**
+     * View debug log or clear it
+     */
+    public function view_log() {
+        if ($this->session->userdata('logged_in') == false) {
+            redirect("authentication");
+        }
+        $log_file = APPPATH . 'logs/iclock_debug.log';
+
+        if ($this->input->get('action') === 'clear') {
+            @file_put_contents($log_file, '');
+            redirect('iclock/device_list');
+            return;
+        }
+
+        if (file_exists($log_file)) {
+            $content = file_get_contents($log_file);
+        } else {
+            $content = "No log file found yet at " . $log_file;
+        }
+
+        header('Content-Type: text/plain; charset=utf-8');
+        echo $content;
+    }
+
+    /**
      * Admin view page to monitor connected ZKTeco ADMS devices
      */
     public function device_list() {
@@ -202,8 +279,17 @@ class Iclock extends CI_Controller {
         $this->data['username']  = !empty($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : '';
         $this->data['devices']   = $this->db->order_by('last_activity', 'DESC')->get('iclock_devices')->result();
         $this->data['title']     = 'ADMS Devices';
+        
+        $log_file = APPPATH . 'logs/iclock_debug.log';
+        if (file_exists($log_file)) {
+            $this->data['log_content'] = file_get_contents($log_file);
+        } else {
+            $this->data['log_content'] = '';
+        }
+
         $this->data['subview']   = 'attn_report/adms_device_list';
         $this->load->view('layout/template', $this->data);
     }
 }
+
 
