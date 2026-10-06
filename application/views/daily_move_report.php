@@ -54,7 +54,7 @@
                         <th style="padding:4px; width:60px; text-align:center;">SL</th>
                         <th style="padding:4px; width:180px; text-align:center;">Date</th>
                         <th style="padding:4px; width:220px; text-align:center;">Punch Time</th>
-                        <th style="padding:4px; text-align:center;">Log Status</th>
+                        <th style="padding:4px; text-align:center;">Remarks</th>
                     </tr>
 
                     <?php
@@ -62,13 +62,12 @@
                     if (!empty($punches)) {
                         $p_count = count($punches);
                         foreach ($punches as $k => $p) {
-                            $status = ($k == 0) ? 'In Punch' : (($k == $p_count - 1) ? 'Out Punch' : 'Punch Log');
                             ?>
                             <tr>
                                 <td style="text-align:center; padding:3px;"><?php echo $k + 1; ?></td>
                                 <td style="text-align:center; padding:3px;"><?php echo $p['date']; ?></td>
                                 <td style="text-align:center; padding:3px; font-weight:bold; color:#0055aa;"><?php echo $p['time']; ?></td>
-                                <td style="text-align:center; padding:3px;"><?php echo $status; ?></td>
+                                <td style="text-align:center; padding:3px;">&nbsp;</td>
                             </tr>
                             <?php
                         }
