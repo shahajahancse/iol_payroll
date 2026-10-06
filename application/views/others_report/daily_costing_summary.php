@@ -32,7 +32,7 @@ $num_of_days 	= date("t",strtotime($date));
 
 <table class="sal" border="1" cellpadding="0" cellspacing="0" align="center" style="font-size:12px;">
 <th>SL</th>
-<th>Line</th> 
+<th>Section</th> 
 <th>Emp</th> 
 <th>Gross Sal</th>
 <th>Per Day Salary</th>

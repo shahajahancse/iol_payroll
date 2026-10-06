@@ -46,6 +46,7 @@
                         </div>
                     </div>
                 </div>
+                <!--
                 <div class="row" style="justify-content: center!important; display: flex; flex-wrap: wrap;">
                     <div class="col-md-5">
                         <div class="form-group">
@@ -58,6 +59,7 @@
                         </div>
                     </div>
                 </div>
+                -->
             </div>
 
             <div class="row tablebox" style="display: block; margin-bottom: 10px;">
@@ -352,67 +354,52 @@
             });
         }
 
+        function load_designations() {
+            $.ajax({
+                type: "POST",
+                url: hostname + "common/ajax_designation_by_unit/1",
+                dataType: "json",
+                success: function(func_data) {
+                    if (typeof func_data === 'string') {
+                        try { func_data = JSON.parse(func_data); } catch(e) {}
+                    }
+                    $('.desig').empty().append("<option value=''>-- Select Designation --</option>");
+                    $.each(func_data, function(id, name) {
+                        var opt = $('<option />');
+                        opt.val(id);
+                        opt.text(name);
+                        $('.desig').append(opt);
+                    });
+                }
+            });
+        }
+
         $(document).ready(function() {
             // select all item or deselect all item
             $("#select_all").click(function() {
                 $('input:checkbox').not(this).prop('checked', this.checked);
             });
-            //Designation dropdown
-            $('#line').change(function() {
-                $('.desig').addClass('form-control input-sm');
-                $(".desig > option").remove();
-                var id = $('#line').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_designation_by_line_id/" + id,
-                    success: function(func_data) {
-                        $('.desig').append("<option value=''>-- Select District --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.desig').append(opt);
-                        });
-                    }
-                });
-                // load employee
+
+            // Section dropdown change
+            $('#section').change(function() {
+                load_designations();
                 grid_emp_list();
             });
 
-            //Line dropdown
-            $('#section').change(function() {
-                $('.line').addClass('form-control input-sm');
-                $(".line > option").remove();
-                $(".desig > option").remove();
-                var id = $('#section').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_line_by_sec_id/" + id,
-                    success: function(func_data) {
-                        $('.line').append("<option value=''>-- Select District --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.line').append(opt);
-                        });
-                    }
-                });
-                // load employee
-                grid_emp_list();
-            });
-            //section dropdown
+            // Department dropdown change
             $('#dept').change(function() {
                 $('.section').addClass('form-control input-sm');
                 $(".section > option").remove();
-                $(".line > option").remove();
-                $(".desig > option").remove();
                 var id = $('#dept').val();
                 $.ajax({
                     type: "POST",
                     url: hostname + "common/ajax_section_by_dept_id/" + id,
+                    dataType: "json",
                     success: function(func_data) {
-                        $('.section').append("<option value=''>-- Select District --</option>");
+                        if (typeof func_data === 'string') {
+                            try { func_data = JSON.parse(func_data); } catch(e) {}
+                        }
+                        $('.section').append("<option value=''>-- Select Section --</option>");
                         $.each(func_data, function(id, name) {
                             var opt = $('<option />');
                             opt.val(id);
@@ -421,32 +408,12 @@
                         });
                     }
                 });
-                // load employee
+                load_designations();
                 grid_emp_list();
             });
-            //Department dropdown
-            $('#unit_id').change(function() {
-                $('.dept').addClass('form-control input-sm');
-                $(".dept > option").remove();
-                $(".section > option").remove();
-                $(".line > option").remove();
-                $(".desig > option").remove();
-                var id = $('#unit_id').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_department_by_unit_id/" + id,
-                    success: function(func_data) {
-                        $('.dept').append("<option value=''>-- Select Department --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.dept').append(opt);
-                        });
-                    }
-                });
-                // load employee
-                grid_emp_list();
-            });
+
+            // Initial load of designations and employee list
+            load_designations();
+            grid_emp_list();
         });
     </script>

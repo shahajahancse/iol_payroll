@@ -72,6 +72,38 @@
                         <input type="text" name="sec_name_bn" value="" placeholder="Section Name Bangla" class="form-control bfont">
                         <?=(isset($failuer['sec_name_bn'])) ? '<div class="alert alert-failuer">' . $failuer['sec_name_bn'] . '</div>' : ''; ?>
                     </div>
+                    <!--
+                    <div class="form-group col-md-4">
+                        <label>Operator Budget</label>
+                        <input type="number" name="group_one" value="" placeholder="Enter Man Power" class="form-control efont">
+                        <?=(isset($failuer['group_one'])) ? '<div class="alert alert-failuer">' . $failuer['group_one'] . '</div>' : ''; ?>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Asst. Operator Budget</label>
+                        <input type="number" name="group_two" value="" placeholder="Enter Man Power" class="form-control efont">
+                        <?=(isset($failuer['group_two'])) ? '<div class="alert alert-failuer">' . $failuer['group_two'] . '</div>' : ''; ?>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Line Ironman Budget</label>
+                        <input type="number" name="group_three" value="" placeholder="Enter Man Power" class="form-control efont">
+                        <?=(isset($failuer['group_three'])) ? '<div class="alert alert-failuer">' . $failuer['group_three'] . '</div>' : ''; ?>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Input Man Budget</label>
+                        <input type="number" name="group_four" value="" placeholder="Enter Man Power" class="form-control efont">
+                        <?=(isset($failuer['group_four'])) ? '<div class="alert alert-failuer">' . $failuer['group_four'] . '</div>' : ''; ?>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Supervisor Budget</label>
+                        <input type="number" name="group_five" value="" placeholder="Enter Man Power" class="form-control efont">
+                        <?=(isset($failuer['group_five'])) ? '<div class="alert alert-failuer">' . $failuer['group_five'] . '</div>' : ''; ?>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Line Chief Budget</label>
+                        <input type="number" name="group_six" value="" placeholder="Enter Man Power" class="form-control efont">
+                        <?=(isset($failuer['group_six'])) ? '<div class="alert alert-failuer">' . $failuer['group_six'] . '</div>' : ''; ?>
+                    </div>
+                    -->
                 </div>
                     <div class="form-group" style="margin-left: 16px;">
                         <button type="submit" class="btn btn-primary ">Submit</button></button>

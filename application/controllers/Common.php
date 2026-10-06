@@ -273,7 +273,7 @@ class Common extends CI_Controller {
             $data[$row->id] = $row->desig_name;
         }
 
-        header('Content-Type: application/x-json; charset=utf-8');
+        header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data);
         exit;
     }

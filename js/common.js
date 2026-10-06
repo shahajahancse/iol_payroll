@@ -45,6 +45,13 @@ function salary_structure_cal2(){
       var com_trans = Math.round(com_gsal * 0.05);
       var com_food = Math.round(com_gsal * 0.05);
 
+      if (document.getElementById('gross_sal')) document.getElementById('gross_sal').value = com_gsal;
+      if (document.getElementById('basic_sal')) document.getElementById('basic_sal').value = com_bsal;
+      if (document.getElementById('house_rent')) document.getElementById('house_rent').value = com_hrent;
+      if (document.getElementById('medical')) document.getElementById('medical').value = com_mallow;
+      if (document.getElementById('food')) document.getElementById('food').value = com_food;
+      if (document.getElementById('trans_allow')) document.getElementById('trans_allow').value = com_trans_allow;
+
       if (document.getElementById('basic_sall')) document.getElementById('basic_sall').value = com_bsal;
       if (document.getElementById('house_rentt')) document.getElementById('house_rentt').value = com_hrent;
       if (document.getElementById('medicall')) document.getElementById('medicall').value = com_mallow;

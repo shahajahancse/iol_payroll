@@ -145,7 +145,7 @@
 					<th rowspan="2" width="14" height="20px"><div align="center"><strong>Card No</strong></div></th>
 					<th rowspan="2" width="30" height="20px"><div align="center"><strong>Name of Employee</strong></div></th>
 					<th rowspan="2" width="25" height="20px"><div align="center"><strong>Designation</strong></div></th>
-					<th rowspan="2" width="50" height="20px"><div align="center"><strong>Line</strong></div></th>
+					<th rowspan="2" width="50" height="20px"><div align="center"><strong>Section</strong></div></th>
 					<th rowspan="2" width="25" height="20px"><div align="center"><strong>Joining Date</strong></div></th>
 					<th rowspan="2" width="25" height="20px"><div align="center"><strong>Grade</strong></div></th>
 					<th rowspan="2" width="35" height="20px"><div align="center"><strong>Gross Salary</strong></div></th>
@@ -225,7 +225,7 @@
 				echo "</td>";
 
 				echo "<td>";
-				print_r($values[$k]->line_name_en);
+				print_r($values[$k]->sec_name_en);
 				//echo $row->desig_name;
 				echo "</td>";
 

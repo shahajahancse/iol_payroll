@@ -90,7 +90,7 @@
                         <th>Tiffin break 2</th>
                         <th>Tiffin minute 2</th>
                         <th>Random minute</th>
-                        <th>off Days</th>
+                        <!-- <th>off Days</th> -->
                         <th style="width:80px !important">Edit</th>
                         <th <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(in_array(148,$acl)) {echo '';} else { echo 'style="display:none;"';}?>>Delete</th>
                     </tr>
@@ -121,12 +121,12 @@
                         <td><?php echo $pr_emp_shift_schedules['tiffin_break2'] ?></td>
                         <td><?php echo $pr_emp_shift_schedules['tiffin_minute2'] ?></td>
                         <td><?php echo $pr_emp_shift_schedules['random_minute'] ?></td>
-                        <?php if (!empty($pr_emp_shift_schedules['of_day'])) { ?>
+                        <!-- <?php if (!empty($pr_emp_shift_schedules['of_day'])) { ?>
                             <?php $days = json_decode($pr_emp_shift_schedules['of_day']); ?>
-                            <td><?php echo implode(', ', $days); ?></td>
+                            <td><?php echo is_array($days) ? implode(', ', $days) : $pr_emp_shift_schedules['of_day']; ?></td>
                         <?php } else { ?>
                             <td></td>
-                        <?php } ?>
+                        <?php } ?> -->
 
                         <td>
                             <a href="<?=base_url('setup_con/shiftschedule_edit').'/'.$pr_emp_shift_schedules["id"]?>"

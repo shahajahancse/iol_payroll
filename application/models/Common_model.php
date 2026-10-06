@@ -164,7 +164,7 @@ class Common_model extends CI_Model{
 			$this->db->where("log.emp_id = com.emp_id");
 			$this->db->where("num.id = com.emp_line_id");
 
-			$this->db->where("com.attn_sum_line_id", $line_id);
+			$this->db->where("com.emp_line_id", $line_id);
 			$this->db->where("com.unit_id", $unit_id);
 			$this->db->where("log.shift_log_date", $date);
 			// $this->db->where("log.in_time !=", "00:00:00");
@@ -218,7 +218,7 @@ class Common_model extends CI_Model{
 			$this->db->where("log.emp_id = com.emp_id");
 			$this->db->where("num.id = com.emp_line_id");
 
-			$this->db->where("com.attn_sum_line_id", $line_id);
+			$this->db->where("com.emp_line_id", $line_id);
 			$this->db->where("com.unit_id", $unit_id);
 			$this->db->where("log.shift_log_date", $date);
 			// $this->db->where("log.in_time !=", "00:00:00");

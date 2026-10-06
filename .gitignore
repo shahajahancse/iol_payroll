@@ -35,3 +35,5 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 
 
 docs/*.xlsx
+import/*.xlsx
+*.xlsx

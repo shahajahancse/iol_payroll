@@ -153,7 +153,7 @@ echo "Payment Date : ";
         <th rowspan="2" width="14" height="20px"><div align="center"><strong>Card No</strong></div></th>
         <th rowspan="2" width="30" height="20px"><div align="center"><strong>Name of Employee</strong></div></th>
         <th rowspan="2" width="25" height="20px"><div align="center"><strong>Designation</strong></div></th>
-        <th rowspan="2" width="30" height="20px"><div align="center"><strong>Line</strong></div></th>
+        <th rowspan="2" width="30" height="20px"><div align="center"><strong>Section</strong></div></th>
         <th rowspan="2" width="55" height="20px"><div align="center"><strong>Joining Date</strong></div></th>
         <th rowspan="2" width="25" height="20px"><div align="center"><strong>Grade</strong></div></th>
         <th rowspan="2" width="55" height="20px"><div align="center"><strong>Gross Salary</strong></div></th>
@@ -224,7 +224,7 @@ echo "Payment Date : ";
 		echo "</td>";
 
 		echo "<td>";
-		print_r($value[$k]->line_name_en);
+		print_r($value[$k]->sec_name_en);
 		echo "</td>";
 
 

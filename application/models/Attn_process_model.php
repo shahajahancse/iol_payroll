@@ -44,6 +44,8 @@ class Attn_process_model extends CI_Model{
 			$shift_id		= $rows->shift_id;
 			$schedule_id	= $rows->schedule_id;
 			$joining_date	= $rows->emp_join_date;
+			$shift_name     = isset($rows->shift_name) ? $rows->shift_name : '';
+			$sec_name       = isset($rows->sec_name) ? $rows->sec_name : '';
 
 			$this->delete_double_entry($emp_id,$process_date);
 
@@ -89,8 +91,24 @@ class Attn_process_model extends CI_Model{
 
 
                 $table = 'att_'.date('Y_m',strtotime($process_date));
-                $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
-				$out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
+                if (strtolower(trim($shift_name)) == 'single') {
+                    $in_time  = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'ASC', $table);
+                    $out_time = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'DESC', $table);
+                    if ($in_time != '' && $in_time == $out_time) {
+                        $out_time = '00:00:00';
+                    }
+                } elseif (strtolower(trim($shift_name)) == 'billing' || strtolower(trim($sec_name)) == 'billing') {
+                    $next_day = date('Y-m-d', strtotime($process_date . ' + 1 days'));
+                    $in_time  = $this->time_check_in("$process_date 07:00:00", "$next_day 06:00:00", $emp_id, 'ASC', $table);
+                    $out_time = $this->time_check_in("$process_date 07:00:00", "$next_day 12:00:00", $emp_id, 'DESC', $table);
+                    if ($in_time != '' && $in_time == $out_time) {
+                        $out_time = '00:00:00';
+                    }
+                } else {
+                    // General, General 2, General 3 & Standard Shifts: Normal schedule in/out calculation
+                    $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
+                    $out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
+                }
 
 				if (empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
 					$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
@@ -106,6 +124,7 @@ class Attn_process_model extends CI_Model{
 				$ot_eot_4pm        = 0;
 				$deduction_hour    = 0;
 				$late_status 	   = 0;
+				$early_exit        = 0;
 				$night_allo        = 0;
 				$holiday_allo 	   = 0;
 				$weekly_allo 	   = 0;
@@ -135,18 +154,65 @@ class Attn_process_model extends CI_Model{
 
 				//WEEKEND CHECK FOR SPECIFIC ID: RETURN TRUE OR FALSE
 				$weekend 	= $this->check_weekend($emp_id, $process_date);
-				$holiday = $this->check_holiday($emp_id, $process_date);
+				$holiday 	= $this->check_holiday($emp_id, $process_date);
 				$night_rules = $this->get_night_allowance_rules($process_date, $unit, $emp_desi_id);
 
-				//============= Check employee attendance status =============
+				//============= Check employee attendance status & Special Shift Policies =============
 				$leaves = $this->leave_chech($process_date, $emp_id);
 				$attn_status = 'A';
 				if($leaves){
 					$attn_status = "L";
-				}elseif ($process_date == $holiday){
+				}elseif ($process_date == $holiday || $holiday === true){
 					$attn_status = "H";
-				}elseif ($process_date == $weekend){
+				}elseif ($process_date == $weekend || $weekend === true){
 					$attn_status = "W";
+				}elseif (in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))){
+					// No Punch Policy: auto present
+					$attn_status = "P";
+				}elseif (strtolower(trim($shift_name)) == 'single'){
+					// Single Punch Policy: single punch at any time during 24 hrs (00:00:00 to 23:59:59) counted as present, otherwise absent
+					if ($in_time != '' || ($out_time != '' && $out_time != '00:00:00')) {
+						$attn_status = "P";
+					} else {
+						$attn_status = "A";
+					}
+				}elseif ((strtolower(trim($sec_name)) == 'billing' || strtolower(trim($shift_name)) == 'billing') && ($in_time != '' || ($out_time != '' && $out_time != '00:00:00'))){
+					// Billing Section/Shift Policy:
+					// In-start between 07:00 AM to 06:00 AM (next day).
+					// General Duty = 8 hrs (480 mins). > 8 hrs = Overtime, < 8 hrs = Early Out (3 days = 1 day salary deduction).
+					$attn_status = "P";
+					$work_mins = 0;
+					if ($in_time != '' && $out_time != '' && $out_time != '00:00:00' && strtotime($out_time) > strtotime($in_time)) {
+						$work_mins = round((strtotime($out_time) - strtotime($in_time)) / 60);
+					}
+
+					if ($work_mins >= 480) {
+						// Work >= 8 hours -> Calculate Overtime
+						$extra_mins = $work_mins - 480;
+						$ot_hour = floor($extra_mins / 60);
+						if ($extra_mins % 60 >= $ot_last_hour) {
+							$ot_hour += 1;
+						}
+						$tot_hour = $ot_hour;
+						if ($ot_hour > 2) {
+							$eot_hour = $ot_hour - 2;
+							$ot_hour = 2;
+						}
+					} else {
+						// Work < 8 hours -> Early Exit
+						$early_exit = 1;
+						// Cumulative Policy: 3 Early Exits = 1 day absence salary deduction
+						$m_start = date('Y-m-01', strtotime($process_date));
+						$prev_early_exits = $this->db->where('emp_id', $emp_id)
+							->where('shift_log_date >=', $m_start)
+							->where('shift_log_date <', $process_date)
+							->where('early_exit', 1)
+							->get('pr_emp_shift_log')->num_rows();
+
+						if (($prev_early_exits + 1) % 3 == 0) {
+							$deduction_hour = 8;
+						}
+					}
 				}elseif ($in_time != ''){
 					$attn_status = "P";
 				}
@@ -179,6 +245,18 @@ class Attn_process_model extends CI_Model{
 						$eot_hour 	= floor($minute / 60);
 						if ($minute % 60 >= $ot_last_hour) {
 							$eot_hour = $eot_hour + 1;
+						}
+						// Shift A, Shift B, Shift C Max OT limit = 8 hours
+						if (in_array(strtolower(trim($shift_name)), array('shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc'))) {
+							if ($eot_hour > 8) {
+								$eot_hour = 8;
+							}
+						}
+						// Shift 12 Night, Shift 12 Morning Max OT limit = 4 hours
+						if (in_array(strtolower(trim($shift_name)), array('shift 12 night', 'shift 12 morning', '12 night', '12 morning', 'shift12 night', 'shift12 morning', 'shift 12night', 'shift 12morning'))) {
+							if ($eot_hour > 4) {
+								$eot_hour = 4;
+							}
 						}
 
 					} else {
@@ -217,6 +295,20 @@ class Attn_process_model extends CI_Model{
 							if ($ot_hour > 2) {
 								$eot_hour = $ot_hour - 2;
 								$ot_hour = 2;
+							}
+							// Shift A, Shift B, Shift C Max OT limit = 8 hours total (2 hrs OT + max 6 hrs EOT)
+							if (in_array(strtolower(trim($shift_name)), array('shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc'))) {
+								if ($eot_hour > 6) {
+									$eot_hour = 6;
+								}
+								$tot_hour = $ot_hour + $eot_hour;
+							}
+							// Shift 12 Night, Shift 12 Morning Max OT limit = 4 hours total (2 hrs OT + max 2 hrs EOT)
+							if (in_array(strtolower(trim($shift_name)), array('shift 12 night', 'shift 12 morning', '12 night', '12 morning', 'shift12 night', 'shift12 morning', 'shift 12night', 'shift 12morning'))) {
+								if ($eot_hour > 2) {
+									$eot_hour = 2;
+								}
+								$tot_hour = $ot_hour + $eot_hour;
 							}
 							// dd($eot_hour);
 							// 9pm EOT Calculation
@@ -281,6 +373,7 @@ class Attn_process_model extends CI_Model{
 					'ot_eot_12am' 		=> $ot_eot_12am,
 					'deduction_hour' 	=> $deduction_hour,
 					'late_status' 		=> $late_status,
+					'early_exit' 		=> $early_exit,
 					'present_status' 	=> $attn_status,
 					'tiffin_allo' 		=> 0,
 					'night_allo' 		=> $night_allo,
@@ -295,12 +388,49 @@ class Attn_process_model extends CI_Model{
 			}
 		}
 
-		// check roster shift and auto chage this (if true this)
+		// check roster shift & policy rotation
+		$this->check_policy_shift_rotation($process_date, $unit);
 		if ($unit == 4 && strtotime(date('Y-m-d')) == strtotime($process_date)) {
 			$this->check_shift_roster($process_date, $unit);
 		}
-		// $this->check_shift_roster($process_date, $unit);
 		return true;
+	}
+
+	function check_policy_shift_rotation($date, $unit = 1)
+	{
+		$day_name = date('l', strtotime($date));
+		$day_num  = date('d', strtotime($date));
+
+		// Saturday Shift Rotation for Shift A, Shift B, Shift C
+		if ($day_name == 'Saturday') {
+			$shiftA = $this->db->where('shift_name', 'Shift A')->get('pr_emp_shift')->row();
+			$shiftB = $this->db->where('shift_name', 'Shift B')->get('pr_emp_shift')->row();
+			$shiftC = $this->db->where('shift_name', 'Shift C')->get('pr_emp_shift')->row();
+
+			if ($shiftA && $shiftB && $shiftC) {
+				$empA = $this->get_roster_shift_emp($shiftA->id, $unit);
+				$empB = $this->get_roster_shift_emp($shiftB->id, $unit);
+				$empC = $this->get_roster_shift_emp($shiftC->id, $unit);
+
+				if (!empty($empA)) $this->auto_change_roster_shift($empA, $shiftB->id, $unit);
+				if (!empty($empB)) $this->auto_change_roster_shift($empB, $shiftC->id, $unit);
+				if (!empty($empC)) $this->auto_change_roster_shift($empC, $shiftA->id, $unit);
+			}
+		}
+
+		// 15th & 30th Shift Rotation for Shift 12 A and Shift 12 B
+		if ($day_num == '15' || $day_num == '30') {
+			$shift12A = $this->db->where('shift_name', 'Shift 12 A')->get('pr_emp_shift')->row();
+			$shift12B = $this->db->where('shift_name', 'Shift 12 B')->get('pr_emp_shift')->row();
+
+			if ($shift12A && $shift12B) {
+				$emp12A = $this->get_roster_shift_emp($shift12A->id, $unit);
+				$emp12B = $this->get_roster_shift_emp($shift12B->id, $unit);
+
+				if (!empty($emp12A)) $this->auto_change_roster_shift($emp12A, $shift12B->id, $unit);
+				if (!empty($emp12B)) $this->auto_change_roster_shift($emp12B, $shift12A->id, $unit);
+			}
+		}
 	}
 
 	function autoNewToRegular($process_date)
@@ -436,10 +566,13 @@ class Attn_process_model extends CI_Model{
 				pr_emp_com_info.com_ot_entitle,
 				pr_emp_com_info.emp_join_date,
 				pr_emp_shift.id as shift_id,
+				pr_emp_shift.shift_name,
 				pr_emp_shift.schedule_id,
+				emp_section.sec_name_en as sec_name
 		');
 		$this->db->from('pr_emp_com_info');
 		$this->db->from('pr_emp_shift');
+		$this->db->join('emp_section', 'emp_section.id = pr_emp_com_info.emp_sec_id', 'left');
 		if (!empty($type)) {
 			$this->db->where_in("pr_emp_com_info.emp_id",$grid_emp_id);
 		} else {
@@ -517,15 +650,16 @@ class Attn_process_model extends CI_Model{
 		$this->db->where("emp_id", $id);
 		$this->db->where("work_off_date", $att_date);
 		$query = $this->db->get();
-		//echo $this->db->last_query();
 		if($query->num_rows() > 0)
 		{
 			return true;
 		}
-		else
-		{
-			return false;
+		
+		$gov = $this->db->where('date', $att_date)->get('pr_gov_holiday');
+		if ($gov->num_rows() > 0) {
+			return true;
 		}
+		return false;
 	}
 
     function leave_chech($process_date, $emp_id)

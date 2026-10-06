@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <link rel="icon" type="image/ico" href="<?=base_url()?>awedget/assets/img/loopdot.png" />
 
-    <title>Hr | Payroll</title>
+    <title><?= isset($title) ? $title . ' | Islam Oxygen Limited' : 'Islam Oxygen Limited | HR & Payroll' ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta content="Mysoftheaven (BD) Ltd." name="author" />
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>

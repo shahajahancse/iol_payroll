@@ -548,7 +548,6 @@ echo $date_format;
     <td rowspan="2" width="25" height="20px"><div align="center"><strong>Desig.</strong></div></td>
     <td rowspan="2" width="25" height="20px"><div align="center"><strong>Date of Join</strong></div></td>
     <td rowspan="2" width="25" height="20px"><div align="center"><strong>Gr.</strong></div></td>
-	 <td rowspan="2" width="25" height="20px"><div align="center"><strong>Line No</strong></div></td>
     <td rowspan="2" width="31" height="20px"><div align="center"><strong>Total Days</strong></div></td>
 	<td rowspan="2" width="31" ><div align="center"><strong>Total Att.</strong></div></td>
     <td rowspan="2" width="31" ><div align="center"><strong>Total Abs.</strong></div></td>
@@ -681,10 +680,6 @@ echo $date_format;
 		print_r ($value[$k]->gr_name);
 		echo "</td>";
 		
-		echo "<td >";
-		print_r($value[$k]->line_name);
-		//echo $row->desig_name;
-		echo "</td>";
 				
 		echo "<td>";
 		$num_of_days = $value[$k]->total_days;

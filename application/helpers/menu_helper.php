@@ -16,6 +16,9 @@ if(!function_exists('activate_class')) {
       $CI = get_instance();
       // Getting router class to active.
       $class = $CI->router->fetch_class();
+      if (is_array($controller)) {
+          return in_array($class, $controller) ? 'active open' : '';
+      }
       return ($class == $controller) ? 'active open' : '';
     }
 }
@@ -26,7 +29,11 @@ if(!function_exists('arrow_open')) {
       $CI = get_instance();
       // Getting router class to active.
       $class = $CI->router->fetch_class();
+      if (is_array($controller)) {
+          return in_array($class, $controller) ? 'open' : '';
+      }
       return ($class == $controller) ? 'open' : '';
     }
 }
+
 

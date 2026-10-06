@@ -220,7 +220,7 @@ input[type="number"] {
                         </div>
 
                         <?php $shifts = $this->db->where('unit_id',$user_data->unit_name)->get('pr_emp_shift')->result(); ?>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Emp Shift <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_shift');?>
@@ -242,6 +242,21 @@ input[type="number"] {
                                 <?php echo form_error('emp_join_date');?>
                             </div>
                         </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Off Day / Weekend <span style="color: red;">*</span> </label>
+                                <?php echo form_error('weekend');?>
+                                <select name="weekend" id="weekend" class="form-control input-sm required" required>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                    <option value="Sunday">Sunday</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <?php $sl_grade = $this->db->get('pr_grade')->result(); ?>
                         <div class="col-md-2">
@@ -257,7 +272,7 @@ input[type="number"] {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                         <div class="form-group">
                             <label>Employee Type <span style="color: red;">*</span> </label>
                             <select name="emp_type" id="emp_type" class="form-control input-sm required" required="">
@@ -343,23 +358,23 @@ input[type="number"] {
                                 <label>Salary <span style="color: red;">*</span> </label>
                                 <?php echo form_error('gross_sal');?>
                                 <input type="text" onkeyup="salary_structure_cal()" onchange="salary_structure_cal()" name="gross_sal" id="gross_sal"
-                                    class="form-control input-sm">
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label>Basic Salary </label>
                                 <?php echo form_error('basic_sal');?>
-                                <input type="text" name="basic_sal" id="basic_sal" readonly
-                                    class="form-control input-sm">
+                                <input type="text" name="basic_sal" id="basic_sal" disabled
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label>House </label>
                                 <?php echo form_error('house_rent');?>
-                                <input type="text" name="house_rent" id="house_rent" readonly
-                                    class="form-control input-sm">
+                                <input type="text" name="house_rent" id="house_rent" disabled
+                                    class="form-control input-sm required">
                             </div>
                         </div>
 
@@ -367,31 +382,31 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Medical </label>
                                 <?php echo form_error('medical');?>
-                                <input type="text" name="medical" id="medical" readonly class="form-control input-sm">
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label>Conveyance </label>
-                                <?php echo form_error('trans_allow');?>
-                                <input type="text" name="trans_allow" id="trans_allow" readonly
-                                    class="form-control input-sm">
+                                <input type="text" name="medical" id="medical" disabled class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="form-group">
+                                <label>Transport </label>
+                                <?php echo form_error('trans_allow');?>
+                                <input type="text" name="trans_allow" id="trans_allow" disabled
+                                    class="form-control input-sm required">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
                                 <label> Food </label>
                                 <?php echo form_error('food');?>
-                                <input type="text" name="food" id="food" readonly class="form-control input-sm">
+                                <input type="text" name="food" id="food" disabled class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-1">
                             <label style="white-space: nowrap">Ot Entitle </label>
                             <?php echo form_error('ot_entitle');?>
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="0" class="form-check-input"
-                                style="display: inline; margin-right: 5px;">Yes
+                                style="display: inline; margin-right: 10px;">Yes
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="1" class="form-check-input"
-                                style="display: inline; margin-right: 5px;" checked>No
+                                style="display: inline; margin-right: 10px;" checked>No
                         </div>
                     </div>
                     <div class="row">
@@ -524,6 +539,7 @@ function set_desi_item() {
     //$("#emp_dob").datepicker("setDate", emp_dob);
     $("#nomi_age").datepicker("setDate", new Date(nomi_age));
     $("#emp_join_date").datepicker("setDate", new Date(emp_join_date));
+    $('#weekend').val(localStorage.getItem('weekend')).trigger('change');
 
     $('#nomi_district').val(nomi_district).trigger('change');
     setTimeout(function() {
@@ -646,7 +662,7 @@ function emp_id_search(id = null) {
                     "emp_sec_id", "emp_line_id", "emp_desi_id", "emp_sal_gra_id", "emp_type",
                     "emp_cat_id", "proxi_id", "emp_shift", "gross_sal",
                     "com_gross_sal", "ot_entitle", "com_ot_entitle", "transport", "img_source",
-                    "lunch", "att_bonus", "salary_draw", "salary_type","position_id", "emp_join_date",
+                    "lunch", "att_bonus", "salary_draw", "salary_type","position_id", "emp_join_date", "weekend",
                     "ref_district", "refer_village", "ref_thana", "ref_post","ft","inches","symbol"
                 ];
                 // Filter the data based on keysToFilter
@@ -660,7 +676,7 @@ function emp_id_search(id = null) {
                             key == 'per_thana' || key == 'per_post' || key == 'pre_post' || key ==
                             'nomi_post' || key == 'ref_thana' || key == 'ref_post' || key ==
                             'ref_district' || key == 'emp_dob' || key == 'nomi_age' || key ==
-                            'emp_join_date' || key == 'ft' || key == 'inches' || key == 'ot_entitle' || key == 'com_ot_entitle' || key == 'nid_dob_check' || key == 'com_gross_sal'|| key == 'gross_sal'
+                            'emp_join_date' || key == 'weekend' || key == 'ft' || key == 'inches' || key == 'ot_entitle' || key == 'com_ot_entitle' || key == 'nid_dob_check' || key == 'com_gross_sal'|| key == 'gross_sal'
                         ) {
                             localStorage.setItem(key, data[key]);
                         } else if (key == 'img_source') {

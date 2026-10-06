@@ -96,13 +96,15 @@
                         if(!empty($emp_designation)){ foreach($emp_designation as $key => $data){
 
                             // dd($data);
-                         $this->db->select('emp_depertment.dept_name, emp_section.sec_name_en, emp_line_num.line_name_en');
-                         $this->db->from('emp_dasignation_line_acl');
-                         $this->db->join('emp_depertment','emp_dasignation_line_acl.dept_id =emp_depertment.dept_id');
-                         $this->db->join('emp_section','emp_dasignation_line_acl.section_id = emp_section.id');
-                         $this->db->join('emp_line_num','emp_dasignation_line_acl.line_id = emp_line_num.id');
-                         $this->db->where('emp_dasignation_line_acl.designation_id',$data['id']);
-                         $info = $this->db->get()->row();
+                         if ($this->db->table_exists('emp_dasignation_line_acl')) {
+                             $this->db->select('emp_depertment.dept_name, emp_section.sec_name_en, emp_line_num.line_name_en');
+                             $this->db->from('emp_dasignation_line_acl');
+                             $this->db->join('emp_depertment','emp_dasignation_line_acl.dept_id =emp_depertment.dept_id');
+                             $this->db->join('emp_section','emp_dasignation_line_acl.section_id = emp_section.id');
+                             $this->db->join('emp_line_num','emp_dasignation_line_acl.line_id = emp_line_num.id');
+                             $this->db->where('emp_dasignation_line_acl.designation_id',$data['id']);
+                             $info = $this->db->get()->row();
+                         }
                         // dd($info);
                     ?>
 

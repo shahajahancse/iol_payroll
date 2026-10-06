@@ -30,6 +30,11 @@
           <?php } ?> -->
 
           <?php if(in_array(12,$acl)) { ?>
+            <li class="<?= activate_method('employee_list') ?>">
+              <a href="<?=base_url('emp_info_con/employee_list')?>">
+                <i class="fa fa-users"></i> Employee List
+              </a>
+            </li>
             <li class="start <?= activate_method('personal_info_short') ?>">
               <a href="<?=base_url('emp_info_con/personal_info_short')?>">
                 <i class="fa fa-address-book"></i> Add Employee
@@ -176,12 +181,12 @@
 
       <!-- Attendance -->
       <?php if(in_array(3,$acl)) { ?>
-      <li class="start <?= activate_class('attn_process_con') ?>">
+      <li class="start <?= activate_class(array('attn_process_con', 'iclock')) ?>">
         <a href="javascript:;">
           <i class="fa fa-clock-o"></i>
           <span class="title">Attendance</span>
           <span class="selected"></span>
-          <span class="arrow <?= arrow_open('attn_process_con') ?>"></span>
+          <span class="arrow <?= arrow_open(array('attn_process_con', 'iclock')) ?>"></span>
         </a>
 
         <ul class="sub-menu">
@@ -191,6 +196,14 @@
                 <i class="fa fa-upload"></i> File Upload
               </a>
             </li>
+
+            <!--
+            <li class="<?= activate_method('device_list') ?>">
+              <a href="<?=base_url('iclock/device_list')?>" class="anchor_cls">
+                <i class="fa fa-hdd-o"></i> ADMS Devices
+              </a>
+            </li>
+            -->
           <?php } ?>
 
           <?php if(in_array(29,$acl)) { ?>
@@ -351,11 +364,13 @@
               </a>
             </li>
 
+            <!--
             <li class="<?= activate_method('line') ?>">
               <a href="<?=base_url('setup_con/line')?>" class="anchor_cls">
                 <i class="fa fa-arrows-h"></i> Line
               </a>
             </li>
+            -->
 
             <li class="<?= activate_method('designation') ?>">
               <a href="<?=base_url('setup_con/designation')?>" class="anchor_cls">
@@ -551,6 +566,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(49,$acl)) { ?>
             <li class="<?= activate_method('activity_log') ?>">
               <a href="<?=base_url('setting_con/activity_log')?>" class="anchor_cls" id="activity_log">
@@ -558,6 +574,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
         </ul>
       </li>
       <?php } ?>

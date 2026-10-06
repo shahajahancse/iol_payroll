@@ -44,7 +44,16 @@ class Job_card_model extends CI_Model{
 		{
 			$holiday[] = $row->start_date;
 		}
-		// dd($this->db->last_query());
+
+		$gov = $this->db->select('date as start_date')
+			->where("date BETWEEN '$sStartDate' AND '$sEndDate'")
+			->get('pr_gov_holiday');
+		foreach ($gov->result() as $r) {
+			if (!in_array($r->start_date, $holiday)) {
+				$holiday[] = $r->start_date;
+			}
+		}
+
 		return $holiday;
 	}
 
