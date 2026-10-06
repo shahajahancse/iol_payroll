@@ -4419,6 +4419,10 @@ class Grid_model extends CI_Model{
 				}
 			}
 
+			if (empty($punches)) {
+				continue;
+			}
+
 			$result_data[] = array(
 				'emp_id'        => $row->emp_id,
 				'emp_full_name' => !empty($row->emp_full_name) ? $row->emp_full_name : '',
