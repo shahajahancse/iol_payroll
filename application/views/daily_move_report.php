@@ -1,158 +1,117 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>Job Card</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+    <title>Daily Movement Report (Punch Log)</title>
+    <style>
+        @media print {
+            #btnExport {
+                display: none;
+            }
+        }
+        .sal_table {
+            border-collapse: collapse;
+            font-size: 12px;
+            width: 950px;
+            margin-bottom: 20px;
+        }
+        .sal_table th, .sal_table td {
+            border: 1px solid #777777;
+        }
+    </style>
 </head>
-<style>
-		.bordered {
-    border: 2px solid black;
-    border-collapse: collapse;
-	font-size:12px;
-	border-radius:3px;
-	
-}
-.bordered td, .bordered th {
-    border: 1px solid #ffff;
-	
-}
-.bordered th {
-   background: #C9C9C9;
-}
-.bordered tr:nth-of-type(odd) {
-    background-color: #F7F7F7;
-}
- 
-.bordered tr:hover {
-    background: #C9C9C9;
-    -o-transition: all 0.1s ease-in-out;
-    -webkit-transition: all 0.1s ease-in-out;
-    -moz-transition: all 0.1s ease-in-out;
-    -ms-transition: all 0.1s ease-in-out;
-    transition: all 0.1s ease-in-out;     
-}
 
+<body style="margin: 0px;" id="report-data">
+    <?php $this->load->view("head_english"); ?>
+    <div style="margin-left: 50px; margin-bottom: 10px;">
+        <button id="btnExport" style="padding: 5px 12px; cursor: pointer; background: #0c74bf; color: #fff; border: none; border-radius: 3px;">Download as Excel</button>
+    </div>
 
-</style>
-<body>
-<div align="center" style="height:100%; width:100%; overflow:hidden;" >
+    <div align="center" style="margin:0 auto; overflow:hidden; font-family: 'Times New Roman', Times, serif;">
+        <span style="font-size:14px; font-weight:bold;">
+            Daily Movement Report (Punch Log) , Date: <?php echo date("d/m/Y", strtotime($grid_firstdate)); ?>
+        </span>
+        <br><br>
 
-<?php
-//print_r($values);
+        <table class="sal_table" border="1" cellpadding="0" cellspacing="0" style="font-size:12px; width:950px; margin-bottom:20px; border-collapse:collapse;">
+            <?php
+            if (!empty($values) && is_array($values)) {
+                foreach ($values as $emp_index => $emp) {
+                    ?>
+                    <!-- Employee Header Row -->
+                    <tr bgcolor="#CCCCCC">
+                        <td colspan="4" style="font-size:13px; font-weight:bold; padding:6px 10px; text-align:left;">
+                            ID: <?php echo $emp['emp_id']; ?> &nbsp;&nbsp;|&nbsp;&nbsp;
+                            Name: <?php echo $emp['emp_full_name']; ?> &nbsp;&nbsp;|&nbsp;&nbsp;
+                            Designation: <?php echo $emp['desig_name']; ?> &nbsp;&nbsp;|&nbsp;&nbsp;
+                            Section: <?php echo $emp['sec_name']; ?> &nbsp;&nbsp;|&nbsp;&nbsp;
+                            Card No: <?php echo $emp['proxi_id']; ?>
+                        </td>
+                    </tr>
 
+                    <!-- Punch Sub-headers -->
+                    <tr bgcolor="#EFEFEF">
+                        <th style="padding:4px; width:60px; text-align:center;">SL</th>
+                        <th style="padding:4px; width:180px; text-align:center;">Date</th>
+                        <th style="padding:4px; width:220px; text-align:center;">Punch Time</th>
+                        <th style="padding:4px; text-align:center;">Log Status</th>
+                    </tr>
 
-$count = count($values["emp_id"]);
+                    <?php
+                    $punches = isset($emp['punches']) ? $emp['punches'] : array();
+                    if (!empty($punches)) {
+                        $p_count = count($punches);
+                        foreach ($punches as $k => $p) {
+                            $status = ($k == 0) ? 'In Punch' : (($k == $p_count - 1) ? 'Out Punch' : 'Punch Log');
+                            ?>
+                            <tr>
+                                <td style="text-align:center; padding:3px;"><?php echo $k + 1; ?></td>
+                                <td style="text-align:center; padding:3px;"><?php echo $p['date']; ?></td>
+                                <td style="text-align:center; padding:3px; font-weight:bold; color:#0055aa;"><?php echo $p['time']; ?></td>
+                                <td style="text-align:center; padding:3px;"><?php echo $status; ?></td>
+                            </tr>
+                            <?php
+                        }
+                    } else {
+                        ?>
+                        <tr>
+                            <td colspan="4" style="text-align:center; padding:6px; color:#aa0000; font-style:italic;">No punch log recorded for this date</td>
+                        </tr>
+                        <?php
+                    }
+                    ?>
+                    <!-- Divider row between employees -->
+                    <tr style="border:none;">
+                        <td colspan="4" style="height:12px; border:none; background-color:#ffffff;"></td>
+                    </tr>
+                    <?php
+                }
+            } else {
+                ?>
+                <tr>
+                    <td colspan="4" style="text-align:center; padding:10px;">No Data Found</td>
+                </tr>
+                <?php
+            }
+            ?>
+        </table>
+    </div>
+    <br><br>
 
-for($i = 0; $i<$count;$i++)
-{
-	//echo $i;
-	echo "<div style='min-height:650px; overflow:hidden;'>";
-
-
-	$this->load->view('head_english');
-	$date = date("d-M-Y", strtotime($grid_firstdate));
-	echo "<span style='font-size:13px; font-weight:bold;'>";
-	echo "Daily Movement Report of &nbsp $date";
-	echo "</span>";
-	echo "<br /><br />";
-	
-	$emp_id = $values["emp_id"][$i];
-	echo "<table border='0' style='font-size:13px;width:500px; margin-bottom:10px;'>";
-	echo "<tr>";
-	echo "<td width='70'>";
-	echo "<strong>Emp ID:</strong>";
-	echo "</td>";
-	echo "<td width='200'>";
-	echo $values["emp_id"][$i];
-	echo "</td>";
-	
-	echo "<td width='50'>";
-	echo "<strong>Name :</strong>";
-	echo "</td>";
-	echo "<td width='150'>";
-	echo $values["emp_full_name"][$i];
-	echo "</td>";
-	echo "</tr>";
-	
-	echo "<tr>";
-	echo "<td >";
-	echo "<strong>Proxi NO. :</strong>";
-	echo "</td>";
-	echo "<td >";
-	echo $values["proxi_id"][$i];
-	echo "</td>";
-	
-	echo "<td>";
-	echo "<strong>Section :</strong>";
-	echo "</td>";
-	echo "<td >";
-	echo $values["sec_name"][$i];
-	echo "</td>";
-	echo "<td>";
-	echo "<strong>Desig :</strong>";
-	echo "</td>";
-	echo "<td>";
-	echo $values["desig_name"][$i];
-	echo "</td>";
-	echo "</tr>";
-	echo "<tr>";
-	echo "<td>";
-	echo "<strong>DOJ :</strong>";
-	echo "</td>";
-	echo "<td>";
-	echo $values["emp_join_date"][$i];
-	echo "</td>";
-	
-	echo "<td >";
-	echo "<strong>Dept :</strong>";
-	echo "</td>";
-	
-	echo "<td >";
-	echo $values["dept_name"][$i];
-	echo "</td>";
-	echo "</tr>";
-	echo "<table>";
-	
-	$count1 = count($values[$emp_id]["time"]);
-	
-	echo "<table class='bordered'  border='1' style='font-size:13px; width:500px;text-align: center;   border-collapse: collapse;'><th>Date</th> <th>Time</th><th>Remarks</th>";
-	for($k = 0; $k<$count1;$k++)
-	{
-		//echo $values[$emp_id]["shift_log_date"][$k];
-		//echo "<br>";
-		
-		echo "<tr>";
-		
-		echo "<td>";
-		echo $values[$emp_id]["date"][$k];
-		echo "</td>";
-		
-		echo "<td>";
-		echo $values[$emp_id]["time"][$k];
-		echo "</td>";
-		
-		
-		echo "<td>";
-		echo "&nbsp";
-		echo "</td>";
-		
-		echo "</tr>";
-	}
-			
-	echo "</table>";
-	
-	echo "<br>";
-	
-			
-	
-	echo "</table>";
-	echo "<br /><br />";
-	
-	echo "</div>";
-	echo "<br>";
-}
-?>
-
-</div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <script>
+        function convert_excel(type, fn, dl) {
+            var elt = document.getElementById('report-data');
+            var wb = XLSX.utils.table_to_book(elt, {sheet:"Punch Log"});
+            return dl ?
+                XLSX.write(wb, {bookType:type, bookSST:true, type: 'base64'}) :
+                XLSX.writeFile(wb, fn || ('Daily_Movement_Punch_Log_' + '<?php echo date("Y_m_d", strtotime($grid_firstdate)); ?>.' + (type || 'xlsx')));
+        }
+        $("#btnExport").click(function(event) {
+            convert_excel('xlsx');
+        });
+    </script>
 </body>
 </html>
+<?php exit(); ?>
