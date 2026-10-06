@@ -157,6 +157,7 @@
 							<?php if(in_array(71,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="grid_daily_actual_out_in_report()">Actual Out & IN Report</button>
 							<?php } ?>
+							<button class="btn input-sm sbtn" onclick="grid_daily_move_report()">Daily Movement (Punch Log)</button>
 
 							<?php /*
 							<?php if(in_array(61,$acl)) { ?>

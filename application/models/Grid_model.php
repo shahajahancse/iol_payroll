@@ -4340,14 +4340,12 @@ class Grid_model extends CI_Model{
 	function daily_move_report($grid_firstdate, $grid_emp_id)
 	{
 		$sStartDate = date("Y-m-d", strtotime($grid_firstdate));
-		$seconddate = date('d-m-Y',strtotime($sStartDate . "+1 days"));
-		//echo "$emp_id<br>";
+		$seconddate = date('Y-m-d', strtotime($sStartDate . " +1 days"));
 
 		$this->db->distinct();
-		$this->db->select('pr_emp_per_info.name_en,pr_emp_per_info.emp_id,emp_designation.desig_name,emp_depertment.dept_name,emp_section.sec_name_en,emp_line_num.line_name_en,pr_emp_com_info.emp_join_date,pr_id_proxi.proxi_id,pr_emp_com_info.emp_shift');
+		$this->db->select('pr_emp_per_info.name_en as emp_full_name, pr_emp_per_info.emp_id, emp_designation.desig_name, emp_depertment.dept_name, emp_section.sec_name_en, emp_line_num.line_name_en, pr_emp_com_info.emp_join_date, pr_id_proxi.proxi_id, pr_emp_com_info.emp_shift');
 		$this->db->from('pr_emp_per_info');
 		$this->db->from('pr_emp_com_info');
-		$this->db->from('pr_attn_monthly');
 		$this->db->from('pr_id_proxi');
 		$this->db->from('emp_depertment');
 		$this->db->from('emp_section');
@@ -4366,26 +4364,37 @@ class Grid_model extends CI_Model{
 		{
 			$emp_id = $row->emp_id;
 
-
 			$emp_shift = $this->emp_shift_check($row->emp_id, $sStartDate);
+			$schedule  = $this->schedule_check($emp_shift);
 
-			$schedule = $this->schedule_check($emp_shift);
+			$start_time   = (isset($schedule[0]["in_start"]) && !empty($schedule[0]["in_start"])) ? $schedule[0]["in_start"] : '00:00:00';
+			$out_end_time = (isset($schedule[0]["out_end"]) && !empty($schedule[0]["out_end"])) ? $schedule[0]["out_end"] : '23:59:59';
 
+			$start_date_time = "$sStartDate $start_time";
+			$end_date_time   = "$seconddate $out_end_time";
 
-			$start_time				=  $schedule[0]["in_start"];
-			$out_end_time			=  $schedule[0]["out_end"];
+			$att_table  = "att_" . date("Y_m", strtotime($sStartDate));
+			$query_move = null;
 
-			$start_date_time 	= "$sStartDate $start_time";
-			$end_date_time 		= "$seconddate $out_end_time";
+			if ($this->db->table_exists($att_table)) {
+				$this->db->select('date_time');
+				$this->db->where('proxi_id', $row->proxi_id);
+				$this->db->where("date_time BETWEEN '$start_date_time' AND '$end_date_time'");
+				$this->db->order_by('date_time', 'ASC');
+				$query_move = $this->db->get($att_table);
+			}
 
-			//echo "$start_date_time===$end_date_time";
+			if (!$query_move || $query_move->num_rows() < 1) {
+				$temp_table = "temp_$emp_id";
+				if ($this->db->table_exists($temp_table)) {
+					$this->db->select('date_time');
+					$this->db->where("date_time BETWEEN '$start_date_time' AND '$end_date_time'");
+					$this->db->order_by('date_time', 'ASC');
+					$query_move = $this->db->get($temp_table);
+				}
+			}
 
-			$temp_table = "temp_$emp_id";
-			$this->db->select('*');
-			$this->db->where("date_time BETWEEN '$start_date_time' AND '$end_date_time'");
-			$query_move = $this->db->get($temp_table);
-			//echo $query_move->num_rows;
-			if($query_move->num_rows() < 1)
+			if (!$query_move || $query_move->num_rows() < 1)
 			{
 				continue;
 			}
@@ -4394,37 +4403,26 @@ class Grid_model extends CI_Model{
 			{
 				$data[$emp_id]["date"][] = date("d-M-Y", strtotime($row_move->date_time));
 				$data[$emp_id]["time"][] = date("h:i:s A", strtotime($row_move->date_time));
-
 			}
-			$data["emp_id"][] = $row->emp_id;
 
+			$data["emp_id"][]        = $row->emp_id;
 			$data["emp_full_name"][] = $row->emp_full_name;
-
-			$data["proxi_id"][] = $row->proxi_id;
-
-			$data["sec_name_en"][] = $row->sec_name_en;
-
-			$data["line_name"][] = $row->line_name;
-
-			$data["desig_name"][] = $row->desig_name;
-
-			$emp_join_date = $row->emp_join_date;
-
-			$data["emp_join_date"][] = date("d-m-Y", strtotime($emp_join_date));
-
-			$data["dept_name"][] = $row->dept_name;
-
-			$data["emp_shift"][] = $row->emp_shift;
-
-
+			$data["proxi_id"][]      = $row->proxi_id;
+			$data["sec_name"][]      = $row->sec_name_en;
+			$data["sec_name_en"][]   = $row->sec_name_en;
+			$data["line_name"][]     = $row->line_name_en;
+			$data["desig_name"][]    = $row->desig_name;
+			$data["emp_join_date"][] = date("d-m-Y", strtotime($row->emp_join_date));
+			$data["dept_name"][]     = $row->dept_name;
+			$data["emp_shift"][]     = $row->emp_shift;
 		}
+
 		if(isset($data)){
 			return $data;
 		}
 		else{
 			return "Requested List Is Empty.";
 		}
-
 	}
 
 
