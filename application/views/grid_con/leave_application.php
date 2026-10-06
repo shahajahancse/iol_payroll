@@ -22,25 +22,7 @@
 </head>
 <body>
     <div class="container w-75">
-        <?php if ($unit_id == 1) { ?>
-        <div class="d-flex flex-row justify-content-between">
-            <p style="font-family: Arial, Helvetica, sans-serif;font-size:15px">Effective Date : 03.10.2020 </p>
-            <p style="font-family: Arial, Helvetica, sans-serif;font-size:15px">Version # 00</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;font-size:15px">Document Code : AJFL/HRAC(HR)/03/009 </p>
-        </div>
-        <?php } else if ($unit_id == 2) { ?>
-        <div class="d-flex flex-row justify-content-between">
-            <p style="font-family: Arial, Helvetica, sans-serif;font-size:15px">Effective Date : 01-01-2020 </p>
-            <p style="font-family: Arial, Helvetica, sans-serif;font-size:15px">Version # 00</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;font-size:15px">Document Code : LSAL/HR/03/091 </p>
-        </div>
-        <?php } else { ?>
-        <div class="d-flex flex-row justify-content-between">
-            <p style="font-family: Arial, Helvetica, sans-serif;font-size:15px">Effective Date : 15.01.2022 </p>
-            <p style="font-family: Arial, Helvetica, sans-serif;font-size:15px">Version # 00</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;font-size:15px">Document Code : HGL/HRD/HR/03/009</p>
-        </div>
-        <?php } ?>
+
         <div class="mt-3">
             <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
             <div class="d-flex">

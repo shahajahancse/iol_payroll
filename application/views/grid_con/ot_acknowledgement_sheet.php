@@ -21,54 +21,12 @@
 	<!-- < ?php echo $status; exit;?> -->
 <!-- heading  -->
     <?php if($status == 1){?>
-				<?php if($unit_id == 1){?>
-				<br>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 01/08/2024</div>
-					<div>Revision: 00</div>
-					<div> Doc. Code: AJFL/HRAC(HR)/03/049</div>
-				</div>
-				<?php }elseif($unit_id == 4){?>
-				<br>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 15/01/2022</div>
-					<div>Revision: 00</div>
-					<div>Doc. Code: HGL/HRD(HR)/03/020</div>
- 				</div>
-				 <?php }elseif($unit_id == 2){?>
-				<br>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 01/02/2022</div>
-					<div>Revision: 00</div>
-					<div>Doc. Code: LSA/HRD(COM)/03/175</div>
- 				</div>
-				<?php }?>
+
 	<?php $this->load->view("head_bangla"); }?>
 	<p style="text-align:center;font-size:15px; font-weight:bold;font-family:sutonnyMJ"> 
 		<?php 
 			if ($status == 2) { ?> 
-				<?php if($unit_id == 1){?>
-				<br>	
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 01/08/2024</div>
-					<div>Revision: 00</div>
-					<div> Doc. Code: AJFL/HRAC(HR)/03/049</div>
-				</div>
-				<?php }elseif($unit_id == 2){?>
-				<br>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 01/02/2022</div>
-					<div>Revision: 00</div>
-					<div>Doc. Code: LSA/HRD(COM)/03/175</div>
- 				</div>
-				 <?php }elseif($unit_id == 4){?>
-				<br>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 15/01/2022</div>
-					<div>Revision: 00</div>
-					<div>Doc. Code: HGL/HRD(HR)/03/020</div>
- 				</div>
-				<?php }?>
+
 				<p style="margin:0 auto;text-align:center;width:80%;font-family:sutonnyMJ ;font-size:20px">dig-35</p>
 				<p style="margin:0 auto;text-align:center;width:80%;font-family:sutonnyMJ ;font-size:20px">[aviv 109 wewa 103(1) `«óe¨]</p>
 				<p style="margin:0 auto;text-align:center;width:80%;font-family:sutonnyMJ ;font-size:20px">gwnjv‡`i ivwÎKvjxb KvR Kivi m¤§wZcÎ</p>
@@ -151,51 +109,12 @@
 			<div style="page-break-after:always"></div>
 			<!-- heading  -->
     <?php if($status != 2){?>
-				<?php if($unit_id == 1){?>
-				<br>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 01/08/2024</div>
-					<div>Revision: 00</div>
-					<div> Doc. Code: AJFL/HRAC(HR)/03/049</div>
-				</div>
-				<?php }elseif($unit_id == 2){?>
-				<br>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 15/01/2022</div>
-					<div>Revision: 00</div>
-					<div>Doc. Code: LSA/HRD(COM)/03/175</div>
- 				</div>
-				 <?php }elseif($unit_id == 4){?>
-				<br>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 15/01/2022</div>
-					<div>Revision: 00</div>
-					<div>Doc. Code: HGL/HRD(HR)/03/020</div>
- 				</div>
-				<?php }?>
+
 	<?php $this->load->view("head_bangla"); }?>
 	<p style="text-align:center;font-size:15px; font-weight:bold;font-family:sutonnyMJ"> 
 		<?php 
 			if ($status == 2) { ?> 
-				<?php if($unit_id == 1){?>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 01/08/2024</div>
-					<div>Revision: 00</div>
-					<div> Doc. Code: AJFL/HRAC(HR)/03/049</div>
-				</div>
-				<?php }elseif($unit_id == 4){?>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 15/01/2022</div>
-					<div>Revision: 00</div>
-					<div>Doc. Code: HGL/HRD(HR)/03/020</div>
- 				</div>
-				 <?php }elseif($unit_id == 2){?>
-				<div style="display:flex; justify-content:space-between;width:80%;margin:0 auto">
-					<div>Effective Date: 15/01/2022</div>
-					<div>Revision: 00</div>
-					<div>Doc. Code: LSA/HRD(COM)/03/175</div>
- 				</div>
-				<?php }?>
+
 				<br>
 				<p style="margin:0 auto;text-align:center;width:80%;font-family:sutonnyMJ ;font-size:20px">dig-35</p>
 				<p style="margin:0 auto;text-align:center;width:80%;font-family:sutonnyMJ ;font-size:20px">[aviv 109 wewa 103(1) `«óe¨]</p>

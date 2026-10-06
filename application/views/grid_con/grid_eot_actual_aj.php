@@ -10,27 +10,9 @@
 		<div align="center" style="height:auto; width:100%; overflow:hidden;" >
 			<?php $this->load->model('job_card_model');
 			foreach ($values as $key => $value) {?>
-                <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-                    <div style="display: flex; justify-content: space-around;">
-                        <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                        <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                        <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/008</p>
-                    </div>
-                    <?php } else if($unit_id == 2){?>
-                    <div style="display: flex; justify-content: space-around;">
-                        <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                        <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                        <p style="font-family: Arial, Helvetica, sans-serif;"> Document Code : LSAL/HR/03/084</p>
-                    </div>
-                    <?php }else if($unit_id == 4){?>
-                    <div style="display: flex; justify-content: space-around;">
-                        <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                        <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                        <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/008</p>
-                    </div> 
-                <?php }
+                <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
 
-                echo "<div style=' overflow:hidden;'>";
+                <?php echo "<div style=' overflow:hidden;'>";
                     $present_count = 0;
                     $absent_count = 0;
                     $leave_count = 0;

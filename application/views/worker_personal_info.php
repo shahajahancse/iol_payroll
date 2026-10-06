@@ -173,25 +173,7 @@ $obj = new BanglaNumberToWord();
                 // dd($value);
         ?>
         <div class="container break_page" style=" font-family: sutonnymj;">
-            <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-            <div class="d-flex flex-row justify-content-between">
-                <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/008</p>
-            </div>
-            <?php } else if($unit_id == 2){?>
-            <div class="d-flex flex-row justify-content-between">
-                <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;"> Document Code : LSAL/HR/03/084</p>
-            </div>
-            <?php }else if($unit_id == 4){?>
-            <div class="d-flex flex-row justify-content-between">
-                <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/008</p>
-            </div>
-            <?php }?>
+            <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
             <div class="mt-3">
                 <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
                 <div class="d-flex">
@@ -384,25 +366,7 @@ $obj = new BanglaNumberToWord();
 
 
         <div class="container break_page" style=" font-family: sutonnymj;">
-            <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-            <div class="d-flex flex-row justify-content-between">
-                <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/008</p>
-            </div>
-            <?php } else if($unit_id == 2){?>
-            <div class="d-flex flex-row justify-content-between">
-                <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;"> Document Code : LSAL/HR/03/084</p>
-            </div>
-            <?php }else if($unit_id == 4){?>
-            <div class="d-flex flex-row justify-content-between">
-                <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/008</p>
-            </div>
-            <?php }?>
+            <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
             <div class="mt-3">
                 <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
                 <div class="d-flex">
@@ -594,25 +558,7 @@ $obj = new BanglaNumberToWord();
 
         <!-- jogdan -->
         <div class="container break_page" style="font-family:sutonnymj;">
-            <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-            <div class="d-flex flex-row justify-content-between">
-                <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/008</p>
-            </div>
-            <?php } else if($unit_id == 2){?>
-            <div class="d-flex flex-row justify-content-between">
-                <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : LSAL/HR/03/084</p>
-            </div>
-            <?php }else if($unit_id == 4){?>
-            <div class="d-flex flex-row justify-content-between">
-                <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/008</p>
-            </div>
-            <?php }?>
+            <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
             <div class="mt-3">
                 <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
                 <div class="d-flex">
@@ -684,25 +630,7 @@ $obj = new BanglaNumberToWord();
 
         <!-- potovumi -->
         <div class="container break_page" style=" font-family: sutonnymj;">
-            <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/005</p>
-                </div>
-                <?php } else if($unit_id == 2){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code :  LSAL/HR/03/086</p>
-                </div>
-                <?php }else if($unit_id == 4){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/005</p>
-                </div>
-            <?php }?>
+            <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
             <div class="mt-3">
                 <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
                 <div class="d-flex">
@@ -798,25 +726,7 @@ $obj = new BanglaNumberToWord();
 
         <div class='container'>
                     <div class="container break_page" style=" font-family: sutonnymj;margin-left:-15px">
-            <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/003</p>
-                </div>
-                <?php } else if($unit_id == 2){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code :  LSAL/HR/03/087</p>
-                </div>
-                <?php }else if($unit_id == 4){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/003</p>
-                </div>
-            <?php }?>
+            <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
             <div>
                 <div class="mt-3">
                     <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
@@ -950,25 +860,7 @@ $obj = new BanglaNumberToWord();
         <br>
         <!-- nominee -->
         <div class="container-fluid break_page" style="margin-left:-10px">
-            <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/007</p>
-                </div>
-                <?php } else if($unit_id == 2){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code :  LSAL/HR/03/080</p>
-                </div>
-                <?php }else if($unit_id == 4){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/007</p>
-                </div>
-            <?php }?>
+            <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
              <div class="mt-3">
                 <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
                 <div class="d-flex">
@@ -1134,28 +1026,7 @@ $obj = new BanglaNumberToWord();
         <!-- account  -->
 
         <div class="container break_page w-100" style="margin-left:-10px">
-            <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;"></p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/002</p>
-                </div>
-                <?php } else if($unit_id == 2){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;"></p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code :  LSAL/HR/03/122</p>
-                </div>
-                <?php }else if($unit_id == 4){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;"></p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/028</p>
-                </div>
-            <?php }?>
+            <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
             <div class="mt-3">
                 <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
                 <div class="d-flex">
@@ -1202,25 +1073,7 @@ $obj = new BanglaNumberToWord();
 
         <!-- job description -->
         <div class="container break_page" >
-           <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/003</p>
-                </div>
-                <?php } else if($unit_id == 2){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code :  LSAL/HR/03/090</p>
-                </div>
-                <?php }else if($unit_id == 4){?>
-                <div class="d-flex flex-row justify-content-between">
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-08-2024</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Revision: 01</p>
-                    <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/002</p>
-                </div>
-            <?php }?>
+           <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
 
             <div class="mt-3">
                 <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>

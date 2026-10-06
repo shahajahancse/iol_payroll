@@ -67,24 +67,13 @@
                     </p>
                   </div>
               </div>
-              <p class="text-center bg-info" style="width: <?php echo $unit_id == 2 ? '100%':($unit_id == 1 ? '141%':'120%')?>;border-radius: 10px 10px 0 0;position: relative;bottom: <?php echo $unit_id == 2 ? '-92px':($unit_id ==1 ? "-98px":'-87px')?>;margin-left: <?php echo $unit_id == 2 ? '0px':($unit_id == 1 ? '-38px' : '-22px')?>;">www.ajgroupbd.com</p>
+              <p class="text-center bg-info" style="width: <?php echo $unit_id == 2 ? '100%':($unit_id == 1 ? '141%':'120%')?>;border-radius: 10px 10px 0 0;position: relative;bottom: <?php echo $unit_id == 2 ? '-92px':($unit_id ==1 ? "-98px":'-87px')?>;margin-left: <?php echo $unit_id == 2 ? '0px':($unit_id == 1 ? '-38px' : '-22px')?>;"></p>
             </div>
         </div>
         <div class='box'>
             <div style='rotate: -90deg;margin: 40px 240px 40px -60px;text-align: center;'>
                   <?php echo $unit_id == 1 ? "<br>":''?>
                   <p style="margin-top: 20px;font-size:14px;white-space:nowrap">
-                    <?php
-
-                      if($unit_id == 1){
-                        echo "  ";
-                        // echo " Document Code : AJFL/HRAC(HR)/03/021 ";
-                      }else if($unit_id == 2){
-                        echo "Document Code : LSAL/HR/03/174";
-                      }else if($unit_id == 4){
-                        echo "Document Code : HGL/HRD/HR/03/051";
-                      }
-                    ?>
                   </p>
           <p style="font-size:14px;line-height:0px"><b>Validity: Till The Time of Employement</b></p>
           <p style="font-size:14px;line-height:0px">Issue Date: <b><?php echo date('d-m-Y',strtotime($value->emp_join_date))?></b></p>

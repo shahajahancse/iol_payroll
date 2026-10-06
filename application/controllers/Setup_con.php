@@ -1906,6 +1906,7 @@ class Setup_con extends CI_Controller
         echo json_encode($query);
     }
     public function shiftmanagement_add(){
+        
         $this->load->library('form_validation');
         $this->load->model('Crud_model');
         $data['shiftmanagementinfo'] = $this->Crud_model->shiftmanagement_fetch();

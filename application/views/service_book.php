@@ -37,7 +37,6 @@
         <div class="flex-fill" style="height:90vh;width:70vw;border: 3px solid black;">
             <div class="text-center" >
                 <br><br><br><br><br><br>
-                <h5>Document Code-HGL/HRD(HR)/03/010</h5>
                 <br><br>
                 <h1 class="unicode-to-bijoy">সার্ভিসবহি </h1>
                 <br>

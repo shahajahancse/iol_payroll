@@ -92,10 +92,10 @@ function get_data() {
             $('#shift_type').empty();
             var parsedData = JSON.parse(data);
             console.log(parsedData);
-            var item;
+            var item = '<option value="">Select Shift Type</option>';
             if (parsedData.length != 0) {
                 for (var i = 0; i < parsedData.length; i++) {
-                    item+='<option value="'+parsedData[i].shift_id+'">'+parsedData[i].sh_type+'</option>';
+                    item += '<option value="' + parsedData[i].id + '">' + parsedData[i].sh_type + '</option>';
                 }
             }
             $('#shift_type').html(item);

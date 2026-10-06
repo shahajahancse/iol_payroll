@@ -125,23 +125,12 @@
             </div>
           </div>
 
-          <p class="text-center bg-info" style="width:100% ; border-radius: 10px 10px 0 0;position: absolute;bottom: 0px;">www.ajgroupbd.com</p>
+          <p class="text-center bg-info" style="width:100% ; border-radius: 10px 10px 0 0;position: absolute;bottom: 0px;"></p>
         </div>
         <div class="box text-center p_padding" style="line-height: <?php echo $unit_id == 1 ? '20' : '21'?>px">
         <!-- <div class="box text-center p_padding" style="line-height: 22px"> -->
           <?php echo $unit_id == 1 ? "<br>":''?>
           <p style="margin-top: 0px;">
-            <?php 
-             
-              if($unit_id == 1){
-                echo "  ";
-                // echo " Document Code : AJFL/HRAC(HR)/03/021 ";
-              }else if($unit_id == 2){
-                echo "Document Code : LSAL/HR/03/174";
-              }else if($unit_id == 4){
-                echo "Document Code : HGL/HRD/HR/03/051";
-              }
-            ?>
           </p>
           <p style="font-size:14px"><b>Validity: Till The Time of Employement</b></p>
           <p style="font-size:14px">Issue Date: <b><?php echo date('d-m-Y',strtotime($value->emp_join_date))?></b></p>

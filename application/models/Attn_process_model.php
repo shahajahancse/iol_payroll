@@ -754,6 +754,7 @@ class Attn_process_model extends CI_Model{
 			     `device_id` int(11) NOT NULL,
 			     `proxi_id` varchar(30) NOT NULL,
 			     `date_time` datetime NOT NULL,
+			     `monitor_con` int(2) DEFAULT 1,
 			      PRIMARY KEY (`att_id`),
 				  KEY `device_id` (`device_id`,`proxi_id`,`date_time`)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;'
 			);
@@ -786,6 +787,7 @@ class Attn_process_model extends CI_Model{
 			     `device_id` int(11) NOT NULL,
 			     `proxi_id` varchar(30) NOT NULL,
 			     `date_time` datetime NOT NULL,
+			     `monitor_con` int(2) DEFAULT 1,
 			      PRIMARY KEY (`att_id`),
 				  KEY `device_id` (`device_id`,`proxi_id`,`date_time`)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;'
 			);
