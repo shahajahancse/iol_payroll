@@ -9,6 +9,10 @@ class Processdb extends CI_Model{
 		/* Standard Libraries */
 		$this->load->model('log_model');
 		$this->load->model('common_model');
+
+		if (!$this->db->field_exists('weekend', 'pr_emp_com_info')) {
+			$this->db->query("ALTER TABLE `pr_emp_com_info` ADD `weekend` VARCHAR(20) NULL DEFAULT 'Friday' AFTER `emp_shift`");
+		}
 	}
 
 	//==================================Employee Information Insert==============================
@@ -42,6 +46,7 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal'),
 			'com_gross_sal'		=> $this->input->post('gross_sal'),
 			'monitor_con'		=> 2,
@@ -225,6 +230,7 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal'),
 			'com_gross_sal'		=> $this->input->post('gross_sal'),
 			'monitor_con'		=> 2,
@@ -243,7 +249,7 @@ class Processdb extends CI_Model{
 		$dob = date("Y-m-d", strtotime($this->input->post('emp_dob')));
 		$per_data = array(
 			'name_bn' 			=> $this->input->post('name_bn'),
-			'name_en' 			=> $this->input->post('name_bn'),
+			'name_en' 			=> $this->input->post('name_en') ? $this->input->post('name_en') : $this->input->post('name_bn'),
 			'emp_dob' 			=> $dob,
 			'gender' 			=> $this->input->post('gender'),
 			'personal_mobile'	=> $this->input->post('personal_mobile'),
@@ -283,6 +289,7 @@ class Processdb extends CI_Model{
 
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'emp_join_date'		=> $ejd,
 			'emp_sal_gra_id'  	=> $this->input->post('emp_sal_gra_id'),
 			'salary_type'		=> $this->input->post('salary_type'),
@@ -539,6 +546,7 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal'),
 			'com_gross_sal'		=> $this->input->post('com_gross_sal'),
 
@@ -2115,8 +2123,7 @@ class Processdb extends CI_Model{
 		$d = $this->db->select('com.*, per.*,deg.*')
 					->from('pr_emp_com_info as com')
 					->join('pr_emp_per_info as per','com.emp_id = per.emp_id', 'left')
-					->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left')
-					->where('deg.hide_status', 1)
+					->join('emp_designation as deg', 'deg.id = com.emp_desi_id AND deg.hide_status = 1', 'left')
 					->where('com.emp_id',$emp_id)
 					->get()->row();
 

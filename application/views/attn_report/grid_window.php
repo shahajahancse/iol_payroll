@@ -69,63 +69,35 @@
 			</div>
 			<div class="row tablebox" style="display: block; margin-bottom: 10px;">
 				<h3 class="h3" style="font-weight: 600;">Select Category</h3>
-				<div class="col-md-6">
-					<div class="form-group">
-						<label>Unit <span style="color: red;">*</span> </label>
-						<select  name="unit_id" id="unit_id" onchange="count_l1()" class="form-control input-sm">
-							<option value="">Select Unit</option>
-							<?php
-
-								foreach ($dept as $row) {
-									if($row['unit_id'] == $user_data->unit_name){
-									$select_data="selected";
-									}else{
-										if ($user_data->level != "All") {
-											continue;
-										}
-									}
-									echo '<option '.$select_data.'  value="'.$row['unit_id'].'">'.$row['unit_name'].
-									'</option>';
-								}
-							?>
-						</select>
-					</div>
-				</div>
+				<input type="hidden" name="unit_id" id="unit_id" value="1">
 				<!-- department -->
 				<div class="col-md-6">
-					<div class="form-group">
+					<div class="form-group" style="margin-bottom: 10px !important;">
 						<label>Department </label>
 						<select class="form-control input-sm dept" id='dept' name='dept'>
-							<?php if (!empty($user_data->unit_name)) {
-								$dpts = $this->db->where('unit_id', $user_data->unit_name)->get('emp_depertment'); ?>
-							<option value=''>Select Department</option>
-							<?php foreach ($dpts->result() as $key => $val) { ?>
-							<option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
-							<?php } } ?>
+							<?php 
+								$dpts = $this->db->where('unit_id', 1)->get('emp_depertment'); ?>
+								<option value=''>Select Department</option>
+								<?php foreach ($dpts->result() as $key => $val) { ?>
+									<option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
+							<?php } ?>
 						</select>
 					</div>
 				</div>
 				<!-- section -->
 				<div class="col-md-6">
-					<div class="form-group">
+					<div class="form-group" style="margin-bottom: 10px !important;">
 						<label class="control-label">Section </label>
 						<select class="form-control input-sm section" id='section' name='section'>
 							<option value=''></option>
 						</select>
 					</div>
 				</div>
-				<!-- line -->
-				<div class="col-md-6">
-					<div class="form-group">
-						<label class="control-label">Line </label>
-						<select class="form-control input-sm line" id='line' name='line'>
-							<option value=''></option>
-						</select>
-					</div>
-				</div>
+				<!-- line (hidden) -->
+				<input type="hidden" class="line" id="line" name="line" value="0">
 				<!-- Designation -->
 				<div class="col-md-6">
-					<div class="form-group">
+					<div class="form-group" style="margin-bottom: 10px !important;">
 						<label class="control-label">Designation</label>
 						<select class="form-control input-sm desig" id='desig' name='desig' onChange="grid_emp_list()">
 							<option value=''></option>
@@ -135,13 +107,13 @@
 				<!-- status -->
 				<div class="col-md-6">
 					<?php $categorys = $this->db->get('emp_category_status')->result(); ?>
-					<div class="form-group">
+					<div class="form-group" style="margin-bottom: 10px !important;">
 						<label class="control-label">Status </label>
 						<select name="status" id="status" class="form-control input-sm" onChange="grid_emp_list()">
 							<option value="">All Employee</option>
 							<?php foreach ($categorys as $key => $row) { ?>
-							<option value="<?= $row->id ?>" <?= ($row->id==1)?'selected':'' ?>><?= $row->status_type; ?>
-							</option>
+								<option value="<?= $row->id ?>" <?= ($row->id == 1) ? 'selected' : '' ?>><?= $row->status_type; ?>
+								</option>
 							<?php } ?>
 						</select>
 					</div>
@@ -156,7 +128,7 @@
 				<div class='multitab-section'>
 					<ul class="nav nav-tabs" id="myTabs">
 						<li class="active"><a href="#daily" data-toggle="tab">Daily Reports</a></li>
-						<li><a href="#monthly" data-toggle="tab">Monthly Reports</a></li>
+						<?php /* <li><a href="#monthly" data-toggle="tab">Monthly Reports</a></li> */ ?>
 						<li><a href="#continuous" data-toggle="tab">Continuous Reports</a></li>
 						<li><a href="#other" data-toggle="tab">Other Reports</a></li>
 					</ul>
@@ -167,14 +139,11 @@
 						?>
 						<!-- Daily Reports -->
 						<div class="tab-pane fade in active" id="daily">
-							<?php if(in_array(61,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(1)">Present Report</button>
+							<?php if(in_array(70,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="grid_actual_present_report()">Actual Present Report</button>
 							<?php } ?>
 							<?php if(in_array(62,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(2)">Absent Report</button>
-							<?php } ?>
-							<?php if(in_array(63,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(3)">Daily Leave Report</button>
 							<?php } ?>
 							<?php if(in_array(64,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(4)">Late Report</button>
@@ -182,27 +151,29 @@
 							<?php if(in_array(65,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(5)">OT Report</button>
 							<?php } ?>
-							<?php if(in_array(66,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(6)">Daily EOT</button>
-							<?php } ?>
-
-							<?php if(in_array(67,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_report(7)">Out & IN Report</button>
-							<?php } ?>
 							<?php if(in_array(68,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="daily_report(8)">Daily Out Punch Miss</button>
 							<?php } ?>
-							<?php if(in_array(69,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="daily_costing_report()">Daily Costing</button>
-							<?php } ?>
-
-
-
-							<?php if(in_array(70,$acl)) { ?>
-								<button class="btn input-sm sbtn" onclick="grid_actual_present_report()">Actual Present Report</button>
-							<?php } ?>
 							<?php if(in_array(71,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="grid_daily_actual_out_in_report()">Actual Out & IN Report</button>
+							<?php } ?>
+							<button class="btn input-sm sbtn" onclick="grid_daily_move_report()">Daily Movement (Punch Log)</button>
+
+							<?php /*
+							<?php if(in_array(61,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(1)">Present Report</button>
+							<?php } ?>
+							<?php if(in_array(63,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(3)">Daily Leave Report</button>
+							<?php } ?>
+							<?php if(in_array(66,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(6)">Daily EOT</button>
+							<?php } ?>
+							<?php if(in_array(67,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_report(7)">Out & IN Report</button>
+							<?php } ?>
+							<?php if(in_array(69,$acl)) { ?>
+								<button class="btn input-sm sbtn" onclick="daily_costing_report()">Daily Costing</button>
 							<?php } ?>
 							<?php if(in_array(72,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="holiday_weekend_attn_report('A')">Holiday / Weekend Absent</button>
@@ -210,8 +181,6 @@
 							<?php if(in_array(73,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="holiday_weekend_attn_report('P')">Holiday / Weekend Present</button>
 							<?php } ?>
-
-
 							<?php if(in_array(74,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="daily_attendance_summary(1)">Line Man Power Costing </button>
 							<button class="btn input-sm sbtn" onclick="daily_attendance_summary(2)">Section Man Power Costing </button>
@@ -231,10 +200,12 @@
 							<?php if(in_array(79,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="iftar_bill_list()">Iftar Bill List</button>
 							<?php } ?>
+							*/ ?>
 						</div>
 						<!-- Daily Reports end -->
 
 						<!-- Monthly Reports -->
+						<?php /*
 						<div class="tab-pane fade" id="monthly">
 							<?php if(in_array(80,$acl)) { ?>
 								<button class="btn input-sm sbtn" onclick="grid_monthly_att_register_ot()">Attendance Register</button>
@@ -317,16 +288,9 @@
 								<button onclick="return validFunc()" type="submit" name="excel" value="excel" class="btn input-sm btn-info">Holiday Register Excel</button>
 								<?php echo form_close(); ?>
 							<?php } ?>
-
-
-
-
-
-
-
-
-
 						</div>
+						*/ ?>
+						<!-- Monthly Reports end -->
 						<!-- Monthly Reports end -->
 
 						<!-- Continuous Reports -->
@@ -366,19 +330,23 @@
 							<?php if(in_array(89,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_prom_report()">Promotion Report</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(90,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_line_report('line')">Line Change Report</button>
 							<?php } ?>
 							<?php if(in_array(91,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_line_report('section')">Section Change Report</button>
 							<?php } ?>
+							*/ ?>
 							<?php if(in_array(92,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_ot_eot_report()">OT / EOT Report</button>
 							<?php } ?>
 
+							<?php /*
 							<?php if(in_array(93,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_continuous_costing_report()">Continuous Costing Report</button>
 							<?php } ?>
+							*/ ?>
 
 							<?php if(in_array(94,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="last_increment_promotion(1)">Last Increment Check</button>
@@ -389,6 +357,7 @@
 							<?php if(in_array(96,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="increment_able_employee()">Increment able employee</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(97,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="unit_transferred_list(1)">Unit transfer list</button>
 							<?php } ?>
@@ -404,6 +373,7 @@
 							<?php if(in_array(101,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="emp_conformation_list(3)">Conformation Letter</button>
 							<?php } ?>
+							*/ ?>
 						</div>
 						<!-- Continuous Reports end -->
 
@@ -415,9 +385,11 @@
 							<?php if(in_array(103,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="id_card(2)">ID Card English</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(104,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_job_card()">Job Card</button>
 							<?php } ?>
+							*/ ?>
 
 
 							<?php if(in_array(105,$acl)) { ?>
@@ -429,6 +401,7 @@
 							<?php if(in_array(107,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_left_report()">Left Report</button>
 							<?php } ?>
+							<?php /*
 							<?php if(in_array(108,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_general_info()">General Report</button>
 							<?php } ?>
@@ -446,6 +419,8 @@
 							<?php if(in_array(112,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="worker_register()">Worker Register</button>
 							<?php } ?>
+							*/ ?>
+
 							<?php if(in_array(113,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_emp_job_application()">Job Application</button>
 							<?php } ?>
@@ -453,7 +428,7 @@
 							<button class="btn input-sm sbtn" onclick="join_letter()">Joining Letter</button>
 							<?php } ?>
 
-
+							<?php /*
 							<?php if(in_array(115,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_letter_report(1)">Letter 1 <span class="badge bg-red " style="color:#fff !important" id="letter1_count">0</span></button>
 							<?php } ?>
@@ -463,6 +438,8 @@
 							<?php if(in_array(117,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_letter_report(3)">Letter 3 <span class="badge bg-red" style="color:#fff !important" id="letter3_count">0</span></button>
 							<?php } ?>
+							*/ ?>
+
 							<?php if(in_array(118,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_employee_information()">Employee Information</button>
 							<?php } ?>
@@ -473,6 +450,8 @@
 							<?php if(in_array(120,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_incre_prom_report(2)">Promotion Letter</button>
 							<?php } ?>
+
+							<?php /*
 							<?php if(in_array(121,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_incre_prom_report(3)">Line Letter</button>
 							<?php } ?>
@@ -483,11 +462,14 @@
 							<?php if(in_array(123,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_final_satalment()">Final Settlement</button>
 							<?php } ?>
+							*/ ?>
 
 							<!-- actual job card -->
 							<?php if(in_array(124,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_eot_actual()">Job Card Actual </button>
 							<?php } ?>
+
+							<?php /*
 							<!-- max 2 eot -->
 							<?php if(in_array(125,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_extra_ot_9pm()">Job Card.</button>
@@ -518,7 +500,7 @@
 							<?php if(in_array(121,$acl)) { ?>
 							<button class="btn input-sm sbtn" onclick="grid_employee_background()">Employee Background</button>
                             <?php } ?>
-							<!-- roster list end  -->
+							*/ ?>
 						</div>
 					</div>
 				</div>
@@ -671,14 +653,13 @@
 				get_checked_emp();
 			});
 
-			//Designation dropdown
-			$('#line').change(function() {
+			// Load designation on section change
+			$('#section').change(function() {
 				$('.desig').addClass('form-control input-sm');
 				$(".desig > option").remove();
-				var id = $('#line').val();
 				$.ajax({
 					type: "POST",
-					url: hostname + "common/ajax_designation_by_line_id/" + id,
+					url: hostname + "common/ajax_designation_by_unit/1",
 					success: function(func_data) {
 						$('.desig').append("<option value=''>-- Select Designation --</option>");
 						$.each(func_data, function(id, name) {
@@ -693,34 +674,10 @@
 				grid_emp_list();
 			});
 
-			//Line dropdown
-			$('#section').change(function() {
-				$('.line').addClass('form-control input-sm');
-				$(".line > option").remove();
-				$(".desig > option").remove();
-				var id = $('#section').val();
-				$.ajax({
-					type: "POST",
-					url: hostname + "common/ajax_line_by_sec_id/" + id,
-					success: function(func_data) {
-						$('.line').append("<option value=''>-- Select Line --</option>");
-						$.each(func_data, function(id, name) {
-							var opt = $('<option />');
-							opt.val(id);
-							opt.text(name);
-							$('.line').append(opt);
-						});
-					}
-				});
-				// load employee
-				grid_emp_list();
-			});
-
-			//section dropdown
+			// Section dropdown on dept change
 			$('#dept').change(function() {
 				$('.section').addClass('form-control input-sm');
 				$(".section > option").remove();
-				$(".line > option").remove();
 				$(".desig > option").remove();
 				var id = $('#dept').val();
 				$.ajax({
@@ -736,35 +693,38 @@
 						});
 					}
 				});
-				// load employee
-				grid_emp_list();
-			});
-
-			//Department dropdown
-			$('#unit_id').change(function() {
-				$('.dept').addClass('form-control input-sm');
-				$(".dept > option").remove();
-				$(".section > option").remove();
-				$(".line > option").remove();
-				$(".desig > option").remove();
-				var id = $('#unit_id').val();
 				$.ajax({
 					type: "POST",
-					url: hostname + "common/ajax_department_by_unit_id/" + id,
+					url: hostname + "common/ajax_designation_by_unit/1",
 					success: function(func_data) {
-						$('.dept').append("<option value=''>-- Select Department --</option>");
+						$('.desig').append("<option value=''>-- Select Designation --</option>");
 						$.each(func_data, function(id, name) {
 							var opt = $('<option />');
 							opt.val(id);
-							opt.html(name);
-							$('.dept').append(opt);
+							opt.text(name);
+							$('.desig').append(opt);
 						});
-						changeFontBn();
 					}
 				});
 				// load employee
 				grid_emp_list();
 			});
+
+			// Initial load of designations and employee list
+			$.ajax({
+				type: "POST",
+				url: hostname + "common/ajax_designation_by_unit/1",
+				success: function(func_data) {
+					$('.desig').append("<option value=''>-- Select Designation --</option>");
+					$.each(func_data, function(id, name) {
+						var opt = $('<option />');
+						opt.val(id);
+						opt.text(name);
+						$('.desig').append(opt);
+					});
+				}
+			});
+			grid_emp_list();
 		});
 	</script>
 

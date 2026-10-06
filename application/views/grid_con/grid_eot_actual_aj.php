@@ -82,30 +82,18 @@
                             echo "</td>";
                         echo "</tr>";
                         echo "<tr>";
-                            echo "<td>";
-                            echo "<strong>Line :</strong>";
-                            echo "</td>";
-                            echo "<td>";
-                            echo $value->line_name_en;
-                            echo "</td>";
-
-                            
                             echo "<td >";
                             echo "<strong>Dept :</strong>";
                             echo "</td>";
                             echo "<td >";
                             echo $value->dept_name;
                             echo "</td>";
-
-                        echo "</tr>";
-                        echo "<tr>";
                             echo "<td>";
                             echo "<strong>DOJ :</strong>";
                             echo "</td>";
                             echo "<td>";
                             echo date("d-M-Y", strtotime($value->emp_join_date));
                             echo "</td>";
-
                         echo "</tr>";
 					echo "<table>";
 

@@ -14,6 +14,14 @@ class Emp_info_con extends CI_Controller {
 			redirect("authentication");
 		}
 		$this->data['user_data'] = $this->session->userdata('data');
+
+		$this->db->query("UPDATE pr_units SET 
+			unit_name = 'Islam Oxygen Limited',
+			unit_name_bangla = 'ইসলাম অক্সিজেন লিমিটেড',
+			unit_add = '11/1 Tarabo, Rupgonj, Narayangonj',
+			unit_add_bangla = '১১/১ তারাবো, রূপগঞ্জ, নারায়ণগঞ্জ'
+			WHERE unit_id = 1 AND unit_name != 'Islam Oxygen Limited'");
+
 		if (!check_acl_list($this->data['user_data']->id,1)) {
 			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
 			redirect("payroll_con");
@@ -51,10 +59,10 @@ class Emp_info_con extends CI_Controller {
 		} else {
 			$this->db->select('emp_id');
 			$this->db->where('unit_id', $unit_id);
-			$this->db->order_by('emp_id', 'desc');
+			$this->db->order_by('CAST(emp_id AS UNSIGNED)', 'desc', FALSE);
 			$this->db->limit(1);
 			$query = $this->db->get('pr_emp_com_info');
-			echo $query->row()->emp_id;
+			echo ($query->num_rows() > 0) ? $query->row()->emp_id : '';
 		}
 	}
 
@@ -494,6 +502,134 @@ class Emp_info_con extends CI_Controller {
 		}
 	}
 
+    public function employee_list() {
+        if ($this->session->userdata('logged_in') == false) {
+            redirect("authentication");
+        }
+        $this->data['user_data']  = $this->session->userdata('data');
+        $this->data['username']   = !empty($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : '';
+        $this->data['user_unit']  = !empty($this->data['user_data']->unit_name) ? $this->data['user_data']->unit_name : '';
+        $this->data['user_level'] = !empty($this->data['user_data']->level) ? $this->data['user_data']->level : '';
+
+        // Dropdown options for filters
+        $this->data['units']        = $this->db->select('unit_id, unit_name')->get('pr_units')->result();
+        $this->data['departments']  = $this->db->select('dept_id, dept_name')->order_by('dept_name', 'ASC')->get('emp_depertment')->result();
+        $this->data['sections']     = $this->db->select('id as sec_id, sec_name_en as sec_name')->order_by('sec_name_en', 'ASC')->get('emp_section')->result();
+        $this->data['designations'] = $this->db->select('id, desig_name')->where('hide_status', 1)->order_by('desig_name', 'ASC')->get('emp_designation')->result();
+
+        $this->data['title']   = 'Employee List';
+        $this->data['subview'] = 'empInfo/employee_list';
+        $this->load->view('layout/template', $this->data);
+    }
+
+    public function get_employee_list_ajax() {
+        if ($this->session->userdata('logged_in') == false) {
+            echo json_encode(array());
+            return;
+        }
+
+        $unit_id     = $this->input->get_post('unit_id');
+        $dept_id     = $this->input->get_post('dept_id');
+        $sec_id      = $this->input->get_post('sec_id');
+        $desig_id    = $this->input->get_post('desig_id');
+        $status      = $this->input->get_post('status');
+        $search      = $this->input->get_post('search');
+
+        $this->db->select('
+            com.id as com_id,
+            com.emp_id,
+            com.proxi_id,
+            com.gross_sal,
+            com.emp_join_date,
+            com.emp_cat_id,
+            per.name_en,
+            per.name_bn,
+            per.personal_mobile,
+            u.unit_name,
+            d.dept_name,
+            s.sec_name_en as sec_name,
+            deg.desig_name
+        ');
+        $this->db->from('pr_emp_com_info as com');
+        $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+        $this->db->join('pr_units as u', 'u.unit_id = com.unit_id', 'left');
+        $this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+        $this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+        $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+
+        if (!empty($unit_id)) {
+            $this->db->where('com.unit_id', $unit_id);
+        }
+        if (!empty($dept_id)) {
+            $this->db->where('com.emp_dept_id', $dept_id);
+        }
+        if (!empty($sec_id)) {
+            $this->db->where('com.emp_sec_id', $sec_id);
+        }
+        if (!empty($desig_id)) {
+            $this->db->where('com.emp_desi_id', $desig_id);
+        }
+        if (!empty($status)) {
+            $this->db->where('com.emp_cat_id', $status);
+        }
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('com.emp_id', $search);
+            $this->db->or_like('com.proxi_id', $search);
+            $this->db->or_like('per.name_en', $search);
+            $this->db->or_like('per.name_bn', $search);
+            $this->db->or_like('per.personal_mobile', $search);
+            $this->db->group_end();
+        }
+
+        $this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+        $employees = $this->db->get()->result();
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($employees);
+    }
+
+    public function get_employee_details() {
+        if ($this->session->userdata('logged_in') == false) {
+            echo json_encode(array('status' => false, 'message' => 'Unauthorized'));
+            return;
+        }
+
+        $emp_id = $this->input->get_post('emp_id');
+        if (empty($emp_id)) {
+            echo json_encode(array('status' => false, 'message' => 'Employee ID is required'));
+            return;
+        }
+
+        $this->db->select('
+            com.*,
+            per.*,
+            u.unit_name,
+            d.dept_name,
+            s.sec_name_en as sec_name,
+            deg.desig_name,
+            l.line_name_en,
+            g.gr_name
+        ');
+        $this->db->from('pr_emp_com_info as com');
+        $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+        $this->db->join('pr_units as u', 'u.unit_id = com.unit_id', 'left');
+        $this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+        $this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+        $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+        $this->db->join('emp_line_num as l', 'l.id = com.emp_line_id', 'left');
+        $this->db->join('pr_grade as g', 'g.gr_id = com.emp_sal_gra_id', 'left');
+        $this->db->where('com.emp_id', $emp_id);
+        $emp = $this->db->get()->row();
+
+        if ($emp) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(array('status' => true, 'data' => $emp));
+        } else {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(array('status' => false, 'message' => 'Employee not found'));
+        }
+    }
 
 }
 

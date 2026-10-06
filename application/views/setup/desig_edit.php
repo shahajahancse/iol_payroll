@@ -47,6 +47,7 @@
                     <?= (isset($failuer['unit_id'])) ? '<div class="alert alert-failuer">' . $failuer['unit_id'] . '</div>' : ''; ?>
                 </div>
             </div>
+            <!--
             <?php
                 $this->db->select('allowance_attn_bonus.*');
                 if(!empty($this->data['user_data']->unit_name)){
@@ -148,6 +149,7 @@
                     <?= (isset($failuer['tiffin_id'])) ? '<div class="alert alert-failuer">' . $failuer['tiffin_id'] . '</div>' : ''; ?>
                 </div>
             </div>
+            -->
         </div>
 
         <div class="row">

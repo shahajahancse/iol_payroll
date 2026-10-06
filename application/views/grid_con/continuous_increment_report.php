@@ -91,7 +91,7 @@ table.main_table tr,table.main_table tr td,table.main_table tr th{
 							<th style="background:;">Emp ID</th>
 							<th>Name</th>
 							<th>Designation</th> 
-							<th>Line</th> 
+							<th>Section</th> 
 							<th>Grade</th> 
 							<th>Pre. Sal.</th>
 							<th>Increment</th>
@@ -120,7 +120,7 @@ table.main_table tr,table.main_table tr td,table.main_table tr th{
 							<th style="background:;">Emp ID</th>
 							<th>Name</th>
 							<th>Designation</th> 
-							<th>Line</th> 
+							<th>Section</th> 
 							<th>Grade</th> 
 							<th>Pre. Sal.</th>
 							<th>Increment</th>
@@ -152,7 +152,7 @@ table.main_table tr,table.main_table tr td,table.main_table tr th{
 						echo "</td>";
 						
 						echo "<td style='text-align:left; padding:5px;'>";
-						echo (isset($values["new_line"][$k])) ? $values["new_line"][$k] : '';
+						echo (isset($values["new_section"][$k])) ? $values["new_section"][$k] : '';
 						echo "</td>";
 						$grade_id = (isset($values["new_grade"][$k])) ? $values["new_grade"][$k] : '';
 						$grade_row = $this->db->where('gr_id',$grade_id)->get('pr_grade')->row();

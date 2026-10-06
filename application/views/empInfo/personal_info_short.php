@@ -49,43 +49,24 @@ input[type="number"] {
 
                 <hr style="margin-bottom: 0px !important;">
                 <div style="background-color: white; padding: 15px !important;">
+                    <!-- Unit field commented out, default set to 1 -->
+                    <input type="hidden" name="unit_id" id="unit_id" value="<?= isset($emp_info->unit_id) ? $emp_info->unit_id : 1 ?>">
+
                     <div class="row">
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label>Unit <span style="color: red;">*</span> </label>
-                                <select name="unit_id" id="unit_id" onchange='get_last_id()' id="unit_id"
-                                    class="form-control input-sm required" required>
-                                    <option value="">Select Unit</option>
-                                    <?php
-										foreach ($units as $row) {
-										if($row->unit_id == $user_data->unit_name){
-											$select_data="selected";
-										}else{
-                                            if ($user_data->level != "All") {
-                                                continue;
-                                            }
-										}
-										echo '<option '.$select_data.'  value="'.$row->unit_id.'">'.$row->unit_name.
-										'</option>';
-										}
-									?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Emp Id <span style="color: red;">*</span> </label>
                                 <input type="text" name="emp_id" id="emp_id" class="form-control input-sm required"
-                                    value="<?= isset($emp_info->emp_id)?>" required>
+                                    value="<?= isset($emp_info->emp_id) ? $emp_info->emp_id : '' ?>" required>
                                 <?php echo form_error('emp_id');?>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label> Punch Card No. <span style="color: red;">*</span> </label>
-                                <input type="text" name="proxi_id" id="proxi_id" value="<?= set_value('proxi_id') ?>"
-                                    required readonly class="form-control input-sm required"
-                                    value="<?= isset($emp_info->proxi_id)?>" required>
+                                <input type="text" name="proxi_id" id="proxi_id"
+                                    class="form-control input-sm required"
+                                    value="<?= isset($emp_info->proxi_id) ? $emp_info->proxi_id : set_value('proxi_id')?>" required>
                                 <?php echo form_error('proxi_id');?>
                             </div>
                         </div>
@@ -93,7 +74,7 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Name (Bangla) <span style="color: red;">*</span> </label>
                                 <input type="text" name="name_bn" id="name_bn"
-                                    class="form-control input-sm bangla_name required" value="<?= isset($emp_info->name_bn)?>"
+                                    class="form-control input-sm bangla_name required" value="<?= isset($emp_info->name_bn) ? $emp_info->name_bn : '' ?>"
                                     required>
                                 <?php echo form_error('name_bn');?>
                             </div>
@@ -102,7 +83,7 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Name (English) <span style="color: red;">*</span> </label>
                                 <input type="text" name="name_en" id="name_en"
-                                    class="form-control input-sm english_name required" value="<?= isset($emp_info->name_en)?>"
+                                    class="form-control input-sm english_name required" value="<?= isset($emp_info->name_en) ? $emp_info->name_en : '' ?>"
                                     required>
                                 <?php echo form_error('name_en');?>
                             </div>
@@ -162,7 +143,7 @@ input[type="number"] {
                         $depts = $this->db->get('emp_depertment')->result();
                     ?>
                     <div class="row">
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Department <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_dept_id');?>
@@ -175,7 +156,7 @@ input[type="number"] {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Section <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_sec_id');?>
@@ -185,7 +166,7 @@ input[type="number"] {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3" style="padding-left: 0px !important;">
+                        <!-- <div class="col-md-3" style="padding-left: 0px !important;">
                             <div class="form-group">
                                 <label>Line<span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_line_id');?>
@@ -194,8 +175,9 @@ input[type="number"] {
                                     <option value="">-- Select one --</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="col-md-3" style="padding-left: 0px !important;">
+                        </div> -->
+                        <input type="hidden" name="emp_line_id" id="emp_line_id" value="1">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>Designation<span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_desi_id');?>
@@ -224,7 +206,7 @@ input[type="number"] {
                         </div>
 
                         <?php $shifts = $this->db->where('unit_id',$user_data->unit_name)->get('pr_emp_shift')->result(); ?>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Emp Shift <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_shift');?>
@@ -246,6 +228,21 @@ input[type="number"] {
                                 <?php echo form_error('emp_join_date');?>
                             </div>
                         </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Off Day / Weekend <span style="color: red;">*</span> </label>
+                                <?php echo form_error('weekend');?>
+                                <select name="weekend" id="weekend" class="form-control input-sm required" required>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                    <option value="Sunday">Sunday</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <?php $sl_grade = $this->db->get('pr_grade')->result(); ?>
                         <div class="col-md-2">
@@ -261,19 +258,19 @@ input[type="number"] {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                         <div class="form-group">
                             <label>Employee Type <span style="color: red;">*</span> </label>
                             <select name="emp_type" id="emp_type" class="form-control input-sm required" required="">
                                 <option value="">-- Select one --</option>
-                                <option value="1">Worker</option>
-                                <option value="2">Staff</option>
+                                <option value="1">Office</option>
+                                <option value="2">Factory</option>
                             </select>
                         </div>
                     </div>
                     </div>
 
-                    <div class="row">
+                    <!-- <div class="row">
                         <?php //dd($shifts); ?>
                         <div class="col-md-3">
                             <div class="form-group">
@@ -334,7 +331,12 @@ input[type="number"] {
                                 </select>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
+                    <input type="hidden" name="position_id" id="position_id" value="1">
+                    <input type="hidden" name="salary_type" id="salary_type" value="1">
+                    <input type="hidden" name="salary_draw" id="salary_draw" value="1">
+                    <input type="hidden" name="lunch" id="lunch" value="1">
+                    <input type="hidden" name="transport" id="transport" value="1">
 
                     <div class="row" <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(!in_array(10,$acl)) {echo '';} else { echo 'style="display:none;"';}?>>
                         <div class="col-md-2">
@@ -342,7 +344,7 @@ input[type="number"] {
                                 <label>Gross Salary <span style="color: red;">*</span> </label>
                                 <?php echo form_error('gross_sal');?>
                                 <input type="text" onkeyup="salary_structure_cal()" onchange="salary_structure_cal()" name="gross_sal" id="gross_sal"
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -350,7 +352,7 @@ input[type="number"] {
                                 <label>Basic Salary </label>
                                 <?php echo form_error('basic_sal');?>
                                 <input type="text" name="basic_sal" id="basic_sal" disabled
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -358,7 +360,7 @@ input[type="number"] {
                                 <label>House </label>
                                 <?php echo form_error('house_rent');?>
                                 <input type="text" name="house_rent" id="house_rent" disabled
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
 
@@ -366,8 +368,7 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Medical </label>
                                 <?php echo form_error('medical');?>
-                                <input type="text" name="medical" id="medical" disabled class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="medical" id="medical" disabled class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-1">
@@ -375,24 +376,23 @@ input[type="number"] {
                                 <label>Transport </label>
                                 <?php echo form_error('trans_allow');?>
                                 <input type="text" name="trans_allow" id="trans_allow" disabled
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
                                 <label> Food </label>
                                 <?php echo form_error('food');?>
-                                <input type="text" name="food" id="food" disabled class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="food" id="food" disabled class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
                             <label style="white-space: nowrap">Ot Entitle </label>
                             <?php echo form_error('ot_entitle');?>
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="0" class="form-check-input"
-                                style="display: inline; margin-right: 10px;" required>Yes
+                                style="display: inline; margin-right: 10px;">Yes
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="1" class="form-check-input"
-                                style="display: inline; margin-right: 10px;" required checked>No
+                                style="display: inline; margin-right: 10px;" checked>No
                         </div>
                     </div>
                     <div class="row">
@@ -527,6 +527,7 @@ function set_desi_item() {
     //$("#emp_dob").datepicker("setDate", emp_dob);
     $("#nomi_age").datepicker("setDate", new Date(nomi_age));
     $("#emp_join_date").datepicker("setDate", new Date(emp_join_date));
+    $('#weekend').val(localStorage.getItem('weekend')).trigger('change');
 
     $('#nomi_district').val(nomi_district).trigger('change');
     setTimeout(function() {
@@ -579,12 +580,8 @@ function set_desi_item() {
         // Set a delay of 0.5 seconds before updating emp_sec_id
         setTimeout(function() {
             $('#emp_sec_id').val(emp_sec_id).trigger('change');
-            // Set another delay of 0.5 seconds before updating emp_line_id
             setTimeout(function() {
-                $('#emp_line_id').val(emp_line_id).trigger('change');
-                setTimeout(function() {
-                    $('#emp_desi_id').val(emp_desi_id);
-                }, 500);
+                $('#emp_desi_id').val(emp_desi_id);
             }, 500);
         }, 500);
     }, 500);
@@ -653,7 +650,7 @@ function emp_id_search(id = null) {
                     "emp_sec_id", "emp_line_id", "emp_desi_id", "emp_sal_gra_id", "emp_type",
                     "emp_cat_id", "proxi_id", "emp_shift", "gross_sal",
                     "com_gross_sal", "ot_entitle", "com_ot_entitle", "transport", "img_source",
-                    "lunch", "att_bonus", "salary_draw", "salary_type","position_id", "emp_join_date",
+                    "lunch", "att_bonus", "salary_draw", "salary_type","position_id", "emp_join_date", "weekend",
                     "ref_district", "refer_village", "ref_thana", "ref_post","ft","inches","symbol"
                 ];
                 // Filter the data based on keysToFilter
@@ -667,7 +664,7 @@ function emp_id_search(id = null) {
                             key == 'per_thana' || key == 'per_post' || key == 'pre_post' || key ==
                             'nomi_post' || key == 'ref_thana' || key == 'ref_post' || key ==
                             'ref_district' || key == 'emp_dob' || key == 'nomi_age' || key ==
-                            'emp_join_date' || key == 'ft' || key == 'inches' || key == 'ot_entitle' || key == 'com_ot_entitle' || key == 'nid_dob_check' || key == 'com_gross_sal'|| key == 'gross_sal'
+                            'emp_join_date' || key == 'weekend' || key == 'ft' || key == 'inches' || key == 'ot_entitle' || key == 'com_ot_entitle' || key == 'nid_dob_check' || key == 'com_gross_sal'|| key == 'gross_sal'
                         ) {
                             localStorage.setItem(key, data[key]);
                         } else if (key == 'img_source') {
@@ -750,47 +747,55 @@ $(document).ready(function() {
         });
     });
 
-    //Line dropdown
-    $('#emp_sec_id').change(function() {
-        $('.emp_line_id').addClass('form-control input-sm');
-        $(".emp_line_id > option").remove();
-        $(".emp_desi_id > option").remove();
-        var id = $('#emp_sec_id').val();
+    function load_designations() {
+        var unit_id = $('#unit_id').val() || 1;
         $.ajax({
             type: "POST",
-            url: hostname + "common/ajax_line_by_sec_id/" + id,
+            url: hostname + "common/ajax_designation_by_unit/" + unit_id,
             success: function(func_data) {
-                $('.emp_line_id').append("<option value=''>-- Select District --</option>");
+                var currentVal = $('.emp_desi_id').val();
+                $('.emp_desi_id').empty();
+                $('.emp_desi_id').append("<option value=''>-- Select Designation --</option>");
                 $.each(func_data, function(id, name) {
                     var opt = $('<option />');
                     opt.val(id);
                     opt.text(name);
-                    $('.emp_line_id').append(opt);
+                    $('.emp_desi_id').append(opt);
                 });
+                if (currentVal) {
+                    $('.emp_desi_id').val(currentVal);
+                }
             }
         });
+    }
+
+    // Section change populates Designation dropdown directly
+    $('#emp_sec_id').change(function() {
+        load_designations();
     });
 
-    //section dropdown
+    // Department change populates Section dropdown and Designation dropdown
     $('#emp_dept_id').change(function() {
         $('.emp_sec_id').addClass('form-control input-sm');
         $(".emp_sec_id > option").remove();
-        $(".emp_line_id > option").remove();
         var id = $('#emp_dept_id').val();
-        var unit_id = $('#unit_id').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_section_by_dept_id/" + id + '/' + unit_id,
-            success: function(func_data) {
-                $('.emp_sec_id').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_sec_id').append(opt);
-                });
-            }
-        });
+        var unit_id = $('#unit_id').val() || 1;
+        if (id) {
+            $.ajax({
+                type: "POST",
+                url: hostname + "common/ajax_section_by_dept_id/" + id + '/' + unit_id,
+                success: function(func_data) {
+                    $('.emp_sec_id').append("<option value=''>-- Select Section --</option>");
+                    $.each(func_data, function(id, name) {
+                        var opt = $('<option />');
+                        opt.val(id);
+                        opt.text(name);
+                        $('.emp_sec_id').append(opt);
+                    });
+                }
+            });
+        }
+        load_designations();
     });
     $('#unit_id').change(function() {
         var id = $('#unit_id').val();
@@ -976,6 +981,9 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Auto-load designations on page ready
+    load_designations();
 });
 </script>
 

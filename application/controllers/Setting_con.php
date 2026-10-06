@@ -25,6 +25,7 @@ class Setting_con extends CI_Controller {
 		if ($this->session->userdata('logged_in') == false) {
             redirect("authentication");
         }
+		$this->db->where('status', 1);
 		$this->db->order_by('id', 'desc');
 		$this->data['data'] = $this->db->get('member_acl_list')->result();
         $this->data['username'] = $this->data['user_data']->id_number;
@@ -48,7 +49,7 @@ class Setting_con extends CI_Controller {
 	}
 
 	function acl_access_add(){
-		if ($this->db->insert('member_acl_list', array('acl_name' => $this->input->post('acl_name'), 'type' => $this->input->post('type')))) {
+		if ($this->db->insert('member_acl_list', array('acl_name' => $this->input->post('acl_name'), 'type' => $this->input->post('type'), 'status' => 1))) {
 			$this->session->set_flashdata('success', 'ACL Added Successfully');
 		}else{
 			$this->session->set_flashdata('failuer', 'ACL Added Failed');
@@ -97,6 +98,7 @@ class Setting_con extends CI_Controller {
             redirect("authentication");
         }
 		$id = $this->data['username'] = $this->data['user_data']->id;
+		$this->db->where('status', 1);
 		$this->db->order_by('id', 'desc');
 		$this->db->where_in('type', [1,2,5]);
 		$this->data['access_list'] = $this->db->get('member_acl_list')->result();
@@ -208,6 +210,7 @@ class Setting_con extends CI_Controller {
 		$id = $this->input->post('id');
 		$type = $this->input->post('type');
 
+		$this->db->where('status', 1);
 		$this->db->order_by('id', 'desc');
 		if ($type == 1) {
 			$this->db->where_in('type', [1,2,5]);
@@ -633,7 +636,7 @@ class Setting_con extends CI_Controller {
         $this->db->join('pr_units', 'pr_units.unit_id = pr_emp_com_info.unit_id');
         $this->db->join('emp_line_num', 'emp_line_num.id = pr_emp_com_info.emp_line_id');
         $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_emp_com_info.emp_id', 'left');
-        $this->db->where('pr_emp_com_info.attn_sum_line_id IS NOT NULL');
+        $this->db->where('pr_emp_com_info.emp_line_id IS NOT NULL');
         $this->db->where('pr_emp_com_info.unit_id', $_SESSION['data']->unit_name);
         $this->data['pr_line'] = $this->db->get()->result_array();
 		// dd();
@@ -668,14 +671,14 @@ class Setting_con extends CI_Controller {
 		$emp_id = $_POST['spl'];
 
 		$this->db->where('emp_id', $emp_id);
-		$this->db->update('pr_emp_com_info', array('attn_sum_line_id' => $line_id));
+		$this->db->update('pr_emp_com_info', array('emp_line_id' => $line_id));
 		echo '1';
 	}
 
     function line_delete($id)
     {
         $this->db->where('emp_id', $id);
-        $this->db->update('pr_emp_com_info', array('attn_sum_line_id' =>null));
+        $this->db->update('pr_emp_com_info', array('emp_line_id' =>null));
         $this->session->set_flashdata('success', 'Record Deleted successfully!');
 		redirect(base_url('setting_con/line_wise_atn_desig'));
     }

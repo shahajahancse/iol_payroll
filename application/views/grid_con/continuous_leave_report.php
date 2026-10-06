@@ -49,7 +49,7 @@
 					<th style="padding:5px">SL</th>
 					<th style="padding:5px">Emp ID</th>
 					<th style="padding:5px">Name</th>
-					<th style="padding:5px">Line</th>
+					<th style="padding:5px">Section</th>
 					<th style="padding:5px">Leave Type</th>
 					<th style="padding:5px">From Date</th>
 					<th style="padding:5px">To Date</th>
@@ -84,7 +84,7 @@
 							<td style="padding:2px 5px;text-align:center"> <?= $key+1 ?> </td>
 							<td style="padding:2px 5px;text-align:center"> <?= $row->emp_id ?> </td>
 							<td style="padding:2px 5px;text-align:center"> <?= $row->name_en ?> </td>
-							<td style="padding:2px 5px;text-align:center"> <?= $row->line_name_en ?> </td>
+							<td style="padding:2px 5px;text-align:center"> <?= $row->sec_name_en ?> </td>
 							<td style="padding:2px 5px;text-align:center"> <?= $leave_type ?> </td>
 							<td style="padding:2px 5px;text-align:center"> <?= date('Y-m-d', strtotime($row->leave_start)) ?> </td>
 							<td style="padding:2px 5px;text-align:center"> <?= date('Y-m-d', strtotime($row->leave_end)) ?> </td>

@@ -26,7 +26,7 @@ class Common extends CI_Controller {
         $this->db->select('max(com.id) as id, max(com.emp_id) as emp_id, max(per.name_en) as name_en, max(per.name_bn) as name_bn');
         $this->db->from('pr_emp_com_info as com');
         $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
-        $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+        $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id AND deg.hide_status = 1', 'left');
         // $this->db->join('pr_emp_left_history', 'pr_emp_left_history.emp_id = com.emp_id', 'left');
         // $this->db->join('pr_emp_resign_history', 'pr_emp_resign_history.emp_id = com.emp_id', 'left');
         // $this->db->where('pr_emp_left_history.left_date <=',date('Y-m-d', strtotime('-360 days')));
@@ -35,7 +35,6 @@ class Common extends CI_Controller {
         if (isset($emp_id_not) && !empty($emp_id_not)) {
             $this->db->where_not_in('com.emp_id', $emp_id_not);
         }
-        $this->db->where('deg.hide_status', 1);
 
         if (!empty($dept)) {
             $this->db->where('com.emp_dept_id', $dept);
@@ -66,7 +65,7 @@ class Common extends CI_Controller {
         }
 
         $this->db->group_by('com.emp_id');
-        $this->db->order_by('com.emp_id', 'asc');
+        $this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
         $result = $this->db->get()->result();
         //dd($result);
 
@@ -274,7 +273,7 @@ class Common extends CI_Controller {
             $data[$row->id] = $row->desig_name;
         }
 
-        header('Content-Type: application/x-json; charset=utf-8');
+        header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data);
         exit;
     }

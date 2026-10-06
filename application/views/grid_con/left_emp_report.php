@@ -58,7 +58,6 @@ table.main_table tr,table.main_table tr td,table.main_table tr th{
 	<th>Emp ID</th>
 	<th>Name</th>
 	<th>Designation</th>
-	<th>Line</th>
 	<th>Section</th>
 	<th>Date of Birth</th>
 	<th>Joining Date</th>
@@ -95,17 +94,7 @@ table.main_table tr,table.main_table tr td,table.main_table tr th{
 		echo "</td>";
 
 		echo "<td style='padding: 5px 3px;'>";
-		echo $values["line_name"][$k];
-		echo "</td>";
-
-		echo "<td style='padding: 5px 3px;'>";
-		$sections = array_merge(
-			explode(' ', $values["line_name"][$k]),
-			explode('-', $values["line_name"][$k])
-		);
-		$sections = preg_split('/[ -]/', $values["line_name"][$k]);
-		echo $sections[0]=="Line" ? "Sewing" : $sections[0];
-
+		echo $values["sec_name_en"][$k];
 		echo "</td>";
 
 		echo "<td   style='text-align:center; width:70px;'>";

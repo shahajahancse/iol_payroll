@@ -117,7 +117,7 @@
                 <th style="padding-left:10px;padding-right:10px;">ID</th>
                 <th style="padding:0 4px;">Employee Name</th>
                 <th style="">Designation</th>
-                <th style="padding:0 4px">Line</th>
+                <th style="padding:0 4px">Section</th>
                 <th style="">Shift</th>
                 <?php if($daily_status == 4){?>
                 	<th style="padding:0 4px">In Time</th>
@@ -165,7 +165,7 @@
                 <td style="text-align:center;padding:0 4px"><?php echo $employee['emp_id']?></td>
                 <td style="text-align:center"><?php echo $employee['name_en']?></td>
                 <td style="text-align:center"><?php echo $employee['desig_name']?></td>
-                <td style="text-align:center;padding:0 4px"><?php echo $employee['line_name_en']?></td>
+                <td style="text-align:center;padding:0 4px"><?php echo $employee['sec_name_en']?></td>
                 <td style="text-align:center;"><?php echo $employee['shift_name']?></td>
 
 				<?php if($daily_status == 4){?>

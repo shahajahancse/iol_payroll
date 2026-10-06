@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <link rel="icon" type="image/ico" href="<?=base_url()?>awedget/assets/img/loopdot.png" />
 
-    <title>Hr | Payroll</title>
+    <title><?= isset($title) ? $title . ' | Islam Oxygen Limited' : 'Islam Oxygen Limited | HR & Payroll' ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta content="Mysoftheaven (BD) Ltd." name="author" />
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -57,6 +57,7 @@
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <!-- <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script> -->
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="<?=base_url()?>js/common.js" type="text/javascript"></script>
     <!-- new -->
 
 

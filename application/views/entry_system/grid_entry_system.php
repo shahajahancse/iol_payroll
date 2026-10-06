@@ -29,39 +29,18 @@
             <!-- start default panel (dept/section/line/desig) -->
             <div class="row tablebox" style="display: block;">
                 <!-- <h3 style="font-weight: 600;"><?= $title ?></h3> -->
-                <div class="col-md-6">
-                    <div class="form-group" style="margin-bottom: 10px !important;">
-                        <label>Unit <span style="color: red;">*</span> </label>
-                        <select name="unit_id" id="unit_id" class="form-control input-sm">
-                            <option value="">Select Unit</option>
-                            <?php
-                            foreach ($dept as $row) {
-                                if ($row['unit_id'] == $user_data->unit_name) {
-                                    $select_data = "selected";
-                                } else {
-                                    if ($user_data->level != "All") {
-                                        continue;
-                                    }
-                                }
-                                echo '<option ' . $select_data . '  value="' . $row['unit_id'] . '">' . $row['unit_name'] .
-                                    '</option>';
-                            }
-                            ?>
-                        </select>
-                    </div>
-                </div>
+                <input type="hidden" name="unit_id" id="unit_id" value="1">
                 <!-- department -->
                 <div class="col-md-6">
                     <div class="form-group" style="margin-bottom: 10px !important;">
                         <label>Department </label>
                         <select class="form-control input-sm dept" id='dept' name='dept'>
-                            <?php if (!empty($user_data->unit_name)) {
-                                $dpts = $this->db->where('unit_id', $user_data->unit_name)->get('emp_depertment'); ?>
+                            <?php 
+                                $dpts = $this->db->where('unit_id', 1)->get('emp_depertment'); ?>
                                 <option value=''>Select Department</option>
                                 <?php foreach ($dpts->result() as $key => $val) { ?>
                                     <option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
-                            <?php }
-                            } ?>
+                            <?php } ?>
                         </select>
                     </div>
                 </div>
@@ -74,15 +53,8 @@
                         </select>
                     </div>
                 </div>
-                <!-- line -->
-                <div class="col-md-6">
-                    <div class="form-group" style="margin-bottom: 10px !important;">
-                        <label class="control-label">Line </label>
-                        <select class="form-control input-sm line" id='line' name='line'>
-                            <option value=''></option>
-                        </select>
-                    </div>
-                </div>
+                <!-- line (hidden) -->
+                <input type="hidden" class="line" id="line" name="line" value="0">
                 <!-- Designation -->
                 <div class="col-md-6">
                     <div class="form-group" style="margin-bottom: 10px !important;">
@@ -171,6 +143,7 @@
             </div>
 
             <!-- Stop Salary -->
+            <!--
             <?php
                 $user_id = $this->session->userdata('data')->id;
                 $acl = check_acl_list($user_id);
@@ -201,6 +174,7 @@
                     </div>
                 </div>
             <?php } ?>
+            -->
             <style>
                 .hints {
                     color: #436D19;
@@ -209,6 +183,7 @@
             </style>
 
             <!-- alert entry form   -->
+            <!--
             <div id="alert_system" class="row nav_head" style="margin-top: 13px;">
                 <div class="col-md-12" style="display: flex;gap: 11px;flex-direction: column;">
                     <div class="col-md-12" style="box-shadow: 0px 0px 2px 2px #bdbdbd;border-radius: 4px;padding-top: 10px; padding-bottom: 10px;">
@@ -238,6 +213,7 @@
                     </div>
                 </div>
             </div>
+            -->
         </div>
 
         <!-- employee list for right side -->
@@ -741,68 +717,51 @@
             });
         }
 
+        function load_designations() {
+            $.ajax({
+                type: "POST",
+                url: hostname + "common/ajax_designation_by_unit/1",
+                dataType: "json",
+                success: function(func_data) {
+                    if (typeof func_data === 'string') {
+                        try { func_data = JSON.parse(func_data); } catch(e) {}
+                    }
+                    $('.desig').empty().append("<option value=''>-- Select Designation --</option>");
+                    $.each(func_data, function(id, name) {
+                        var opt = $('<option />');
+                        opt.val(id);
+                        opt.text(name);
+                        $('.desig').append(opt);
+                    });
+                }
+            });
+        }
+
         $(document).ready(function() {
             // select all item or deselect all item
             $("#select_all").click(function() {
                 $('input:checkbox').not(this).prop('checked', this.checked);
             });
 
-            //Designation dropdown
-            $('#line').change(function() {
-                $('.desig').addClass('form-control input-sm');
-                $(".desig > option").remove();
-                var id = $('#line').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_designation_by_line_id/" + id,
-                    success: function(func_data) {
-                        $('.desig').append("<option value=''>-- Select Designation --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.desig').append(opt);
-                        });
-                    }
-                });
-                // load employee
-                grid_emp_list();
-            });
-
-            //Line dropdown
+            // Load designation by unit on section change
             $('#section').change(function() {
-                $('.line').addClass('form-control input-sm');
-                $(".line > option").remove();
-                $(".desig > option").remove();
-                var id = $('#section').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_line_by_sec_id/" + id,
-                    success: function(func_data) {
-                        $('.line').append("<option value=''>-- Select Line --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.line').append(opt);
-                        });
-                    }
-                });
-                // load employee
+                load_designations();
                 grid_emp_list();
             });
 
-            //section dropdown
+            // section dropdown
             $('#dept').change(function() {
                 $('.section').addClass('form-control input-sm');
                 $(".section > option").remove();
-                $(".line > option").remove();
-                $(".desig > option").remove();
                 var id = $('#dept').val();
                 $.ajax({
                     type: "POST",
                     url: hostname + "common/ajax_section_by_dept_id/" + id,
+                    dataType: "json",
                     success: function(func_data) {
+                        if (typeof func_data === 'string') {
+                            try { func_data = JSON.parse(func_data); } catch(e) {}
+                        }
                         $('.section').append("<option value=''>-- Select Section --</option>");
                         $.each(func_data, function(id, name) {
                             var opt = $('<option />');
@@ -812,34 +771,13 @@
                         });
                     }
                 });
-                // load employee
+                load_designations();
                 grid_emp_list();
             });
 
-            //Department dropdown
-            $('#unit_id').change(function() {
-                $('.dept').addClass('form-control input-sm');
-                $(".dept > option").remove();
-                $(".section > option").remove();
-                $(".line > option").remove();
-                $(".desig > option").remove();
-                var id = $('#unit_id').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_department_by_unit_id/" + id,
-                    success: function(func_data) {
-                        $('.dept').append("<option value=''>-- Select Department --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.dept').append(opt);
-                        });
-                    }
-                });
-                // load employee
-                grid_emp_list();
-            });
+            // Initial load of designations and employee list
+            load_designations();
+            grid_emp_list();
         });
     </script>
 

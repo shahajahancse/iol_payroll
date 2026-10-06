@@ -144,7 +144,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
     <td rowspan="2"  width="15" height="20px"><div align="center"><strong>নং</strong></div></td>
     <td rowspan="2" width="25" height="20px"><div align="center"><strong>কার্ড নং</strong></div></td>
     <td rowspan="2" colspan="6" width="94" height="20px"><div align="center"><strong>নাম, পদবী, যোগদান, গ্রেড</strong></div></td>
-	<td rowspan="2" width="50" height="20px"><div align="center"><strong>লাইন</strong></div></td>
+	<td rowspan="2" width="50" height="20px"><div align="center"><strong>সেকশন</strong></div></td>
     <td rowspan="2" width="20" height="20px"> <div align="center"><strong>মূল বেতন</strong></div></td>
     <td rowspan="2" width="17" height="20px"><div align="center"><strong>বাড়ী ভাড়া</strong></div></td>
     <td rowspan="2" width="15" height="20px"><div align="center"><strong>চিকিৎসা ভাতা</strong></div></td>
@@ -266,7 +266,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo "</td>"; 
 			
 		echo "<td style='font-family:arial; font-size:10px;'>";
-		echo  $value[$k]->line_name_en;
+		echo  $value[$k]->sec_name_en;
 		echo "</td>";
 			
 		$basic_salary 				= $value[$k]->basic_sal;

@@ -21,18 +21,23 @@
       <li class="start <?= activate_class('emp_info_con') ?>"> <a href="javascript:;"> <i class="fa fa-users"></i>
         <span class="title">HRM</span> <span class="selected"></span> <span class="arrow <?= arrow_open('emp_info_con') ?>"></span> </a>
         <ul class="sub-menu">
-          <?php if(in_array(11,$acl)) { ?>
+          <!-- <?php if(in_array(11,$acl)) { ?>
             <li class="start <?= activate_method('personal_info') ?>">
               <a href="<?=base_url('emp_info_con/personal_info')?>">
                 <i class="fa fa-id-card"></i> Emp Information
               </a>
             </li>
-          <?php } ?>
+          <?php } ?> -->
 
           <?php if(in_array(12,$acl)) { ?>
+            <li class="<?= activate_method('employee_list') ?>">
+              <a href="<?=base_url('emp_info_con/employee_list')?>">
+                <i class="fa fa-users"></i> Employee List
+              </a>
+            </li>
             <li class="start <?= activate_method('personal_info_short') ?>">
               <a href="<?=base_url('emp_info_con/personal_info_short')?>">
-                <i class="fa fa-address-book"></i> Emp Short Information
+                <i class="fa fa-address-book"></i> Add Employee
               </a>
             </li>
           <?php } ?>
@@ -77,6 +82,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(17,$acl)) { ?>
             <li class="<?= activate_method('gov_holiday_list') ?>">
               <a href="<?= base_url('entry_system_con/gov_holiday_list')?>" class="anchor_cls">
@@ -84,6 +90,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
           <?php if(in_array(18,$acl)) { ?>
             <li class="<?= activate_method('leave_transation') ?>">
@@ -93,6 +100,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(19,$acl)) { ?>
             <li class="<?= activate_method('maternity_entry') ?>">
               <a href="<?= base_url('entry_system_con/maternity_entry')?>" class="anchor_cls">
@@ -100,6 +108,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
           <?php if(in_array(20,$acl)) { ?>
             <li class="<?= activate_method('leave_list') ?>">
@@ -141,6 +150,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(25,$acl)) { ?>
             <li class="<?= activate_method('inter_unit_transfer') ?>">
               <a href="<?= base_url('entry_system_con/inter_unit_transfer')?>" class="anchor_cls">
@@ -164,18 +174,19 @@
               </a>
             </li>
           <?php } ?>
+          -->
         </ul>
       </li>
       <?php } ?>
 
       <!-- Attendance -->
       <?php if(in_array(3,$acl)) { ?>
-      <li class="start <?= activate_class('attn_process_con') ?>">
+      <li class="start <?= activate_class(array('attn_process_con', 'iclock')) ?>">
         <a href="javascript:;">
           <i class="fa fa-clock-o"></i>
           <span class="title">Attendance</span>
           <span class="selected"></span>
-          <span class="arrow <?= arrow_open('attn_process_con') ?>"></span>
+          <span class="arrow <?= arrow_open(array('attn_process_con', 'iclock')) ?>"></span>
         </a>
 
         <ul class="sub-menu">
@@ -185,6 +196,14 @@
                 <i class="fa fa-upload"></i> File Upload
               </a>
             </li>
+
+            <!--
+            <li class="<?= activate_method('device_list') ?>">
+              <a href="<?=base_url('iclock/device_list')?>" class="anchor_cls">
+                <i class="fa fa-hdd-o"></i> ADMS Devices
+              </a>
+            </li>
+            -->
           <?php } ?>
 
           <?php if(in_array(29,$acl)) { ?>
@@ -196,6 +215,7 @@
           <?php } ?>
 
           <?php if(in_array(30,$acl)) { ?>
+            <?php /*
             <li class="<?= activate_method('alert_msg_list') ?>">
               <a href="<?=base_url('attn_process_con/alert_msg_list')?>" class="anchor_cls">
                 <i class="fa fa-bell"></i> Alert List
@@ -204,6 +224,7 @@
                 </span>
               </a>
             </li>
+            */ ?>
 
             <li class="<?= activate_method('grid_window') ?>">
               <a href="<?=base_url('attn_process_con/grid_window')?>" class="anchor_cls">
@@ -229,11 +250,13 @@
           <?php } ?>
 
           <?php if(in_array(32,$acl)) { ?>
+            <?php /*
             <li class="<?= activate_method('adv_salary_report') ?>">
               <a href="<?=base_url('salary_process_con/adv_salary_report')?>" class="anchor_cls">
                 <i class="fa fa-hand-o-right"></i> Adv. Salary
               </a>
             </li>
+            */ ?>
           <?php } ?>
 
           <?php if(in_array(33,$acl)) { ?>
@@ -248,6 +271,7 @@
       <?php } ?>
 
       <!-- Training -->
+      <!--
       <?php if(in_array(6,$acl)) { ?>
         <li class="start <?= activate_class('training_con') ?>"> <a href="javascript:;"> <i class="fa fa-book fa-fw"></i>
           <span class="title">Training</span> <span class="selected"></span> <span class="arrow <?= arrow_open('training_con') ?>"></span> </a>
@@ -272,8 +296,10 @@
           </ul>
         </li>
       <?php } ?>
+      -->
 
       <!-- Monitoring / Audit Log -->
+      <!--
       <?php if(in_array(8,$acl)) { ?>
         <li class="start <?= activate_class('monitoring_con') ?>"><a href="javascript:;"><i class="fa fa-desktop"></i>
           <span class="title">Audit Log</span> <span class="selected"></span> <span class="arrow <?= arrow_open('monitoring_con') ?>"></span> </a>
@@ -310,6 +336,7 @@
           </ul>
         </li>
       <?php } ?>
+      -->
 
       <!-- Setup -->
       <?php if(in_array(5,$acl)) { ?>
@@ -337,11 +364,13 @@
               </a>
             </li>
 
+            <!--
             <li class="<?= activate_method('line') ?>">
               <a href="<?=base_url('setup_con/line')?>" class="anchor_cls">
                 <i class="fa fa-arrows-h"></i> Line
               </a>
             </li>
+            -->
 
             <li class="<?= activate_method('designation') ?>">
               <a href="<?=base_url('setup_con/designation')?>" class="anchor_cls">
@@ -349,13 +378,16 @@
               </a>
             </li>
 
+            <!--
             <li class="<?= activate_method('position') ?>">
               <a href="<?=base_url('setup_con/position')?>" class="anchor_cls">
                 <i class="fa fa-map-marker"></i> Position
               </a>
             </li>
+            -->
           <?php } ?>
 
+          <!--
           <?php if(in_array(36,$acl)) { ?>
             <li class="<?= activate_method('manage_designation') ?>">
               <a href="<?=base_url('setup_con/manage_designation')?>" class="anchor_cls">
@@ -397,6 +429,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
           <?php if(in_array(38,$acl)) { ?>
             <li class="<?= activate_method('shift_schedule') ?>">
@@ -421,11 +454,13 @@
           <?php } ?>
 
           <?php if(in_array(41,$acl)) { ?>
+            <?php /*
             <li class="<?= activate_method('alternet_day') ?>">
               <a href="<?=base_url('setup_con/alternet_day')?>">
                 <i class="fa fa-exchange"></i> Alternet Day
               </a>
             </li>
+            */ ?>
           <?php } ?>
 
           <?php if(in_array(42,$acl)) { ?>
@@ -491,6 +526,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(45,$acl)) { ?>
             <li class="<?= activate_method('report_setting') ?>">
               <a href="<?=base_url('setting_con/report_setting')?>" class="anchor_cls" id="acl">
@@ -520,6 +556,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
           <?php if(in_array(48,$acl)) { ?>
             <li class="<?= activate_method('acl') ?>">
@@ -529,6 +566,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(49,$acl)) { ?>
             <li class="<?= activate_method('activity_log') ?>">
               <a href="<?=base_url('setting_con/activity_log')?>" class="anchor_cls" id="activity_log">
@@ -536,6 +574,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
         </ul>
       </li>
       <?php } ?>

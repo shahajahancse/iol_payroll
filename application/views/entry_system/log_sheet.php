@@ -39,12 +39,8 @@
             </tr>
 
             <tr>
-                <td width=''><strong>Line :</strong></td>
-                <td width=''><?= $row->line_name_en ?></td>
-
                 <td width=''><strong>Desig :</strong> </td>
                 <td width=''><?= $row->desig_name ?></td>
-            </tr>
 
             <tr>
                 <td width=''><strong>DOJ :</strong></td>
