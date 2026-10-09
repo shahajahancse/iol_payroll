@@ -6,6 +6,7 @@ on:
       - msa
       - main
       - master
+      - shakil
 
 jobs:
   web-deploy:

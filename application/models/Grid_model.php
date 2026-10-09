@@ -1454,7 +1454,7 @@ class Grid_model extends CI_Model{
 			$seconddate = date("Y-m-d", strtotime('-1 days'.$seconddate));
 		}
 
-		$this->db->where('unit_id', $unit_id)->where('work_off_date BETWEEN "'.$firstdate.'" AND "'.$seconddate.'"');
+		$this->db->where('unit_id', $unit_id)->where('from_date <= "'.$seconddate.'" AND to_date >= "'.$firstdate.'"');
 		$rs = $this->db->get('attn_holyday_off')->result();
 		$tday = count($rs);
 		if ($tday > 0) {

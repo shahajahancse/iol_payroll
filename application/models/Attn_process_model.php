@@ -652,7 +652,7 @@ class Attn_process_model extends CI_Model{
 		$this->db->select("emp_id");
 		$this->db->from("attn_holyday_off");
 		$this->db->where("emp_id", $id);
-		$this->db->where("(work_off_date = '$att_date' OR ('$att_date' BETWEEN from_date AND to_date))");
+		$this->db->where("'$att_date' BETWEEN from_date AND to_date");
 		$query = $this->db->get();
 		if($query->num_rows() > 0)
 		{

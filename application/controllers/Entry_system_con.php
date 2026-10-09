@@ -1743,7 +1743,7 @@ class Entry_system_con extends CI_Controller
     }
     public function holiday_list_ajax(){
         if (!$this->db->field_exists('from_date', 'attn_holyday_off')) {
-            $this->db->query("ALTER TABLE `attn_holyday_off` ADD `from_date` DATE NULL AFTER `work_off_date`");
+            $this->db->query("ALTER TABLE `attn_holyday_off` ADD `from_date` DATE NULL AFTER `emp_id`");
         }
         if (!$this->db->field_exists('to_date', 'attn_holyday_off')) {
             $this->db->query("ALTER TABLE `attn_holyday_off` ADD `to_date` DATE NULL AFTER `from_date`");
@@ -1754,12 +1754,12 @@ class Entry_system_con extends CI_Controller
         $deptSearch = $this->input->post('deptSearch');
 
         $date = date("Y-m-d", strtotime('-8 month', strtotime(date("Y-m-d"))));
-        $this->db->select('MIN(attn_holyday_off.id) as id, attn_holyday_off.emp_id, attn_holyday_off.unit_id, attn_holyday_off.description, IFNULL(attn_holyday_off.from_date, attn_holyday_off.work_off_date) as from_date, IFNULL(attn_holyday_off.to_date, attn_holyday_off.work_off_date) as to_date, pr_units.unit_name, pr_emp_per_info.name_en as user_name');
+        $this->db->select('attn_holyday_off.*, pr_units.unit_name, pr_emp_per_info.name_en as user_name');
         $this->db->from('attn_holyday_off');
         $this->db->join('pr_units', 'pr_units.unit_id = attn_holyday_off.unit_id');
         $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = attn_holyday_off.emp_id');
         $this->db->where('pr_units.unit_id', $this->data['user_data']->unit_name);
-        $this->db->where('(attn_holyday_off.work_off_date >= "'.$date.'" OR attn_holyday_off.from_date >= "'.$date.'")');
+        $this->db->where('attn_holyday_off.to_date >=', $date);
 
         if (!empty($deptSearch) && $deptSearch != '') {
             $this->db->group_start();
@@ -1771,8 +1771,7 @@ class Entry_system_con extends CI_Controller
             $this->db->group_end();
         }
 
-        $this->db->group_by('attn_holyday_off.emp_id, IFNULL(attn_holyday_off.from_date, attn_holyday_off.work_off_date), IFNULL(attn_holyday_off.to_date, attn_holyday_off.work_off_date)');
-        $this->db->order_by('id', 'DESC');
+        $this->db->order_by('attn_holyday_off.id', 'DESC');
         $this->db->limit($limit, $offset);
 
         $this->data['results'] = $this->db->get()->result();
@@ -1788,7 +1787,7 @@ class Entry_system_con extends CI_Controller
     }
     public function holiday_add_ajax(){
         if (!$this->db->field_exists('from_date', 'attn_holyday_off')) {
-            $this->db->query("ALTER TABLE `attn_holyday_off` ADD `from_date` DATE NULL AFTER `work_off_date`");
+            $this->db->query("ALTER TABLE `attn_holyday_off` ADD `from_date` DATE NULL AFTER `emp_id`");
         }
         if (!$this->db->field_exists('to_date', 'attn_holyday_off')) {
             $this->db->query("ALTER TABLE `attn_holyday_off` ADD `to_date` DATE NULL AFTER `from_date`");
@@ -1819,33 +1818,27 @@ class Entry_system_con extends CI_Controller
             return;
         }
 
-        $this->db->where('work_off_date <=', date("Y-m-d", strtotime('-25 month', strtotime($from_date))));
+        // Cleanup old records (>25 months)
+        $this->db->where('to_date <=', date("Y-m-d", strtotime('-25 month', strtotime($from_date))));
+        $this->db->delete('attn_holyday_off');
+
+        // Delete overlapping holiday records for these employees
+        $this->db->where_in('emp_id', $emp_ids);
+        $this->db->group_start();
+        $this->db->where('from_date <=', $to_date);
+        $this->db->where('to_date >=', $from_date);
+        $this->db->group_end();
         $this->db->delete('attn_holyday_off');
 
         $data = [];
-        $dates = [];
-        $current = strtotime($from_date);
-        $end     = strtotime($to_date);
-
-        while ($current <= $end) {
-            $curr_date = date('Y-m-d', $current);
-            $dates[] = $curr_date;
-            foreach ($emp_ids as $value) {
-                $data[] = array(
-                    'work_off_date' => $curr_date,
-                    'from_date'     => $from_date,
-                    'to_date'       => $to_date,
-                    'emp_id'        => $value,
-                    'unit_id'       => $unit_id,
-                    'description'   => $description,
-                );
-            }
-            $current = strtotime('+1 day', $current);
-        }
-
-        if (!empty($dates)) {
-            $this->db->where_in('work_off_date', $dates)->where_in('emp_id', $emp_ids);
-            $this->db->delete('attn_holyday_off');
+        foreach ($emp_ids as $value) {
+            $data[] = array(
+                'unit_id'     => $unit_id,
+                'emp_id'      => $value,
+                'from_date'   => $from_date,
+                'to_date'     => $to_date,
+                'description' => $description,
+            );
         }
 
         if (!empty($data)) {
@@ -1861,16 +1854,8 @@ class Entry_system_con extends CI_Controller
     public function emp_holiday_del($id = null){
         if ($this->input->is_ajax_request()) {
             $id = $this->input->post('id');
-            $row = $this->db->where('id', $id)->get('attn_holyday_off')->row();
-            if ($row) {
-                if (!empty($row->from_date) && !empty($row->to_date)) {
-                    $this->db->where('emp_id', $row->emp_id)
-                             ->where('from_date', $row->from_date)
-                             ->where('to_date', $row->to_date)
-                             ->delete('attn_holyday_off');
-                } else {
-                    $this->db->where('id', $id)->delete('attn_holyday_off');
-                }
+            $this->db->where('id', $id);
+            if ($this->db->delete('attn_holyday_off')) {
                 echo 'success';
             } else {
                 echo 'error';
@@ -1878,16 +1863,8 @@ class Entry_system_con extends CI_Controller
             return;
         }
 
-        $row = $this->db->where('id', $id)->get('attn_holyday_off')->row();
-        if ($row) {
-            if (!empty($row->from_date) && !empty($row->to_date)) {
-                $this->db->where('emp_id', $row->emp_id)
-                         ->where('from_date', $row->from_date)
-                         ->where('to_date', $row->to_date)
-                         ->delete('attn_holyday_off');
-            } else {
-                $this->db->where('id', $id)->delete('attn_holyday_off');
-            }
+        $this->db->where('id', $id);
+        if ($this->db->delete('attn_holyday_off')) {
             $this->session->set_flashdata('success', 'Record Deleted successfully!');
         } else {
             $this->session->set_flashdata('failuer', 'Record Not Found!');

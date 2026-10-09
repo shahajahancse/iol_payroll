@@ -2046,7 +2046,8 @@ class Setup_con extends CI_Controller
             $data[] = array(
                 'emp_id'        =>$value,
                 'unit_id'       =>$unit_id,
-                'work_off_date' =>$off_day,
+                'from_date'     =>$off_day,
+                'to_date'       =>$off_day,
                 'duty_on_day'   =>$on_day,
                 'description'   =>$remark,
             );
@@ -2071,7 +2072,7 @@ class Setup_con extends CI_Controller
         $sql = $this->input->post('sql');
         $emp_ids = explode(',', $sql);
 
-        $this->db->where('work_off_date ', $date)->where('unit_id ', $unit_id);
+        $this->db->where('from_date', $date)->where('unit_id', $unit_id);
         if ( $this->db->where_in('emp_id', $emp_ids)->delete('attn_holyday_off') ) {
             echo 'success';
         }else{

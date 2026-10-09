@@ -35,14 +35,19 @@ class Job_card_model extends CI_Model{
 	}
 
 	function holiday_calculation($sStartDate, $sEndDate,$emp_id){
-		$this->db->select("work_off_date as start_date");
-		$this->db->where("work_off_date BETWEEN '$sStartDate' AND '$sEndDate'");
+		$this->db->select("from_date, to_date");
+		$this->db->where("from_date <= '$sEndDate' AND to_date >= '$sStartDate'");
 		$this->db->where("emp_id", $emp_id);
 		$query = $this->db->get("attn_holyday_off");
 		$holiday = array();
 		foreach ($query->result() as $row)
 		{
-			$holiday[] = $row->start_date;
+			$start = max(strtotime($sStartDate), strtotime($row->from_date));
+			$end   = min(strtotime($sEndDate), strtotime($row->to_date));
+			while ($start <= $end) {
+				$holiday[] = date('Y-m-d', $start);
+				$start = strtotime('+1 day', $start);
+			}
 		}
 
 		$gov = $this->db->select('date as start_date')

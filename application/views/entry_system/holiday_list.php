@@ -159,8 +159,8 @@ function get_data(offset=0) {
             var obj = JSON.parse(data);
 
             obj.forEach(element => {
-                var from_d = element.from_date ? element.from_date : element.work_off_date;
-                var to_d   = element.to_date ? element.to_date : element.work_off_date;
+                var from_d = element.from_date;
+                var to_d   = element.to_date;
                 var unitCol = unitCount > 1 ? `<td>${element.unit_name}</td>` : '';
 
                 $('#tbody').append(`<tr>
