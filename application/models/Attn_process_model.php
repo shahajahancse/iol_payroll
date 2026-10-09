@@ -71,26 +71,32 @@ class Attn_process_model extends CI_Model{
                 $late_start_time = $schedule[0]["late_start"];
 
 
-            	// one day plus for out end time
-            	// because out end next day
+            	// Check night shift / Shift C where in_end or out_end is next day
                 $out_date = $process_date;
-                if (strtotime($out_end_time) < strtotime('12:00:00')){
-                    $out_date = date('Y-m-d', strtotime($out_date. ' + 1 days'));
+                if (strtotime($out_end_time) < strtotime('12:00:00') || strtotime($in_end_time) < strtotime($in_start_time) || strtolower(trim($shift_name)) == 'shift c' || strtolower(trim($shift_name)) == 'shiftc') {
+                    $out_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
                 }
+
+                $in_end_date = $process_date;
+                if (strtotime($in_end_time) < strtotime($in_start_time) || strtolower(trim($shift_name)) == 'shift c' || strtolower(trim($shift_name)) == 'shiftc') {
+                    $in_end_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
+                }
+
                 // OT start time define,
-                //some worker OT start inday, and some worker OT start next day
-                if (strtotime($in_end_time) > strtotime('12:00:00')){
-	                $ot_start = "$out_date $ot_start_time";
-                } else {
+                // some worker OT start inday, and some worker OT start next day
+                if (strtotime($in_end_time) > strtotime('12:00:00') && strtolower(trim($shift_name)) != 'shift c' && strtolower(trim($shift_name)) != 'shiftc'){
 	                $ot_start = "$process_date $ot_start_time";
+                } else {
+	                $ot_start = "$out_date $ot_start_time";
                 }
 
                 $in_start_time = "$process_date $in_start_time";
-                $in_end_time   = "$process_date $in_end_time";
-                $out_end_time   = "$out_date $out_end_time";
+                $in_end_time   = "$in_end_date $in_end_time";
+                $out_end_time  = "$out_date $out_end_time";
 
 
                 $table = 'att_'.date('Y_m',strtotime($process_date));
+				// dd($shift_name);
                 if (strtolower(trim($shift_name)) == 'single') {
                     $in_time  = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'ASC', $table);
                     $out_time = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'DESC', $table);
@@ -109,6 +115,7 @@ class Attn_process_model extends CI_Model{
                     $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
                     $out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
                 }
+				// dd($in_time.'=='.$out_time);
 
 				if (empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
 					$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
@@ -416,9 +423,10 @@ class Attn_process_model extends CI_Model{
 				$empB = $this->get_roster_shift_emp($shiftB->id, $unit);
 				$empC = $this->get_roster_shift_emp($shiftC->id, $unit);
 
-				if (!empty($empA)) $this->auto_change_roster_shift($empA, $shiftB->id, $unit);
-				if (!empty($empB)) $this->auto_change_roster_shift($empB, $shiftC->id, $unit);
-				if (!empty($empC)) $this->auto_change_roster_shift($empC, $shiftA->id, $unit);
+				if (!empty($empA)) $this->auto_change_roster_shift($empA, $shiftC->id, $unit);
+				if (!empty($empB)) $this->auto_change_roster_shift($empB, $shiftA->id, $unit);
+				if (!empty($empC)) $this->auto_change_roster_shift($empC, $shiftB->id, $unit);
+
 			}
 		}
 

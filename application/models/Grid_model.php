@@ -3751,38 +3751,103 @@ class Grid_model extends CI_Model{
 
 	function grid_daily_actual_out_in_report($year, $month, $date, $status, $grid_emp_id)
 	{
-		$day = $year."-".$month."-".$date;
+		$day = $year . "-" . $month . "-" . $date;
+
 		$this->db->distinct();
-		$this->db->select("pr_attn_monthly.emp_id, $date_field");
-		$this->db->from("pr_attn_monthly");
-		$this->db->from("pr_emp_com_info");
-		$this->db->from("emp_designation");
-		$this->db->from("emp_line_num");
-		$this->db->where_in("pr_attn_monthly.emp_id", $grid_emp_id);
-		$this->db->where($date_field, $status);
-		$this->db->where("pr_attn_monthly.att_month", $att_month);
-		$this->db->where("pr_attn_monthly.emp_id = pr_emp_com_info.emp_id");
-		$this->db->where('pr_emp_com_info.emp_desi_id = emp_designation.id');
-		$this->db->where('pr_emp_com_info.emp_line_id = emp_line_num.id');
-		$this->db->order_by("pr_attn_monthly.emp_id","ASC");
-		$query = $this->db->get()->result();
-		dd($query);
-		//echo $this->db->last_query();
-		if($query->num_rows() == 0)
-		{
+		$this->db->select("pr_emp_shift_log.emp_id, pr_emp_shift_log.present_status, pr_emp_shift_log.in_time, pr_emp_shift_log.out_time");
+		$this->db->from("pr_emp_shift_log");
+		$this->db->where_in("pr_emp_shift_log.emp_id", $grid_emp_id);
+		$this->db->where("pr_emp_shift_log.shift_log_date", $day);
+		$this->db->where("((pr_emp_shift_log.in_time IS NOT NULL AND pr_emp_shift_log.in_time != '' AND pr_emp_shift_log.in_time != '00:00:00') OR (pr_emp_shift_log.out_time IS NOT NULL AND pr_emp_shift_log.out_time != '' AND pr_emp_shift_log.out_time != '00:00:00'))");
+		$this->db->order_by("pr_emp_shift_log.emp_id", "ASC");
+		$query = $this->db->get();
+
+		if ($query->num_rows() == 0) {
 			return "Requested list is empty";
 		}
 
+		$data = array();
 
+		foreach ($query->result() as $rows) {
+			$emp_id = $rows->emp_id;
+			$status_val = !empty($rows->present_status) ? $rows->present_status : 'P';
 
-		
-		if($data)
-		{
+			$this->db->select('
+				pr_emp_com_info.emp_id,
+				pr_emp_per_info.name_en,
+				emp_designation.desig_name,
+				pr_emp_com_info.emp_join_date,
+				emp_depertment.dept_name,
+				emp_section.sec_name_en,
+				emp_line_num.line_name_en,
+				pr_id_proxi.proxi_id,
+				pr_emp_shift.shift_name,
+				pr_emp_com_info.emp_cat_id
+			');
+			$this->db->from('pr_emp_per_info');
+			$this->db->from('pr_emp_com_info');
+			$this->db->from('emp_designation');
+			$this->db->from('emp_depertment');
+			$this->db->from('emp_section');
+			$this->db->from('emp_line_num');
+			$this->db->from('pr_id_proxi');
+			$this->db->from('pr_emp_shift');
+			$this->db->where('pr_emp_per_info.emp_id = pr_emp_com_info.emp_id');
+			$this->db->where('pr_emp_com_info.emp_desi_id = emp_designation.id');
+			$this->db->where('pr_emp_com_info.emp_dept_id = emp_depertment.dept_id');
+			$this->db->where('pr_emp_com_info.emp_sec_id = emp_section.id');
+			$this->db->where('pr_emp_com_info.emp_line_id = emp_line_num.id');
+			$this->db->where('pr_emp_com_info.emp_id = pr_id_proxi.emp_id');
+			$this->db->where('pr_emp_shift.id = pr_emp_com_info.emp_shift');
+			$this->db->where("pr_emp_per_info.emp_id", $emp_id);
+			$emp_query = $this->db->get();
 
-			return $data;
+			if ($status_val == "L") {
+				$this->db->select("leave_type");
+				$this->db->where("emp_id", $emp_id);
+				$this->db->where("start_date", $day);
+				$query1 = $this->db->get("pr_leave_trans");
+				if ($query1->num_rows() > 0) {
+					$status_val = $query1->row()->leave_type;
+				}
+			}
+
+			foreach ($emp_query->result() as $emp_row) {
+				$emp_shift = $emp_row->shift_name;
+
+				$in_time  = (!empty($rows->in_time) && $rows->in_time != '00:00:00') ? date("h:i:s A", strtotime($rows->in_time)) : '';
+				$out_time = (!empty($rows->out_time) && $rows->out_time != '00:00:00') ? date("h:i:s A", strtotime($rows->out_time)) : '';
+
+				$previous_day_out = $this->get_previous_day_out_status($year, $month, $date, $emp_id);
+				if ($previous_day_out == '00:00:00') {
+					$previous_day_out = 'P(Error)';
+				} elseif ($previous_day_out != 'A' && $previous_day_out != 'L' && $previous_day_out != 'W' && $previous_day_out != 'H' && !empty($previous_day_out) && $previous_day_out != 'P(Error)') {
+					$previous_day_out = date("h:i:s A", strtotime($previous_day_out));
+				}
+
+				$emp_cat_id = $emp_row->emp_cat_id;
+				if ($emp_cat_id == 1 || $emp_cat_id == 2 || $emp_cat_id == 5) {
+					$data["emp_id"][]     = $emp_row->emp_id;
+					$data["proxi_id"][]   = $emp_row->proxi_id;
+					$data["emp_name"][]   = $emp_row->name_en;
+					$data["desig_name"][] = $emp_row->desig_name;
+					$data["doj"][]        = $emp_row->emp_join_date;
+					$data["dept_name"][]  = $emp_row->dept_name;
+					$data["sec_name"][]   = $emp_row->sec_name_en;
+					$data["line_name"][]  = $emp_row->line_name_en;
+					$data["floor_name"][] = "";
+					$data["emp_shift"][]  = $emp_shift;
+					$data["in_time"][]    = $in_time;
+					$data["out_time"][]   = $out_time;
+					$data["status"][]     = $status_val;
+					$data["p_out"][]      = $previous_day_out;
+				}
+			}
 		}
-		else
-		{
+
+		if (!empty($data)) {
+			return $data;
+		} else {
 			return "Requested list is empty";
 		}
 	}
@@ -3792,29 +3857,46 @@ class Grid_model extends CI_Model{
 		$current_date  = date("Y-m-d", mktime(0, 0, 0, $month, $date, $year));
 		$previous_date = date("Y-m-d", strtotime("-1 day", strtotime($current_date)));
 
-		$previous_day = date("d", strtotime($previous_date));
-
-		$att_month  = $year."-".$month."-01";
-		$date_field = "pr_attn_monthly.date_$previous_day";
-
-		$date_field2 = "date_$previous_day";
-
-		$this->db->distinct();
-		$this->db->select("pr_attn_monthly.emp_id, $date_field");
-		$this->db->from("pr_attn_monthly");
-		$this->db->where("pr_attn_monthly.emp_id", $emp_id);
-		$this->db->where("pr_attn_monthly.att_month", $att_month);
+		$this->db->select("present_status, out_time");
+		$this->db->from("pr_emp_shift_log");
+		$this->db->where("emp_id", $emp_id);
+		$this->db->where("shift_log_date", $previous_date);
 		$query = $this->db->get();
-		$row = $query->row();
-		$status = $row->$date_field2;
-		if($status =='P')
-		{
-			return $out_time = $this->get_out_time($emp_id, $previous_date);
+
+		if ($query->num_rows() > 0) {
+			$row = $query->row();
+			$status = $row->present_status;
+			$out_time = $row->out_time;
+
+			if ($status == 'P' || empty($status)) {
+				return (!empty($out_time) && $out_time != '00:00:00') ? $out_time : '00:00:00';
+			} else {
+				return $status;
+			}
 		}
-		else
-		{
+
+		// Fallback check from pr_attn_monthly if shift log doesn't have it
+		$prev_year  = date("Y", strtotime($previous_date));
+		$prev_month = date("m", strtotime($previous_date));
+		$prev_day   = date("d", strtotime($previous_date));
+		$att_month  = "$prev_year-$prev_month-01";
+		$date_field = "date_$prev_day";
+
+		$this->db->select($date_field);
+		$this->db->from("pr_attn_monthly");
+		$this->db->where("emp_id", $emp_id);
+		$this->db->where("att_month", $att_month);
+		$query = $this->db->get();
+		if ($query->num_rows() > 0) {
+			$row = $query->row();
+			$status = isset($row->$date_field) ? $row->$date_field : '';
+			if ($status == 'P') {
+				return $this->get_out_time($emp_id, $previous_date);
+			}
 			return $status;
 		}
+
+		return '';
 	}
 
 	function get_out_time($emp_id, $previous_date)
@@ -3824,8 +3906,11 @@ class Grid_model extends CI_Model{
 		$this->db->where("emp_id", $emp_id);
 		$this->db->where("shift_log_date", $previous_date);
 		$query = $this->db->get('pr_emp_shift_log');
-		$row = $query->row();
-		return $out_time = $row->out_time;
+		if ($query->num_rows() > 0) {
+			$row = $query->row();
+			return $row->out_time;
+		}
+		return '00:00:00';
 	}
 
 	function emp_shift_check($emp_id, $att_date)

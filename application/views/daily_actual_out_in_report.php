@@ -24,7 +24,7 @@ Daily OUT and IN Report of <?php echo "$date/$month/$year"; ?></span>
 
 
 <table class="sal" border="1" cellpadding="0" cellspacing="0" align="center" style="font-size:12px;">
-<th>SL</th><th>Emp ID</th><th>Punch Card No.</th><th>Employee Name</th> <!--<th>DOJ</th>--> <th>Department</th> <th>Section</th> <th>Designation</th> <th>Shift</th><th>Previous Day OUT Time</th><th>Previous OT + EOT</th><th>IN Time</th><th>OUT Time</th><th>OT + EOT</th><th>Status</th>
+<th>SL</th><th>Emp ID</th><th>Punch Card No.</th><th>Employee Name</th> <!--<th>DOJ</th>--> <th>Department</th> <th>Section</th> <th>Designation</th> <th>Shift</th><th>Previous Day OUT Time</th><th>IN Time</th><th>OUT Time</th><th>Status</th>
 
 <?php
 
@@ -85,30 +85,6 @@ for($i=0; $i<$count; $i++ )
 	echo $values["p_out"][$i];
 	echo "</td>";
 		
-	echo "<td style='text-align:center;'>";
-	if($values["p_out"][$i] == "N/A")
-	{
-		echo $values["p_out"][$i];
-		//echo "1heloo";
-	}
-	else
-	{
-		$row_num_prev_ot = $this->db->where("emp_id",$values["emp_id"][$i])->where("shift_log_date",$day)->get('pr_emp_shift_log')->num_rows();
-		if($row_num_prev_ot==0)
-		{
-			$prev_ot = 0;
-			$prev_eot =0;
-		}
-		else
-		{
-			$prev_ot = $this->db->where("emp_id",$values["emp_id"][$i])->where("shift_log_date",$day)->get('pr_emp_shift_log')->row()->ot_hour;
-			$prev_eot = $this->db->where("emp_id",$values["emp_id"][$i])->where("shift_log_date",$day)->get('pr_emp_shift_log')->row()->extra_ot_hour;
-		}
-	 echo $prev_ot +  $prev_eot;
-	}
-	echo "</td>";
-	
-	
 	echo "<td width='80' align='center'>";
 	echo $values["in_time"][$i];
 	echo "</td>";
@@ -121,19 +97,6 @@ for($i=0; $i<$count; $i++ )
 	else
 	{
 		echo $values["out_time"][$i];
-	}
-	echo "</td>";
-	
-	echo "<td width='80' align='center'>";
-	if($values["status"][$i] == "N/A")
-	{
-		echo $values["status"][$i];
-	}
-	else
-	{
-	 $curr_ot = $this->db->where("emp_id",$values["emp_id"][$i])->where("shift_log_date",$first_date)->get('pr_emp_shift_log')->row()->ot_hour;
-	 $curr_eot = $this->db->where("emp_id",$values["emp_id"][$i])->where("shift_log_date",$first_date)->get('pr_emp_shift_log')->row()->extra_ot_hour;
-	 echo $curr_ot +  $curr_eot;
 	}
 	echo "</td>";
 		
