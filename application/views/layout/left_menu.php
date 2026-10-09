@@ -29,15 +29,20 @@
             </li>
           <?php } ?> -->
 
-          <?php if(in_array(12,$acl)) { ?>
+          <?php if(in_array(12,$acl)) { ?> 
             <li class="<?= activate_method('employee_list') ?>">
               <a href="<?=base_url('emp_info_con/employee_list')?>">
                 <i class="fa fa-users"></i> Employee List
               </a>
             </li>
+            <li class="start <?= activate_method('personal_info') ?>">
+              <a href="<?=base_url('emp_info_con/personal_info')?>">
+                <i class="fa fa-address-book"></i> Add Employee
+              </a>
+            </li>
             <li class="start <?= activate_method('personal_info_short') ?>">
               <a href="<?=base_url('emp_info_con/personal_info_short')?>">
-                <i class="fa fa-address-book"></i> Add Employee
+                <i class="fa fa-address-book"></i> Add Employee Short Form
               </a>
             </li>
           <?php } ?>
@@ -65,14 +70,14 @@
               </a>
             </li>
           <?php } ?>
-
-          <?php if(in_array(15,$acl)) { ?>
-            <li class="<?= activate_method('emp_weekend_add') ?>">
-              <a href="<?= base_url('entry_system_con/emp_weekend_add')?>" class="anchor_cls">
+<!-- 
+          < ?php if(in_array(15,$acl)) { ?>
+            <li class="< ?= activate_method('emp_weekend_add') ?>">
+              <a href="< ?= base_url('entry_system_con/emp_weekend_add')?>" class="anchor_cls">
                 <i class="fa fa-calendar-plus-o"></i> Weekend Add
               </a>
             </li>
-          <?php } ?>
+          < ?php } ?> -->
 
           <?php if(in_array(16,$acl)) { ?>
             <li class="<?= activate_method('emp_holiday_add') ?>">

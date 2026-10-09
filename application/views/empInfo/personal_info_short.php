@@ -8,9 +8,9 @@ input[type="number"]::-webkit-outer-spin-button {
 input[type="number"] {
     -moz-appearance: textfield;
 }
-.bangla_name {
+/* .bangla_name {
     font-family: SutonnyMJ !important;
-}
+} */
 
 
 </style>
@@ -647,11 +647,11 @@ function emp_id_search(id = null) {
             if (e.status == true) {
                 const keysToFilter = [
                     "id", "emp_id", "name_en", "name_bn",
-                    "father_name", "mother_name", "per_village", "per_post",
+                    "father_name", "father_name_en", "mother_name", "mother_name_en", "spouse_name", "spouse_name_en", "per_village", "per_post",
                     "per_thana", "per_district", "per_village_bn",
                     "pre_home_owner", "holding_num", "home_own_mobile",
                     "pre_village", "pre_post", "pre_thana", "pre_district",
-                    "pre_village_bn", "spouse_name", "emp_dob", "gender",
+                    "pre_village_bn", "emp_dob", "gender",
                     "marital_status", "religion", "blood", "m_child", "f_child",
                     "nominee_name", "nominee_vill", "nomi_post", "nomi_thana",
                     "nomi_district", "nomi_age", "nomi_relation", "nomi_mobile",

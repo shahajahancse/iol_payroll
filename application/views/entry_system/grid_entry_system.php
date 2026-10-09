@@ -1,4 +1,4 @@
-<script src="<?php echo base_url(); ?>js/grid_content.js" type="text/javascript"></script>
+<script src="<?php echo base_url(); ?>js/grid_content.js?v=<?php echo time(); ?>" type="text/javascript"></script>
     <style>
         #fileDiv #removeTr td {
             padding: 5px 10px !important;
@@ -30,6 +30,21 @@
             <div class="row tablebox" style="display: block;">
                 <!-- <h3 style="font-weight: 600;"><?= $title ?></h3> -->
                 <input type="hidden" name="unit_id" id="unit_id" value="1">
+                <!-- shift -->
+                <div class="col-md-6">
+                    <div class="form-group" style="margin-bottom: 10px !important;">
+                        <label>Shift </label>
+                        <select class="form-control input-sm shift" id='shift' name='shift' onChange="grid_emp_list()">
+                            <option value=''>Select Shift</option>
+                            <?php 
+                                $shifts = $this->db->get('pr_emp_shift');
+                                if (!empty($shifts)) {
+                                    foreach ($shifts->result() as $key => $val) { ?>
+                                        <option value='<?= $val->id ?>'><?= $val->shift_name ?></option>
+                                <?php } } ?>
+                        </select>
+                    </div>
+                </div>
                 <!-- department -->
                 <div class="col-md-6">
                     <div class="form-group" style="margin-bottom: 10px !important;">
@@ -120,6 +135,8 @@
                                     <div class="input-group">
                                         <span class="input-group-btn" style="display: flex; gap: 15px;">
                                             <input class="btn btn-primary" onclick='present_entry(event)' type="button" value='Save' />
+                                            <input class="btn btn-info" onclick="log_sheet(event)" type="button" value="Attn. Sheet">
+                                            <input class="btn btn-danger" onclick="log_delete(event)" type="button" value="Log Delete">
                                             <?php
                                                 $user_id = $this->session->userdata('data')->id;
                                                 $acl = check_acl_list($user_id);
@@ -505,35 +522,60 @@
                 }
             }
         }
-    </script>
-    <script>
+
+        function loading_open() {
+            $('#loader').css('display', 'block');
+        }
+        function loading_close() {
+            $('#loader').css('display', 'none');
+        }
+
+        function get_checked_value(checkboxes) {
+            if (!checkboxes) return "";
+            var vals = [];
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) {
+                    vals.push(checkboxes[i].value);
+                }
+            }
+            return vals.join(",");
+        }
+
         function present_entry(e) {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
             var checkboxes = document.getElementsByName('emp_id[]');
-            var sql = get_checked_value(checkboxes);
-            let emp_id = sql.split(",");
-            if (emp_id == '') {
+            var sql = typeof get_checked_value === 'function' ? get_checked_value(checkboxes) : '';
+            if (!sql || sql == '') {
                 showMessage('error', 'Please select employee Id');
                 return false;
             }
-            unit_id = document.getElementById('unit_id').value;
-            if (unit_id == '') {
+            var emp_id = sql;
+
+            var unit_id_el = document.getElementById('unit_id');
+            var unit_id = unit_id_el ? unit_id_el.value : '1';
+            if (!unit_id) {
                 showMessage('error', 'Please select Unit');
                 return false;
             }
 
-            first_date = document.getElementById('first_date').value;
-            if (first_date == '') {
+            var first_date_el = document.getElementById('first_date');
+            var first_date = first_date_el ? first_date_el.value : '';
+            if (!first_date) {
                 showMessage('error', 'Please select First date');
                 return false;
             }
-            second_date = document.getElementById('second_date').value;
-            if (second_date == '') {
+            var second_date_el = document.getElementById('second_date');
+            var second_date = second_date_el ? second_date_el.value : '';
+            if (!second_date) {
                 showMessage('error', 'Please select Second date');
                 return false;
             }
-            in_time = document.getElementById('in_time').value;
-            out_time = document.getElementById('out_time').value;
+
+            var in_time_el = document.getElementById('in_time');
+            var in_time = in_time_el ? in_time_el.value : '';
+            var out_time_el = document.getElementById('out_time');
+            var out_time = out_time_el ? out_time_el.value : '';
+
             // Check if BOTH are empty
             if (in_time === '' && out_time === '') {
                 showMessage('error', 'Please select at least In Time or Out Time');
@@ -541,7 +583,7 @@
             }
 
             var formdata = $("#present_entry_form").serialize();
-            var data = "unit_id=" + unit_id + "&first_date=" + first_date + "&second_date=" + second_date + "&in_time=" + in_time + "&out_time=" + out_time + "&emp_id=" + emp_id + "&" + formdata; // Merge the data
+            var data = "unit_id=" + encodeURIComponent(unit_id) + "&first_date=" + encodeURIComponent(first_date) + "&second_date=" + encodeURIComponent(second_date) + "&in_time=" + encodeURIComponent(in_time) + "&out_time=" + encodeURIComponent(out_time) + "&emp_id=" + encodeURIComponent(emp_id) + "&" + formdata;
 
             $.ajax({
                 type: "POST",
@@ -563,34 +605,40 @@
         }
 
         function present_absent(e) {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
             var checkboxes = document.getElementsByName('emp_id[]');
-            var sql = get_checked_value(checkboxes);
-            let emp_id = sql.split(",");
-            if (emp_id == '') {
+            var sql = typeof get_checked_value === 'function' ? get_checked_value(checkboxes) : '';
+            if (!sql || sql == '') {
                 showMessage('error', 'Please select employee Id');
                 return false;
             }
-            unit_id = document.getElementById('unit_id').value;
-            if (unit_id == '') {
+            var emp_id = sql;
+
+            var unit_id_el = document.getElementById('unit_id');
+            var unit_id = unit_id_el ? unit_id_el.value : '1';
+            if (!unit_id) {
                 showMessage('error', 'Please select Unit');
                 return false;
             }
 
-            first_date = document.getElementById('first_date').value;
-            if (first_date == '') {
+            var first_date_el = document.getElementById('first_date');
+            var first_date = first_date_el ? first_date_el.value : '';
+            if (!first_date) {
                 showMessage('error', 'Please select First date');
                 return false;
             }
-            second_date = document.getElementById('second_date').value;
-            if (second_date == '') {
+            var second_date_el = document.getElementById('second_date');
+            var second_date = second_date_el ? second_date_el.value : '';
+            if (!second_date) {
                 showMessage('error', 'Please select Second date');
                 return false;
             }
-            time = document.getElementById('in_time').value;
+
+            var time_el = document.getElementById('in_time') || document.getElementById('time');
+            var time = time_el ? time_el.value : '';
 
             var formdata = $("#present_entry_form").serialize();
-            var data = "unit_id=" + unit_id + "&first_date=" + first_date + "&second_date=" + second_date + "&time=" + time + "&emp_id=" + emp_id + "&" + formdata; // Merge the data
+            var data = "unit_id=" + encodeURIComponent(unit_id) + "&first_date=" + encodeURIComponent(first_date) + "&second_date=" + encodeURIComponent(second_date) + "&time=" + encodeURIComponent(time) + "&emp_id=" + encodeURIComponent(emp_id) + "&" + formdata;
 
             $.ajax({
                 type: "POST",
@@ -612,34 +660,40 @@
         }
 
         function log_delete(e) {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
             var checkboxes = document.getElementsByName('emp_id[]');
-            var sql = get_checked_value(checkboxes);
-            let emp_id = sql.split(",");
-            if (emp_id == '') {
+            var sql = typeof get_checked_value === 'function' ? get_checked_value(checkboxes) : '';
+            if (!sql || sql == '') {
                 showMessage('error', 'Please select employee Id');
                 return false;
             }
-            unit_id = document.getElementById('unit_id').value;
-            if (unit_id == '') {
+            var emp_id = sql;
+
+            var unit_id_el = document.getElementById('unit_id');
+            var unit_id = unit_id_el ? unit_id_el.value : '1';
+            if (!unit_id) {
                 showMessage('error', 'Please select Unit');
                 return false;
             }
 
-            first_date = document.getElementById('first_date').value;
-            if (first_date == '') {
+            var first_date_el = document.getElementById('first_date');
+            var first_date = first_date_el ? first_date_el.value : '';
+            if (!first_date) {
                 showMessage('error', 'Please select First date');
                 return false;
             }
-            second_date = document.getElementById('second_date').value;
-            if (second_date == '') {
+            var second_date_el = document.getElementById('second_date');
+            var second_date = second_date_el ? second_date_el.value : '';
+            if (!second_date) {
                 showMessage('error', 'Please select Second date');
                 return false;
             }
-            time = document.getElementById('time').value;
+
+            var time_el = document.getElementById('time') || document.getElementById('in_time');
+            var time = time_el ? time_el.value : '';
 
             var formdata = $("#present_entry_form").serialize();
-            var data = "unit_id=" + unit_id + "&first_date=" + first_date + "&second_date=" + second_date + "&time=" + time + "&emp_id=" + emp_id + "&" + formdata; // Merge the data
+            var data = "unit_id=" + encodeURIComponent(unit_id) + "&first_date=" + encodeURIComponent(first_date) + "&second_date=" + encodeURIComponent(second_date) + "&time=" + encodeURIComponent(time) + "&emp_id=" + encodeURIComponent(emp_id) + "&" + formdata;
 
             loading_open();
             $.ajax({
@@ -658,7 +712,7 @@
                     loading_close();
                     showMessage('error', 'Shift Log Not Deleted');
                 }
-            })
+            });
         }
     </script>
 
@@ -681,6 +735,7 @@
             var desig = document.getElementById('desig').value;
             var status = document.getElementById('status').value;
             var searchi = document.getElementById('searchi').value;
+            var shift = document.getElementById('shift') ? document.getElementById('shift').value : '';
 
             url = hostname + "common/grid_emp_list/" + unit + "/" + dept + "/" + section + "/" + line + "/" + desig;
             $.ajax({
@@ -688,7 +743,8 @@
                 type: 'GET',
                 data: {
                     "status": status,
-                    "searchi": searchi
+                    "searchi": searchi,
+                    "shift": shift
                 },
                 contentType: "application/json",
                 dataType: "json",

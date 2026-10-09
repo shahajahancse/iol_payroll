@@ -72,14 +72,18 @@ class Emp_info_con extends CI_Controller {
 		// dd("BSA");
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('unit_id', 'Unit', 'trim|required');
-		if($this->input->post('pi_save')) {
+		if($this->input->post('submit_type') == 'save') {
 			$this->form_validation->set_rules('emp_id', 'Employee ID', 'trim|required|is_unique[pr_emp_com_info.emp_id]');
 		}
 		$this->form_validation->set_rules('proxi_id', 'Punch ID', 'trim');  //|is_unique[pr_emp_com_info.proxi_id]
 		$this->form_validation->set_rules('name_en', 'Employee Name', 'trim|required');
 		$this->form_validation->set_rules('name_bn', 'Employee Bangla Name', 'trim|required');
-		$this->form_validation->set_rules('mother_name', 'Employee Mother\'s Name', 'trim|required');
-		$this->form_validation->set_rules('father_name', 'Employee Father\'s Name', 'trim|required');
+		$this->form_validation->set_rules('father_name_en', 'Employee Father\'s Name (English)', 'trim|required');
+		$this->form_validation->set_rules('father_name', 'Employee Father\'s Name (Bangla)', 'trim|required');
+		$this->form_validation->set_rules('mother_name_en', 'Employee Mother\'s Name (English)', 'trim|required');
+		$this->form_validation->set_rules('mother_name', 'Employee Mother\'s Name (Bangla)', 'trim|required');
+		$this->form_validation->set_rules('spouse_name_en', 'Employee Spouse Name (English)', 'trim');
+		$this->form_validation->set_rules('spouse_name', 'Employee Spouse Name (Bangla)', 'trim');
 		$this->form_validation->set_rules('emp_dob', 'Date of Birth', 'trim|required');
 		$this->form_validation->set_rules('gender', 'Employee Gender', 'trim|required');
 		$this->form_validation->set_rules('marital_status', 'Marital Status', 'trim|required');
@@ -90,12 +94,44 @@ class Emp_info_con extends CI_Controller {
 		$this->form_validation->set_rules('personal_mobile', 'Personal Mobile', 'trim|required');
 		$this->form_validation->set_rules('bank_bkash_no', 'Bank Account', 'trim|required');
 
+		$this->form_validation->set_error_delimiters("","");
+
+		if ($this->input->is_ajax_request()) {
+			if ($this->form_validation->run() == FALSE) {
+				echo json_encode([
+					'status' => false,
+					'message' => strip_tags(validation_errors()),
+					'errors' => $this->form_validation->error_array()
+				]);
+				return;
+			}
+
+			if ($this->input->post('submit_type') == 'save') {
+				$res = $this->Processdb->insert_emp_info();
+				if (is_array($res)) {
+					echo json_encode($res);
+				} else {
+					echo json_encode(['status' => true, 'message' => 'Inserted Successfully.']);
+				}
+				return;
+			} elseif ($this->input->post('submit_type') == 'edit') {
+				$res = $this->Processdb->updatedb1();
+				if (is_array($res)) {
+					echo json_encode($res);
+				} else {
+					echo json_encode(['status' => true, 'message' => 'Updated Successfully.']);
+				}
+				return;
+			} else {
+				echo json_encode(['status' => false, 'message' => 'Invalid submit type.']);
+				return;
+			}
+		}
+
 		if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$this->form_validation->run()) {
 			$this->load->view('empInfo/personal_info');
 		}
 
-
-		$this->form_validation->set_error_delimiters("","");
 		if ($this->form_validation->run() == TRUE) {
 			if($this->input->post('submit_type') == 'save') {
 				$this->Processdb->insert_emp_info();
@@ -107,8 +143,6 @@ class Emp_info_con extends CI_Controller {
 				echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Error Occurred'); window.location='personal_info';</SCRIPT>";
 			}
 		} else {
-			// dd($this->form_validation->error_array());
-
 			redirect(base_url('emp_info_con/personal_info'));
 		}
 	}

@@ -65,6 +65,21 @@
             <div class="row tablebox" style="display: block; margin-bottom: 10px;">
                 <h3 class="h3" style="font-weight: 600;">Select Category</h3>
                 <input type="hidden" name="unit_id" id="unit_id" value="1">
+                <!-- shift -->
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Shift </label>
+                        <select class="form-control input-sm shift" id='shift' name='shift' onChange="grid_emp_list()">
+                            <option value=''>Select Shift</option>
+                            <?php 
+                                $shifts = $this->db->get('pr_emp_shift');
+                                if (!empty($shifts)) {
+                                    foreach ($shifts->result() as $key => $val) { ?>
+                                        <option value='<?= $val->id ?>'><?= $val->shift_name ?></option>
+                                <?php } } ?>
+                        </select>
+                    </div>
+                </div>
                 <!-- department -->
                 <div class="col-md-6">
                     <div class="form-group">
@@ -306,8 +321,8 @@
             var status = document.getElementById('status').value;
             var stop_salary = document.getElementById('stop_salary').value;
             var salary_month = document.getElementById('salary_month').value;
-
             var searchi = document.getElementById('searchi').value;
+            var shift = document.getElementById('shift') ? document.getElementById('shift').value : '';
 
             if (typeof unit === "undefined" || unit === '') {
                  alert('Please Select Unit First'); return;
@@ -326,7 +341,8 @@
                     "status"      : status,
                     "stop_salary" : stop_salary,
                     "salary_month": salary_month,
-                    "searchi"     : searchi
+                    "searchi"     : searchi,
+                    "shift"       : shift
                 },
                 contentType: "application/json",
                 dataType: "json",

@@ -9,7 +9,7 @@
         -moz-appearance: textfield;
     }
     .bangla_name, .bangla_village {
-        font-family: SutonnyMJ !important;
+        /* font-family: SutonnyMJ !important; */
     }
 </style>
 <!-- < ? php dd($emp_info);?> -->
@@ -37,7 +37,7 @@
                 style="margin-top: 8px;width:15%;float:right;border-radius: 0 !important;">
 
             <form id="form_id" enctype="multipart/form-data" method="post" name="creatdepartment"
-                action="<?php echo base_url('emp_info_con/personal_info_add')?>">
+                action="<?php echo base_url('emp_info_con/personal_info_add')?>" onsubmit="return false;">
                 <h3 style="font-weight: bold; width:fit-content"><?= $title ?>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-center" style="font-size:18px !important" id='last_emp_id'></span></h3>
 
@@ -93,23 +93,41 @@
                                 <?php echo form_error('name_en');?>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Name (Bangla) <span style="color: red;">*</span> </label>
-                                <input style="" type="text" name="name_bn" id="name_bn" class="form-control input-sm bangla_name required" value="<?= isset($emp_info->name_bn)?>" required>
+                                <input type="text" name="name_bn" id="name_bn" class="form-control input-sm bangla_name required" value="<?= isset($emp_info->name_bn)?>" required>
                                 <?php echo form_error('name_bn');?>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
+                                <label>Father's Name (English) <span style="color: red;">*</span> </label>
+                                <input type="text" name="father_name_en" id="father_name_en"
+                                    class="form-control input-sm english_name required"
+                                    value="<?= isset($emp_info->father_name_en) ? $emp_info->father_name_en : '' ?>" required>
+                                <?php echo form_error('father_name_en');?>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
                                 <label>Father's Name (Bangla) <span style="color: red;">*</span> </label>
-                                <input  style="font-family: SutonnyMJ;" type="text" name="father_name" id="father_name"
-                                    class="form-control input-sm bangla_name unicode-to-bijoy required"
-                                    value="<?= isset($emp_info->father_name)?>" required>
+                                <input type="text" name="father_name" id="father_name"
+                                    class="form-control input-sm bangla_name required"
+                                    value="<?= isset($emp_info->father_name) ? $emp_info->father_name : '' ?>" required>
                                 <?php echo form_error('father_name');?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Mother's Name (English) <span style="color: red;">*</span> </label>
+                                <input type="text" name="mother_name_en" id="mother_name_en"
+                                    class="form-control input-sm english_name required"
+                                    value="<?= isset($emp_info->mother_name_en) ? $emp_info->mother_name_en : '' ?>" required>
+                                <?php echo form_error('mother_name_en');?>
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -117,16 +135,25 @@
                                 <label>Mother's Name (Bangla) <span style="color: red;">*</span> </label>
                                 <input type="text" name="mother_name" id="mother_name"
                                     class="form-control input-sm bangla_name required"
-                                    value="<?= isset($emp_info->mother_name)?>" required>
+                                    value="<?= isset($emp_info->mother_name) ? $emp_info->mother_name : '' ?>" required>
                                 <?php echo form_error('mother_name');?>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Spouse Name (Bangla) </label>
+                                <label>Spouse Name (English)</label>
+                                <input type="text" name="spouse_name_en" id="spouse_name_en"
+                                    class="form-control input-sm english_name"
+                                    value="<?= isset($emp_info->spouse_name_en) ? $emp_info->spouse_name_en : '' ?>">
+                                <?php echo form_error('spouse_name_en');?>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Spouse Name (Bangla)</label>
                                 <input type="text" name="spouse_name" id="spouse_name"
-                                    class="form-control input-sm bangla_name "
-                                    value="<?= isset($emp_info->spouse_name)?>">
+                                    class="form-control input-sm bangla_name"
+                                    value="<?= isset($emp_info->spouse_name) ? $emp_info->spouse_name : '' ?>">
                                 <?php echo form_error('spouse_name');?>
                             </div>
                         </div>
@@ -471,7 +498,6 @@
                     <?php
                         $depts = $this->db->get('emp_depertment')->result();
                         $sections = $this->db->get('emp_section')->result();
-                        $lines = $this->db->get('pr_line_num')->result();
                         $designations = $this->db->order_by('desig_name', 'ASC')->get('emp_designation')->result();
                     ?>
                     <div class="row">
@@ -507,23 +533,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3" style="padding-left: 0px !important;">
-                            <div class="form-group">
-                                <label>Line<span style="color: red;">*</span> </label>
-                                <?php echo form_error('emp_line_id');?>
-                                <select name="emp_line_id" id="emp_line_id" class="emp_line_id form-control input-sm required" required>
-                                    <option value="">-- Select Line --</option>
-                                    <?php foreach ($lines as $key => $row) {
-                                        $l_id = isset($row->line_id) && $row->line_id ? $row->line_id : (isset($row->id) ? $row->id : '');
-                                        $l_en = !empty($row->line_name_en) ? $row->line_name_en : (!empty($row->line_name) ? $row->line_name : '');
-                                        $l_bn = !empty($row->line_name_bn) ? $row->line_name_bn : (!empty($row->line_bangla) ? $row->line_bangla : '');
-                                    ?>
-                                    <option value="<?= $l_id ?>"><?= $l_en . ($l_bn ? ' >> '.$l_bn : ''); ?></option>
-                                    <?php } ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3" style="padding-left: 0px !important;">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Designation<span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_desi_id');?>
@@ -617,54 +627,10 @@
                     </div>
                     </div>
 
-                    <div class="row">
-                        <?php //dd($shifts); ?>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Salary Type <span style="color: red;">*</span> </label>
-                                <?php echo form_error('salary_type');?>
-                                <select name="salary_type" id="salary_type" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <option value="1" selected>Fixed</option>
-                                    <option value="2">Production</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Salary Withdraw <span style="color: red;">*</span> </label>
-                                <?php echo form_error('salary_draw');?>
-                                <select name="salary_draw" id="salary_draw" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <option value="1">cash</option>
-                                    <option value="2">bank</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Lunch <span style="color: red;">*</span> </label>
-                                <?php echo form_error('lunch');?>
-                                <select name="lunch" id="lunch" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <option value="0">Yes</option>
-                                    <option selected value="1">No</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Transport <span style="color: red;">*</span> </label>
-                                <?php echo form_error('transport');?>
-                                <select name="transport" id="transport" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <option value="0">Yes</option>
-                                    <option selected value="1">No</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    <input type="hidden" name="salary_type" id="salary_type" value="1">
+                    <input type="hidden" name="salary_draw" id="salary_draw" value="1">
+                    <input type="hidden" name="lunch" id="lunch" value="1">
+                    <input type="hidden" name="transport" id="transport" value="1">
 
                     <div class="row"  <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(!in_array(10,$acl)) {echo '';} else { echo 'style="display:none;"';}?>>
                         <div class="col-md-2">
@@ -893,34 +859,33 @@
                     </div>
                 </div>
 
-                <h3 style="font-weight: 600;">Reference/Guardian</h3>
+                <h3 style="font-weight: 600;">Reference/Guardian(Optional)</h3>
                 <hr style="margin-bottom: 0px !important;">
                 <div style="background-color: white; padding: 15px !important;">
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Name <span style="color: red;">*</span> </label>
+                                <label>Name </label>
                                 <?php echo form_error('refer_name');?>
                                 <input type="text" name="refer_name" id="refer_name"
-                                    value="<?= isset($emp_info->refer_name)?>" class="form-control input-sm bangla_name required"
-                                    required>
+                                    value="<?= isset($emp_info->refer_name)?>" class="form-control input-sm bangla_name "
+                                    >
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Mobile Number<span style="color: red;">*</span> </label>
+                                <label>Mobile Number</label>
                                 <?php echo form_error('refer_mobile');?>
                                 <input type="text" name="refer_mobile" id="refer_mobile"
-                                    value="<?= isset($emp_info->refer_mobile)?>" class="form-control input-sm required" required>
+                                    value="<?= isset($emp_info->refer_mobile)?>" class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Rrelation<span style="color: red;">*</span> </label>
+                                <label>Rrelation</label>
                                 <?php echo form_error('refer_relation');?>
-                                <input type="text" name="refer_relation" id="refer_relation" value="<?= isset($emp_info->refer_relation)?>" class="form-control input-sm required" required>
-                                <!-- <select name="refer_relation" id="refer_relation" class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="refer_relation" id="refer_relation" value="<?= isset($emp_info->refer_relation)?>" class="form-control input-sm">
+                                <!-- <select name="refer_relation" id="refer_relation" class="form-control input-sm">
                                     <option value='' >-- Select --</option>
                                     < ?php foreach ($nominees as $key => $row) { ?>
                                     <option value="< ?= $row->id ?>"><?= $row->nomini_relation; ?></option>
@@ -930,20 +895,20 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Village <span style="color: red;">*</span> </label>
+                                <label>Village</label>
                                 <?php echo form_error('refer_village');?>
                                 <input type="text" name="refer_village" id="refer_village"
                                     value="<?= isset($emp_info->refer_village)?>"
-                                    class="form-control input-sm english_village required" required>
+                                    class="form-control input-sm english_village " >
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>District <span style="color: red;">*</span> </label>
+                                <label>District </label>
                                 <?php echo form_error('ref_district');?>
-                                <select name="ref_district" id="ref_district" class="form-control input-sm required" required>
+                                <select name="ref_district" id="ref_district" class="form-control input-sm">
                                     <option value='' >-- Select --</option>
                                     <?php foreach ($districts as $key => $row) { ?>
                                     <option value="<?= $row->id ?>"><?= $row->name_en.' >>'.$row->name_bn; ?></option>
@@ -953,19 +918,18 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Thana/Upazila<span style="color: red;">*</span> </label>
+                                <label>Thana/Upazila</label>
                                 <?php echo form_error('ref_thana');?>
-                                <select name="ref_thana" id="ref_thana" class="ref_thana form-control input-sm required"
-                                    required>
+                                <select name="ref_thana" id="ref_thana" class="ref_thana form-control input-sm">
                                     <option value='' >-- Select --</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Post Office<span style="color: red;">*</span> </label>
+                                <label>Post Office</label>
                                 <?php echo form_error('ref_post');?>
-                                <select name="ref_post" id="ref_post" class="ref_post form-control input-sm required" required>
+                                <select name="ref_post" id="ref_post" class="ref_post form-control input-sm">
                                     <option value='' >-- Select --</option>
                                 </select>
                             </div>
@@ -1048,8 +1012,8 @@
 
                             <input type="hidden" name="submit_type" id="submit_type">
 
-                            <button onclick="checkAndBlockSubmit('edit',event)" class="btn btn-success">EDIT</button>
-                            <button onclick="checkAndBlockSubmit('save',event)" class="btn btn-primary">SAVE</button>
+                            <button type="button" onclick="submitFormViaAjax('edit', event)" class="btn btn-success">EDIT</button>
+                            <button type="button" onclick="submitFormViaAjax('save', event)" class="btn btn-primary">SAVE</button>
 
                         </div>
                     </div>
@@ -1073,7 +1037,7 @@ function set_desi_item() {
     }
     var emp_dept_id = localStorage.getItem('emp_dept_id');
     var emp_sec_id = localStorage.getItem('emp_sec_id');
-    var emp_line_id = localStorage.getItem('emp_line_id');
+    // var emp_line_id = localStorage.getItem('emp_line_id');
     var emp_desi_id = localStorage.getItem('emp_desi_id');
     var nomi_district = localStorage.getItem('nomi_district');
     var nomi_thana = localStorage.getItem('nomi_thana');
@@ -1173,7 +1137,7 @@ function set_desi_item() {
     if (unit_id) $('#unit_id').val(unit_id);
     if (emp_dept_id) $('#emp_dept_id').val(emp_dept_id);
     if (emp_sec_id) $('#emp_sec_id').val(emp_sec_id);
-    if (emp_line_id) $('#emp_line_id').val(emp_line_id);
+    // if (emp_line_id) $('#emp_line_id').val(emp_line_id);
     if (emp_desi_id) $('#emp_desi_id').val(emp_desi_id);
     // Clear all items in localStorage
     var otEntitleElement = document.querySelector('input[name="ot_entitle"][value="'+ot_entitle+'"]');
@@ -1229,11 +1193,11 @@ function emp_id_search(id = null) {
             if (e.status == true) {
                 const keysToFilter = [
                     "id", "emp_id", "name_en", "name_bn",
-                    "father_name", "mother_name", "per_village", "per_post",
+                    "father_name", "father_name_en", "mother_name", "mother_name_en", "spouse_name", "spouse_name_en", "per_village", "per_post",
                     "per_thana", "per_district", "per_village_bn",
                     "pre_home_owner", "holding_num", "home_own_mobile",
                     "pre_village", "pre_post", "pre_thana", "pre_district",
-                    "pre_village_bn", "spouse_name", "emp_dob", "gender",
+                    "pre_village_bn", "emp_dob", "gender",
                     "marital_status", "religion", "blood", "m_child", "f_child",
                     "nominee_name", "nominee_vill", "nomi_post", "nomi_thana",
                     "nomi_district", "nomi_age","nomi_nid", "nomi_relation", "nomi_mobile",
@@ -1241,7 +1205,7 @@ function emp_id_search(id = null) {
                     "education", "nid_dob_id", "nid_dob_check","nomi_nid_bc_check", "exp_factory_name",
                     "exp_duration", "exp_designation", "personal_mobile", "exp_dasignation",
                     "bank_bkash_no", "unit_id", "emp_dept_id", "refer_village",
-                    "emp_sec_id", "emp_line_id", "emp_desi_id", "emp_sal_gra_id", "emp_type",
+                   "emp_sal_gra_id", "emp_type",
                     "emp_cat_id", "proxi_id", "emp_shift", "gross_sal",
                     "com_gross_sal", "ot_entitle", "com_ot_entitle", "transport", "img_source",
                     "lunch", "att_bonus", "salary_draw", "salary_type", "emp_join_date", "weekend",
@@ -1252,7 +1216,7 @@ function emp_id_search(id = null) {
                 keysToFilter.forEach(function(key) {
                     // console.log(key);
                     if (data[key] !== undefined && data[key] !== null) {
-                        if (key == 'emp_dept_id' || key == 'emp_sec_id' || key == 'emp_line_id' ||
+                        if (key == 'emp_dept_id' || key == 'emp_sec_id'  ||
                             key == 'emp_desi_id' || key == 'nomi_district' || key == 'nomi_thana' ||
                             key == 'pre_district' || key == 'pre_thana' || key == 'per_district' ||
                             key == 'per_thana' || key == 'per_post' || key == 'pre_post' || key ==
@@ -1577,71 +1541,63 @@ $(function() {
     });
 });
 function changeFontBn() {
-    setTimeout(() => {
-        $('.ui-menu-item-wrapper').css('font-family', 'SutonnyMJ');
-    }, 500);
+    // Standard Unicode (Avro) support
 }
 </script>
 <script>
-function checkAndBlockSubmit(type, e) {
-    e.preventDefault();
-
-
-    console.log($('#per_district').val())
+function submitFormViaAjax(type, e) {
+    if (e) e.preventDefault();
     $('#submit_type').val(type);
-    if (type == 'edit') {
-        var flag = true;
-         $('#form_id').find(".required").each(function() {
-            $(this).siblings('.help-block').remove();
-            $(this).parent().removeClass('has-error');
-            if ($(this).val() == '' || $(this).val() == null) {
-                flag = false;
-                $(this).parent().append('<span class="help-block">This field is required</span>');
-                $(this).parent().addClass('has-error');
+
+    // Clear previous error messages and highlighting
+    $('#form_id').find('.help-block').remove();
+    $('#form_id').find('.has-error').removeClass('has-error');
+
+    var form = document.getElementById('form_id');
+    var formData = new FormData(form);
+
+    $.ajax({
+        type: "POST",
+        url: $('#form_id').attr('action'),
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: "json",
+        success: function(response) {
+            if (response.status === true) {
+                alert(response.message || 'Operation successful.');
+                // Clear/reset form ONLY when data insert or update is successful
+                $('#form_id')[0].reset();
+                $("#image").attr("src", "");
+                $('#age').html('-');
+                $('#job_duration').html('-');
+                if (typeof get_last_id === 'function') {
+                    get_last_id();
+                }
             } else {
-                $(this).siblings('.help-block').remove();
-                $(this).parent().removeClass('has-error');
-            }
-        });
-        if (flag) {
-            $('#form_id').submit();
-        }
-    } else {
-        $.ajax({
-            type: "POST",
-            url: "<?php echo base_url('emp_info_con/checkAndBlockSubmit'); ?>",
-            data: {
-                id: $('#emp_id').val()
-            },
-            success: function(data) {
-                if (data == 'true') {
-                    var flag = true;
-                    $('#form_id').find(".required").each(function() {
-                        $(this).siblings('.help-block').remove();
-                        $(this).parent().removeClass('has-error');
-                        if ($(this).val() == '' || $(this).val() == null) {
-                            flag = false;
-                            $(this).parent().append(
-                                '<span class="help-block">This field is required</span>');
-                            $(this).parent().addClass('has-error');
-                        } else {
-                            $(this).siblings('.help-block').remove();
-                            $(this).parent().removeClass('has-error');
+                // Display warning and DO NOT reset form data
+                alert('Warning: ' + (response.message || 'Data insertion failed.'));
+                if (response.errors) {
+                    $.each(response.errors, function(key, val) {
+                        var field = $('#' + key);
+                        if (field.length) {
+                            field.parent().addClass('has-error');
+                            field.siblings('.help-block').remove();
+                            field.parent().append('<span class="help-block" style="color:red;">' + val + '</span>');
                         }
                     });
-                    if (flag) {
-                        $('#form_id').submit();
-                    }
-                } else {
-                    alert('Employee ID Already Exist');
-                    return false;
                 }
             }
-        })
+        },
+        error: function(xhr, status, error) {
+            alert('Warning: An error occurred while submitting data. Form data has not been reset.');
+            console.error(xhr.responseText);
+        }
+    });
+}
 
-    }
-
-
+function checkAndBlockSubmit(type, e) {
+    submitFormViaAjax(type, e);
 }
 </script>
 

@@ -1,8 +1,10 @@
 function get_checked_value(checkboxes) {
+   if (!checkboxes) return "";
    var vals = Array.from(checkboxes)
       .filter(checkbox => checkbox.checked)
       .map(checkbox => checkbox.value)
       .join(",");
+   return vals;
 }
 
 function grid_continuous_costing_report()
@@ -4583,6 +4585,7 @@ var ajaxRequest;  // The variable that makes Ajax possible!
 		alert("Please select First date");
 		return false;
 	}
+	var status = document.getElementById('status').value;
 	var unit_id = document.getElementById('unit_id').value;
 	if(unit_id =='Select')
 	{

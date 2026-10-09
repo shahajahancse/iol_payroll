@@ -32,6 +32,21 @@
             <!-- <h3 style="font-weight: 600;"><?= $title ?></h3> -->
             <h3></h3>
                 <input type="hidden" name="unit_id" id="unit_id" value="1">
+                <!-- shift -->
+                <div class="col-md-6">
+                    <div class="form-group" style="margin-bottom: 10px !important;">
+                        <label>Shift </label>
+                        <select class="form-control input-sm shift" id='shift' name='shift' onChange="grid_emp_list()">
+                            <option value=''>Select Shift</option>
+                            <?php 
+                                $shifts = $this->db->get('pr_emp_shift');
+                                if (!empty($shifts)) {
+                                    foreach ($shifts->result() as $key => $val) { ?>
+                                        <option value='<?= $val->id ?>'><?= $val->shift_name ?></option>
+                                <?php } } ?>
+                        </select>
+                    </div>
+                </div>
                 <!-- department -->
                 <div class="col-md-6">
                     <div class="form-group" style="margin-bottom: 10px !important;">
@@ -191,6 +206,7 @@
             var desig = document.getElementById('desig').value;
             var status = document.getElementById('status').value;
             var searchi = document.getElementById('searchi').value;
+            var shift = document.getElementById('shift') ? document.getElementById('shift').value : '';
 
             url = hostname + "common/grid_emp_list/" + unit + "/" + dept + "/" + section + "/" + line + "/" + desig;
             $.ajax({
@@ -198,7 +214,8 @@
                 type: 'GET',
                 data: {
                     "status": status,
-                    "searchi": searchi
+                    "searchi": searchi,
+                    "shift": shift
                 },
                 contentType: "application/json",
                 dataType: "json",

@@ -48,6 +48,9 @@ class Common extends CI_Controller {
         if (!empty($desig)) {
             $this->db->where('com.emp_desi_id', $desig);
         }
+        if (!empty($_GET['shift'])) {
+            $this->db->where('com.emp_shift', $_GET['shift']);
+        }
         if (!empty($_GET['status'])) {
             $this->db->where('com.emp_cat_id', $_GET['status']);
         }
@@ -136,6 +139,10 @@ class Common extends CI_Controller {
         }
         if (!empty($_GET['stop_salary'])) {
             $this->db->where('ss.stop_salary', $_GET['stop_salary']);
+        }
+        if (!empty($_GET['shift'])) {
+            $this->db->join('pr_emp_com_info as com', 'com.emp_id = ss.emp_id', 'left');
+            $this->db->where('com.emp_shift', $_GET['shift']);
         }
         if (!empty($searchInput)) {
             $searchTerms = explode(',', $searchInput);
