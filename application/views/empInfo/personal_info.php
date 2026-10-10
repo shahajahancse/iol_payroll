@@ -1215,10 +1215,25 @@ function set_desi_item() {
         }, 500)
 
     var nomi_age = localStorage.getItem('nomi_age');
-    var emp_join_date = localStorage.getItem('emp_join_date');
+    if (nomi_age && $("#nomi_age").length) {
+        try {
+            var nDate = new Date(nomi_age);
+            if (!isNaN(nDate.getTime()) && typeof $("#nomi_age").datepicker === 'function') {
+                $("#nomi_age").datepicker("setDate", nDate);
+            }
+        } catch(e) {}
+    }
 
-    $("#nomi_age").datepicker("setDate", new Date(nomi_age));
-    $("#emp_join_date").datepicker("setDate", new Date(emp_join_date));
+    var emp_join_date = localStorage.getItem('emp_join_date');
+    if (emp_join_date && $("#emp_join_date").length) {
+        $("#emp_join_date").val(emp_join_date);
+        try {
+            var jDate = new Date(emp_join_date);
+            if (!isNaN(jDate.getTime()) && typeof $("#emp_join_date").datepicker === 'function') {
+                $("#emp_join_date").datepicker("setDate", jDate);
+            }
+        } catch(e) {}
+    }
     $('#weekend').val(localStorage.getItem('weekend')).trigger('change');
 
     var nomi_district = localStorage.getItem('nomi_district');
@@ -1346,7 +1361,8 @@ function emp_id_search(id = null) {
                     "education", "nid_dob_id", "nid_dob_check","nomi_nid_bc_check", "exp_factory_name",
                     "exp_duration", "exp_designation", "personal_mobile", "exp_dasignation",
                     "bank_bkash_no", "unit_id", "emp_dept_id", "refer_village",
-                   "emp_sal_gra_id", "emp_type",
+                    "emp_sec_id", "emp_line_id", "emp_desi_id",
+                    "emp_sal_gra_id", "emp_type",
                     "emp_cat_id", "proxi_id", "emp_shift", "gross_sal",
                     "com_gross_sal", "ot_entitle", "com_ot_entitle", "transport", "img_source",
                     "lunch", "att_bonus", "salary_draw", "salary_type", "emp_join_date", "weekend",
@@ -1385,8 +1401,28 @@ function emp_id_search(id = null) {
                         }
                     }
                 });
-            }
+                if (data.unit_id) {
+                    $('#unit_id').val(data.unit_id);
+                }
 
+                if (data.emp_dept_id) {
+                    $('#emp_dept_id').val(data.emp_dept_id);
+                    if ($('#emp_dept_id').data('select2')) $('#emp_dept_id').select2('val', data.emp_dept_id);
+                    load_sections(data.emp_dept_id, data.emp_sec_id, function() {
+                        if (data.emp_sec_id) {
+                            load_designations(data.emp_sec_id, data.emp_desi_id);
+                        } else {
+                            load_designations('');
+                        }
+                    });
+                } else if (data.emp_sec_id) {
+                    $('#emp_sec_id').val(data.emp_sec_id);
+                    if ($('#emp_sec_id').data('select2')) $('#emp_sec_id').select2('val', data.emp_sec_id);
+                    load_designations(data.emp_sec_id, data.emp_desi_id);
+                } else {
+                    load_designations('');
+                }
+            }
 
             set_desi_item();
             get_last_id();

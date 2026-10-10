@@ -207,6 +207,14 @@ class Common extends CI_Controller {
         $this->db->order_by('sec_name_en', 'ASC');
         $query = $this->db->get()->result();
 
+        if (empty($query) && !empty($unit_id)) {
+            $this->db->select('*');
+            $this->db->from('emp_section');
+            $this->db->where('depertment_id', $id);
+            $this->db->order_by('sec_name_en', 'ASC');
+            $query = $this->db->get()->result();
+        }
+
         foreach ($query as $row) {
             $data[$row->id] = $row->sec_name_en;
         }
@@ -299,6 +307,16 @@ class Common extends CI_Controller {
             $this->db->order_by('dg.desig_name', 'ASC');
             $query = $this->db->get()->result();
 
+            if (empty($query) && !empty($unit_id)) {
+                $this->db->select('dg.id, dg.desig_name, dg.desig_bangla');
+                $this->db->from('emp_dasignation_line_acl dl');
+                $this->db->join('emp_designation dg', 'dg.id = dl.designation_id', 'inner');
+                $this->db->where('dl.section_id', $id);
+                $this->db->group_by('dg.id');
+                $this->db->order_by('dg.desig_name', 'ASC');
+                $query = $this->db->get()->result();
+            }
+
             if (empty($query)) {
                 $this->db->select('dg.id, dg.desig_name, dg.desig_bangla');
                 $this->db->from('pr_emp_com_info com');
@@ -308,6 +326,16 @@ class Common extends CI_Controller {
                     $this->db->where('com.unit_id', $unit_id);
                 }
                 $this->db->group_by('dg.id');
+                $this->db->order_by('dg.desig_name', 'ASC');
+                $query = $this->db->get()->result();
+            }
+
+            if (empty($query)) {
+                $this->db->select('dg.id, dg.desig_name, dg.desig_bangla');
+                $this->db->from('emp_designation dg');
+                if (!empty($unit_id)) {
+                    $this->db->where('dg.unit_id', $unit_id);
+                }
                 $this->db->order_by('dg.desig_name', 'ASC');
                 $query = $this->db->get()->result();
             }

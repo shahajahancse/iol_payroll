@@ -484,137 +484,134 @@ input[type="number"] {
 </div>
 </div>
 <script>
-function loadUpazilaOptions(dis_id, thana_selector, post_selector, selected_thana, selected_post) {
-    if (!dis_id) return;
-    $(thana_selector).addClass('form-control input-sm');
-    $(thana_selector + " > option").remove();
-    if (post_selector) $(post_selector + " > option").remove();
+function load_sections(dept_id, selected_sec_id, callback) {
+    var unit_id = $('#unit_id').val() || 1;
+    dept_id = (dept_id !== undefined && dept_id !== null && dept_id !== '') ? dept_id : $('#emp_dept_id').val();
+
+    $('#emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
+
+    if (!dept_id) {
+        load_designations('', '', callback);
+        return;
+    }
+
     $.ajax({
         type: "POST",
-        url: hostname + "common/ajax_upazila_by_dis/" + dis_id,
+        url: hostname + "common/ajax_section_by_dept_id/" + dept_id + '/' + unit_id,
+        dataType: "json",
         success: function(func_data) {
-            $(thana_selector).append("<option value=''>-- Select Upazila/Thana --</option>");
+            if (typeof func_data === 'string') {
+                try { func_data = JSON.parse(func_data); } catch(e) {}
+            }
+            $('#emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
             $.each(func_data, function(id, name) {
                 var opt = $('<option />');
                 opt.val(id);
                 opt.text(name);
-                $(thana_selector).append(opt);
+                $('#emp_sec_id').append(opt);
             });
-            if (selected_thana) {
-                $(thana_selector).val(selected_thana);
-                if (selected_post && post_selector) {
-                    loadPostOfficeOptions(selected_thana, post_selector, selected_post);
-                }
+            if (selected_sec_id) {
+                $('#emp_sec_id').val(selected_sec_id);
             }
+            if (typeof callback === 'function') callback();
+        },
+        error: function() {
+            if (typeof callback === 'function') callback();
         }
     });
 }
 
-function loadPostOfficeOptions(thana_id, post_selector, selected_post) {
-    if (!thana_id) return;
-    $(post_selector).addClass('form-control input-sm');
-    $(post_selector + " > option").remove();
+function load_designations(sec_id, selected_desig_id, callback) {
+    var unit_id = $('#unit_id').val() || 1;
+    sec_id = (sec_id !== undefined && sec_id !== null && sec_id !== '') ? sec_id : $('#emp_sec_id').val();
+
+    $('#emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
+
+    if (!sec_id) {
+        if (typeof callback === 'function') callback();
+        return;
+    }
+
     $.ajax({
         type: "POST",
-        url: hostname + "common/ajax_post_office_by_upa_id/" + thana_id,
-        success: function(upazilaThanas) {
-            $(post_selector).append("<option value=''>-- Select Post Office --</option>");
-            $.each(upazilaThanas, function(id, ut_name) {
+        url: hostname + "common/ajax_designation_by_sec_id/" + sec_id + '/' + unit_id,
+        dataType: "json",
+        success: function(func_data) {
+            if (typeof func_data === 'string') {
+                try { func_data = JSON.parse(func_data); } catch(e) {}
+            }
+            $('#emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
+            $.each(func_data, function(id, name) {
                 var opt = $('<option />');
                 opt.val(id);
-                opt.text(ut_name);
-                $(post_selector).append(opt);
+                opt.text(name);
+                $('#emp_desi_id').append(opt);
             });
-            if (selected_post) {
-                $(post_selector).val(selected_post);
+            if (selected_desig_id) {
+                $('#emp_desi_id').val(selected_desig_id);
             }
+            if (typeof callback === 'function') callback();
+        },
+        error: function() {
+            if (typeof callback === 'function') callback();
         }
     });
 }
 
 function set_desi_item() {
-    
     var emp_dob = localStorage.getItem('emp_dob');
-
-    if (emp_dob) {
-        // Parse the stored date
-        var date = new Date(emp_dob);
-
-        // Set the date in the date picker
-        $("#emp_dob").datepicker("setDate", date);
+    if (emp_dob && $("#emp_dob").length) {
+        $("#emp_dob").val(emp_dob);
+        try {
+            var date = new Date(emp_dob);
+            if (!isNaN(date.getTime()) && typeof $("#emp_dob").datepicker === 'function') {
+                $("#emp_dob").datepicker("setDate", date);
+            }
+        } catch(e) {}
     }
-    var emp_dept_id = localStorage.getItem('emp_dept_id');
-    var emp_sec_id = localStorage.getItem('emp_sec_id');
-    var emp_line_id = localStorage.getItem('emp_line_id');
-    var emp_desi_id = localStorage.getItem('emp_desi_id');
-    var nomi_district = localStorage.getItem('nomi_district');
-    var nomi_thana = localStorage.getItem('nomi_thana');
-    var nomi_post = localStorage.getItem('nomi_post');
 
-    
-    var ot_entitle = localStorage.getItem('ot_entitle');
-    var com_ot_entitle = localStorage.getItem('com_ot_entitle');
-    var nid_dob_check = localStorage.getItem('nid_dob_check');
+    var emp_join_date = localStorage.getItem('emp_join_date');
+    if (emp_join_date && $("#emp_join_date").length) {
+        $("#emp_join_date").val(emp_join_date);
+        try {
+            var jDate = new Date(emp_join_date);
+            if (!isNaN(jDate.getTime()) && typeof $("#emp_join_date").datepicker === 'function') {
+                $("#emp_join_date").datepicker("setDate", jDate);
+            }
+        } catch(e) {}
+    }
 
     var gross_sal = localStorage.getItem('gross_sal');
     var com_gross_sal = localStorage.getItem('com_gross_sal');
-
-
-         setTimeout(function() {
-            $('#gross_sal').val(gross_sal).trigger('change');
-            setTimeout(function() {
-                $('#com_gross_sal').val(com_gross_sal).trigger('change');
-            }, 500)
-        }, 500)
-        
-    //alert(new Date(emp_dob));
-    var nomi_age = localStorage.getItem('nomi_age');
-    var emp_join_date = localStorage.getItem('emp_join_date');
-    var ft = localStorage.getItem('ft');
-    var inches = localStorage.getItem('inches');
-    console.log(ft, inches);
-
-
-    $('#ft').val(ft).trigger('change');
-    $('#inches').val(inches).trigger('change');
-
-
-
-    //$("#emp_dob").datepicker("setDate", emp_dob);
-    $("#nomi_age").datepicker("setDate", new Date(nomi_age));
-    $("#emp_join_date").datepicker("setDate", new Date(emp_join_date));
-    $('#weekend').val(localStorage.getItem('weekend')).trigger('change');
-
-    if (nomi_district) {
-        $('#nomi_district').val(nomi_district);
-        loadUpazilaOptions(nomi_district, '.nomi_thana', '.nomi_post', nomi_thana, nomi_post);
+    if (gross_sal) {
+        $('#gross_sal').val(gross_sal);
+        if (typeof salary_structure_cal === 'function') salary_structure_cal();
+    }
+    if (com_gross_sal) {
+        $('#com_gross_sal').val(com_gross_sal);
+        if (typeof salary_structure_cal2 === 'function') salary_structure_cal2();
     }
 
-    var pre_district = localStorage.getItem('pre_district');
-    var pre_thana = localStorage.getItem('pre_thana');
-    var pre_post = localStorage.getItem('pre_post');
-    if (pre_district) {
-        $('#pre_district').val(pre_district);
-        loadUpazilaOptions(pre_district, '.pre_thana', '.pre_post', pre_thana, pre_post);
+    var weekend = localStorage.getItem('weekend');
+    if (weekend) $('#weekend').val(weekend);
+
+    var ot_entitle = localStorage.getItem('ot_entitle');
+    if (ot_entitle !== null && ot_entitle !== undefined) {
+        $('input[name="ot_entitle"][value="' + ot_entitle + '"]').prop('checked', true);
     }
 
-    var per_district = localStorage.getItem('per_district');
-    var per_thana = localStorage.getItem('per_thana');
-    var per_post = localStorage.getItem('per_post');
-    if (per_district) {
-        $('#per_district').val(per_district);
-        loadUpazilaOptions(per_district, '.per_thana', '.per_post', per_thana, per_post);
+    var com_ot_entitle = localStorage.getItem('com_ot_entitle');
+    if (com_ot_entitle !== null && com_ot_entitle !== undefined) {
+        $('input[name="com_ot_entitle"][value="' + com_ot_entitle + '"]').prop('checked', true);
     }
 
-    var ref_district = localStorage.getItem('ref_district');
-    var ref_thana = localStorage.getItem('ref_thana');
-    var ref_post = localStorage.getItem('ref_post');
-    if (ref_district) {
-        $('#ref_district').val(ref_district);
-        loadUpazilaOptions(ref_district, '.ref_thana', '.ref_post', ref_thana, ref_post);
-    }
+    var unit_id = localStorage.getItem('unit_id');
+    if (unit_id) $('#unit_id').val(unit_id);
 
-    // Update emp_dept_id, emp_sec_id, emp_desi_id
+    var emp_dept_id = localStorage.getItem('emp_dept_id');
+    var emp_sec_id = localStorage.getItem('emp_sec_id');
+    var emp_desi_id = localStorage.getItem('emp_desi_id');
+
     if (emp_dept_id) {
         $('#emp_dept_id').val(emp_dept_id);
         load_sections(emp_dept_id, emp_sec_id, function() {
@@ -624,41 +621,21 @@ function set_desi_item() {
                 load_designations('');
             }
         });
+    } else if (emp_sec_id) {
+        $('#emp_sec_id').val(emp_sec_id);
+        load_designations(emp_sec_id, emp_desi_id);
     } else {
-        if (emp_sec_id) {
-            $('.emp_sec_id').val(emp_sec_id);
-            load_designations(emp_sec_id, emp_desi_id);
-        } else {
-            load_designations('');
-        }
+        load_designations('');
     }
-    // Clear all items in localStorage
-    var otEntitleElement = document.querySelector('input[name="ot_entitle"][value="'+ot_entitle+'"]');
-        if (otEntitleElement) {
-            otEntitleElement.checked = true;
-        }
-
-        var comOtEntitleElement = document.querySelector('input[name="com_ot_entitle"][value="'+com_ot_entitle+'"]');
-        if (comOtEntitleElement) {
-            comOtEntitleElement.checked = true;
-        }
-
-        var nidDobCheckElement = document.querySelector('input[name="nid_dob_check"][value="'+nid_dob_check+'"]');
-        if (nidDobCheckElement) {
-            nidDobCheckElement.checked = true;
-        }
-//localStorage.clear();
-
 }
-</script>
 
-<script>
 function emp_id_search(id = null) {
     if (id == null) {
-        var id = $('#employee_id').val();
+        id = $('#employee_id').val();
     }
-    if (id == '') {
+    if (!id) {
         alert('Field can not be empty');
+        return;
     }
     document.getElementById("form_id").reset();
     $.ajax({
@@ -668,10 +645,6 @@ function emp_id_search(id = null) {
             id: id,
         },
         success: function(e) {
-            var data = e.data;
-            // consol.log(data);return;
-            $('#age').html(data.age)
-            $('#job_duration').html(data.job_duration)
             if (e.status == false) {
                 alert(e.data);
                 $("#form_id").trigger("reset");
@@ -679,65 +652,57 @@ function emp_id_search(id = null) {
                 return false;
             }
 
+            var data = e.data;
+            $('#age').html(data.age || '-');
+            $('#job_duration').html(data.job_duration || '-');
+
             if (e.status == true) {
                 const keysToFilter = [
                     "id", "emp_id", "name_en", "name_bn",
-                    "father_name", "father_name_en", "mother_name", "mother_name_en", "spouse_name", "spouse_name_en", "per_village", "per_post",
-                    "per_thana", "per_district", "per_village_bn",
-                    "pre_home_owner", "holding_num", "home_own_mobile",
-                    "pre_village", "pre_post", "pre_thana", "pre_district",
-                    "pre_village_bn", "emp_dob", "gender",
-                    "marital_status", "religion", "blood", "m_child", "f_child",
-                    "nominee_name", "nominee_vill", "nomi_post", "nomi_thana",
-                    "nomi_district", "nomi_age", "nomi_relation", "nomi_mobile",
-                    "refer_name", "refer_address", "refer_mobile", "refer_relation",
-                    "education", "nid_dob_id", "nid_dob_check", "exp_factory_name",
-                    "exp_duration", "exp_designation", "personal_mobile", "exp_dasignation",
-                    "bank_bkash_no", "unit_id", "emp_dept_id", "refer_village",
+                    "emp_dob", "gender", "personal_mobile",
+                    "bank_bkash_no", "unit_id", "emp_dept_id",
                     "emp_sec_id", "emp_line_id", "emp_desi_id", "emp_sal_gra_id", "emp_type",
                     "emp_cat_id", "proxi_id", "emp_shift", "gross_sal",
                     "com_gross_sal", "ot_entitle", "com_ot_entitle", "transport", "img_source",
-                    "lunch", "att_bonus", "salary_draw", "salary_type","position_id", "emp_join_date", "weekend",
-                    "ref_district", "refer_village", "ref_thana", "ref_post","ft","inches","symbol"
+                    "lunch", "att_bonus", "salary_draw", "salary_type", "position_id", "emp_join_date", "weekend"
                 ];
-                // Filter the data based on keysToFilter
-                var filteredData = {};
+
                 keysToFilter.forEach(function(key) {
-                    // console.log(key);
                     if (data[key] !== undefined && data[key] !== null) {
-                        if (key == 'emp_dept_id' || key == 'emp_sec_id' || key == 'emp_line_id' ||
-                            key == 'emp_desi_id' || key == 'nomi_district' || key == 'nomi_thana' ||
-                            key == 'pre_district' || key == 'pre_thana' || key == 'per_district' ||
-                            key == 'per_thana' || key == 'per_post' || key == 'pre_post' || key ==
-                            'nomi_post' || key == 'ref_thana' || key == 'ref_post' || key ==
-                            'ref_district' || key == 'emp_dob' || key == 'nomi_age' || key ==
-                            'emp_join_date' || key == 'weekend' || key == 'ft' || key == 'inches' || key == 'ot_entitle' || key == 'com_ot_entitle' || key == 'nid_dob_check' || key == 'com_gross_sal'|| key == 'gross_sal'
-                        ) {
-                            localStorage.setItem(key, data[key]);
-                        } else if (key == 'img_source') {
-                            $("#image").attr("src", data[key] != null ?
-                                '<?php echo base_url("/uploads/photo/")?>' + data[key] : '');
-                            $("#img_source").attr("src", data[key] != null ?
-                                '<?php echo base_url("/uploads/photo/")?>' + data[key] : '');
-                        } else if (key == 'nid_dob_check' || key == 'ot_entitle' || key ==
-                            'com_ot_entitle') {
-                            var radioBtn = $('#' + key);
-                            if (data[key] != null) {
-                                radioBtn.prop('checked', true);
-                            } else {
-                                radioBtn.prop('checked', false);
-                            }
-                        } else {
-                            console.log(key);
-                            $('#' + key).val(data[key] != null ? data[key] : '');
+                        localStorage.setItem(key, data[key]);
+                        if (key == 'ot_entitle' || key == 'com_ot_entitle') {
+                            $('input[name="' + key + '"][value="' + data[key] + '"]').prop('checked', true);
+                        } else if (key != 'emp_dept_id' && key != 'emp_sec_id' && key != 'emp_desi_id') {
+                            $('#' + key).val(data[key]);
                         }
                     }
                 });
-            }
 
-            
-            set_desi_item();
-            get_last_id();
+                if (data.unit_id) {
+                    $('#unit_id').val(data.unit_id);
+                }
+
+                if (data.emp_dept_id) {
+                    $('#emp_dept_id').val(data.emp_dept_id);
+                    load_sections(data.emp_dept_id, data.emp_sec_id, function() {
+                        if (data.emp_sec_id) {
+                            load_designations(data.emp_sec_id, data.emp_desi_id);
+                        } else {
+                            load_designations('');
+                        }
+                    });
+                } else if (data.emp_sec_id) {
+                    $('#emp_sec_id').val(data.emp_sec_id);
+                    load_designations(data.emp_sec_id, data.emp_desi_id);
+                } else {
+                    load_designations('');
+                }
+
+                set_desi_item();
+                if (typeof get_last_id === 'function') {
+                    get_last_id();
+                }
+            }
         },
         error: function(error) {
             console.error('Error:', error);
@@ -748,16 +713,13 @@ function emp_id_search(id = null) {
 
 <script type="text/javascript">
 $(document).ready(function() {
-    //Designation dropdown
     $('#emp_id').change(function() {
         var emp_id = $('#emp_id').val();
         $("#proxi_id").empty();
         $('#proxi_id').val(emp_id);
     });
 
-
     $('#emp_sal_gra_id').change(function() {
-    // alert($(this).val());
         var grade_id = $(this).val();
         $.ajax({
             type: "POST",
@@ -766,86 +728,11 @@ $(document).ready(function() {
             },
             url: hostname + "emp_info_con/get_salary_by_grade_id/",
             success: function(func_data) {
-              $('#com_gross_sal').val(func_data);
-              salary_structure_cal2();
+                $('#com_gross_sal').val(func_data);
+                if (typeof salary_structure_cal2 === 'function') salary_structure_cal2();
             }
         });
     });
-
-    function load_sections(dept_id, selected_sec_id, callback) {
-        var unit_id = $('#unit_id').val() || 1;
-        dept_id = (dept_id !== undefined && dept_id !== null) ? dept_id : $('#emp_dept_id').val();
-
-        $('.emp_sec_id').addClass('form-control input-sm');
-        $('.emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
-
-        if (!dept_id) {
-            load_designations('', '', callback);
-            return;
-        }
-
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_section_by_dept_id/" + dept_id + '/' + unit_id,
-            dataType: "json",
-            success: function(func_data) {
-                if (typeof func_data === 'string') {
-                    try { func_data = JSON.parse(func_data); } catch(e) {}
-                }
-                $('.emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_sec_id').append(opt);
-                });
-                if (selected_sec_id) {
-                    $('.emp_sec_id').val(selected_sec_id);
-                }
-                if (typeof callback === 'function') callback();
-            },
-            error: function() {
-                if (typeof callback === 'function') callback();
-            }
-        });
-    }
-
-    function load_designations(sec_id, selected_desig_id, callback) {
-        var unit_id = $('#unit_id').val() || 1;
-        sec_id = (sec_id !== undefined && sec_id !== null) ? sec_id : $('.emp_sec_id').val();
-
-        $('.emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
-
-        if (!sec_id) {
-            if (typeof callback === 'function') callback();
-            return;
-        }
-
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_designation_by_sec_id/" + sec_id + '/' + unit_id,
-            dataType: "json",
-            success: function(func_data) {
-                if (typeof func_data === 'string') {
-                    try { func_data = JSON.parse(func_data); } catch(e) {}
-                }
-                $('.emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_desi_id').append(opt);
-                });
-                if (selected_desig_id) {
-                    $('.emp_desi_id').val(selected_desig_id);
-                }
-                if (typeof callback === 'function') callback();
-            },
-            error: function() {
-                if (typeof callback === 'function') callback();
-            }
-        });
-    }
 
     // Section change populates Designation dropdown directly
     $('#emp_sec_id, .emp_sec_id').change(function() {
@@ -860,197 +747,30 @@ $(document).ready(function() {
             load_designations('');
         });
     });
+
     $('#unit_id').change(function() {
         var id = $('#unit_id').val();
         $.ajax({
             type: "POST",
             url: hostname + "common/ajax_department_by_unit_id/" + id,
             success: function(func_data) {
-                $('#emp_dept_id').empty();
-                $('#emp_dept_id').append(
-                    "<option value=''>-- Select Department --</option>");
+                $('#emp_dept_id').empty().append("<option value=''>-- Select Department --</option>");
                 $.each(func_data, function(id, name) {
                     var opt = $('<option />');
                     opt.val(id);
                     opt.text(name);
                     $('#emp_dept_id').append(opt);
                 });
-                $('.emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
-                $('.emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
-            }
-        });
-    });
-
-    //nominee Upazila dropdown
-    $('#nomi_district').change(function() {
-        $('.nomi_thana').addClass('form-control input-sm');
-        $(".nomi_thana > option").remove();
-        $(".nomi_post > option").remove();
-        var id = $('#nomi_district').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_upazila_by_dis/" + id,
-            success: function(func_data) {
-                $('.nomi_thana').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.nomi_thana').append(opt);
-                });
-            }
-        });
-    });
-
-    //nominee post office dropdown
-    $('#nomi_thana').change(function() {
-        $('.nomi_post').addClass('form-control input-sm');
-        $(".nomi_post > option").remove();
-        var id = $('#nomi_thana').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_post_office_by_upa_id/" + id,
-            success: function(func_data) {
-                $('.nomi_post').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.nomi_post').append(opt);
-                });
-            }
-        });
-    });
-
-
-    //Refer Upazila dropdown
-    $('#ref_district').change(function() {
-        $('.ref_thana').addClass('form-control input-sm');
-        $(".ref_thana > option").remove();
-        $(".ref_post > option").remove();
-        var id = $('#ref_district').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_upazila_by_dis/" + id,
-            success: function(func_data) {
-                $('.ref_thana').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.ref_thana').append(opt);
-                });
-            }
-        });
-    });
-
-    //Refer post office dropdown
-    $('#ref_thana').change(function() {
-        $('.ref_post').addClass('form-control input-sm');
-        $(".ref_post > option").remove();
-        var id = $('#ref_thana').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_post_office_by_upa_id/" + id,
-            success: function(func_data) {
-                $('.ref_post').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.ref_post').append(opt);
-                });
-            }
-        });
-    });
-
-
-    //Upazila dropdown
-    $('#pre_district').change(function() {
-        $('.pre_thana').addClass('form-control input-sm');
-        $(".pre_thana > option").remove();
-        $(".pre_post > option").remove();
-        var id = $('#pre_district').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_upazila_by_dis/" + id,
-            success: function(func_data) {
-                $('.pre_thana').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.pre_thana').append(opt);
-                });
-            }
-        });
-    });
-
-    //Post Office dropdown
-    $('#pre_thana').change(function() {
-        $('.pre_post').addClass('form-control input-sm');
-        $(".pre_post > option").remove();
-        var id = $('#pre_thana').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_post_office_by_upa_id/" + id,
-            success: function(upazilaThanas) {
-                $('.pre_post').append("<option value=''>-- Select Upazila --</option>");
-                $.each(upazilaThanas, function(id, ut_name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(ut_name);
-                    $('.pre_post').append(opt);
-                });
-            }
-        });
-    });
-
-    //Upazila dropdown
-    $('#per_district').change(function() {
-        $('.per_thana').addClass('form-control input-sm');
-        $(".per_thana > option").remove();
-        $(".per_post > option").remove();
-        var id = $('#per_district').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_upazila_by_dis/" + id,
-            success: function(func_data) {
-                $('.per_thana').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.per_thana').append(opt);
-                });
-            }
-        });
-    });
-
-    //Post Office dropdown
-    $('#per_thana').change(function() {
-        $('.per_post').addClass('form-control input-sm');
-        $(".per_post > option").remove();
-        var id = $('#per_thana').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_post_office_by_upa_id/" + id,
-            success: function(upazilaThanas) {
-                $('.per_post').append("<option value=''>-- Select Upazila --</option>");
-                $.each(upazilaThanas, function(id, ut_name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(ut_name);
-                    $('.per_post').append(opt);
-                });
+                $('#emp_sec_id, .emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
+                $('#emp_desi_id, .emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
             }
         });
     });
 
     // Auto-load section and designation if pre-selected
     var initial_dept = $('#emp_dept_id').val();
-    var initial_sec = $('.emp_sec_id').val();
-    var initial_desi = $('.emp_desi_id').val();
+    var initial_sec = $('#emp_sec_id').val();
+    var initial_desi = $('#emp_desi_id').val();
     if (initial_dept) {
         load_sections(initial_dept, initial_sec, function() {
             if (initial_sec) {
