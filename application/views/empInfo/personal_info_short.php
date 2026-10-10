@@ -192,12 +192,8 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Designation<span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_desi_id');?>
-                                <?php $designations = $this->db->order_by('desig_name', 'ASC')->get('emp_designation')->result(); ?>
                                 <select name="emp_desi_id" id="emp_desi_id" class="emp_desi_id form-control input-sm required" required>
                                     <option value="">-- Select Designation --</option>
-                                    <?php foreach ($designations as $key => $row) { ?>
-                                    <option value="<?= $row->id ?>"><?= $row->desig_name; ?></option>
-                                    <?php } ?>
                                 </select>
                             </div>
                         </div>
@@ -488,6 +484,54 @@ input[type="number"] {
 </div>
 </div>
 <script>
+function loadUpazilaOptions(dis_id, thana_selector, post_selector, selected_thana, selected_post) {
+    if (!dis_id) return;
+    $(thana_selector).addClass('form-control input-sm');
+    $(thana_selector + " > option").remove();
+    if (post_selector) $(post_selector + " > option").remove();
+    $.ajax({
+        type: "POST",
+        url: hostname + "common/ajax_upazila_by_dis/" + dis_id,
+        success: function(func_data) {
+            $(thana_selector).append("<option value=''>-- Select Upazila/Thana --</option>");
+            $.each(func_data, function(id, name) {
+                var opt = $('<option />');
+                opt.val(id);
+                opt.text(name);
+                $(thana_selector).append(opt);
+            });
+            if (selected_thana) {
+                $(thana_selector).val(selected_thana);
+                if (selected_post && post_selector) {
+                    loadPostOfficeOptions(selected_thana, post_selector, selected_post);
+                }
+            }
+        }
+    });
+}
+
+function loadPostOfficeOptions(thana_id, post_selector, selected_post) {
+    if (!thana_id) return;
+    $(post_selector).addClass('form-control input-sm');
+    $(post_selector + " > option").remove();
+    $.ajax({
+        type: "POST",
+        url: hostname + "common/ajax_post_office_by_upa_id/" + thana_id,
+        success: function(upazilaThanas) {
+            $(post_selector).append("<option value=''>-- Select Post Office --</option>");
+            $.each(upazilaThanas, function(id, ut_name) {
+                var opt = $('<option />');
+                opt.val(id);
+                opt.text(ut_name);
+                $(post_selector).append(opt);
+            });
+            if (selected_post) {
+                $(post_selector).val(selected_post);
+            }
+        }
+    });
+}
+
 function set_desi_item() {
     
     var emp_dob = localStorage.getItem('emp_dob');
@@ -541,62 +585,53 @@ function set_desi_item() {
     $("#emp_join_date").datepicker("setDate", new Date(emp_join_date));
     $('#weekend').val(localStorage.getItem('weekend')).trigger('change');
 
-    $('#nomi_district').val(nomi_district).trigger('change');
-    setTimeout(function() {
-        $('#nomi_thana').val(nomi_thana).trigger('change');
-        setTimeout(function() {
-            $('#nomi_post').val(nomi_post).trigger('change');
-        }, 500)
-    }, 500)
+    if (nomi_district) {
+        $('#nomi_district').val(nomi_district);
+        loadUpazilaOptions(nomi_district, '.nomi_thana', '.nomi_post', nomi_thana, nomi_post);
+    }
 
     var pre_district = localStorage.getItem('pre_district');
     var pre_thana = localStorage.getItem('pre_thana');
     var pre_post = localStorage.getItem('pre_post');
-    $('#pre_district').val(pre_district).trigger('change');
-    setTimeout(function() {
-        $('#pre_thana').val(pre_thana).trigger('change');
-        setTimeout(function() {
-            $('#pre_post').val(pre_post).trigger('change');
-        }, 500)
-    }, 500)
+    if (pre_district) {
+        $('#pre_district').val(pre_district);
+        loadUpazilaOptions(pre_district, '.pre_thana', '.pre_post', pre_thana, pre_post);
+    }
 
     var per_district = localStorage.getItem('per_district');
     var per_thana = localStorage.getItem('per_thana');
     var per_post = localStorage.getItem('per_post');
-
-    $('#per_district').val(per_district).trigger('change');
-    setTimeout(function() {
-        $('#per_thana').val(per_thana).trigger('change');
-        setTimeout(function() {
-            $('#per_post').val(per_post).trigger('change');
-        }, 500)
-    }, 500)
+    if (per_district) {
+        $('#per_district').val(per_district);
+        loadUpazilaOptions(per_district, '.per_thana', '.per_post', per_thana, per_post);
+    }
 
     var ref_district = localStorage.getItem('ref_district');
     var ref_thana = localStorage.getItem('ref_thana');
     var ref_post = localStorage.getItem('ref_post');
+    if (ref_district) {
+        $('#ref_district').val(ref_district);
+        loadUpazilaOptions(ref_district, '.ref_thana', '.ref_post', ref_thana, ref_post);
+    }
 
-
-    $('#ref_district').val(ref_district).trigger('change');
-    setTimeout(function() {
-        $('#ref_thana').val(ref_thana).trigger('change');
-        setTimeout(function() {
-            $('#ref_post').val(ref_post).trigger('change');
-        }, 500)
-    }, 500)
-
-    // Update emp_dept_id and trigger 'change'
-    $('#unit_id').trigger('change');
-    setTimeout(function() {
-        $('#emp_dept_id').val(emp_dept_id).trigger('change');
-        // Set a delay of 0.5 seconds before updating emp_sec_id
-        setTimeout(function() {
-            $('#emp_sec_id').val(emp_sec_id).trigger('change');
-            setTimeout(function() {
-                $('#emp_desi_id').val(emp_desi_id);
-            }, 500);
-        }, 500);
-    }, 500);
+    // Update emp_dept_id, emp_sec_id, emp_desi_id
+    if (emp_dept_id) {
+        $('#emp_dept_id').val(emp_dept_id);
+        load_sections(emp_dept_id, emp_sec_id, function() {
+            if (emp_sec_id) {
+                load_designations(emp_sec_id, emp_desi_id);
+            } else {
+                load_designations('');
+            }
+        });
+    } else {
+        if (emp_sec_id) {
+            $('.emp_sec_id').val(emp_sec_id);
+            load_designations(emp_sec_id, emp_desi_id);
+        } else {
+            load_designations('');
+        }
+    }
     // Clear all items in localStorage
     var otEntitleElement = document.querySelector('input[name="ot_entitle"][value="'+ot_entitle+'"]');
         if (otEntitleElement) {
@@ -737,55 +772,93 @@ $(document).ready(function() {
         });
     });
 
-    function load_designations() {
+    function load_sections(dept_id, selected_sec_id, callback) {
         var unit_id = $('#unit_id').val() || 1;
+        dept_id = (dept_id !== undefined && dept_id !== null) ? dept_id : $('#emp_dept_id').val();
+
+        $('.emp_sec_id').addClass('form-control input-sm');
+        $('.emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
+
+        if (!dept_id) {
+            load_designations('', '', callback);
+            return;
+        }
+
         $.ajax({
             type: "POST",
-            url: hostname + "common/ajax_designation_by_unit/" + unit_id,
+            url: hostname + "common/ajax_section_by_dept_id/" + dept_id + '/' + unit_id,
+            dataType: "json",
             success: function(func_data) {
-                var currentVal = $('.emp_desi_id').val();
-                $('.emp_desi_id').empty();
-                $('.emp_desi_id').append("<option value=''>-- Select Designation --</option>");
+                if (typeof func_data === 'string') {
+                    try { func_data = JSON.parse(func_data); } catch(e) {}
+                }
+                $('.emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
+                $.each(func_data, function(id, name) {
+                    var opt = $('<option />');
+                    opt.val(id);
+                    opt.text(name);
+                    $('.emp_sec_id').append(opt);
+                });
+                if (selected_sec_id) {
+                    $('.emp_sec_id').val(selected_sec_id);
+                }
+                if (typeof callback === 'function') callback();
+            },
+            error: function() {
+                if (typeof callback === 'function') callback();
+            }
+        });
+    }
+
+    function load_designations(sec_id, selected_desig_id, callback) {
+        var unit_id = $('#unit_id').val() || 1;
+        sec_id = (sec_id !== undefined && sec_id !== null) ? sec_id : $('.emp_sec_id').val();
+
+        $('.emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
+
+        if (!sec_id) {
+            if (typeof callback === 'function') callback();
+            return;
+        }
+
+        $.ajax({
+            type: "POST",
+            url: hostname + "common/ajax_designation_by_sec_id/" + sec_id + '/' + unit_id,
+            dataType: "json",
+            success: function(func_data) {
+                if (typeof func_data === 'string') {
+                    try { func_data = JSON.parse(func_data); } catch(e) {}
+                }
+                $('.emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
                 $.each(func_data, function(id, name) {
                     var opt = $('<option />');
                     opt.val(id);
                     opt.text(name);
                     $('.emp_desi_id').append(opt);
                 });
-                if (currentVal) {
-                    $('.emp_desi_id').val(currentVal);
+                if (selected_desig_id) {
+                    $('.emp_desi_id').val(selected_desig_id);
                 }
+                if (typeof callback === 'function') callback();
+            },
+            error: function() {
+                if (typeof callback === 'function') callback();
             }
         });
     }
 
     // Section change populates Designation dropdown directly
-    $('#emp_sec_id').change(function() {
-        load_designations();
+    $('#emp_sec_id, .emp_sec_id').change(function() {
+        var sec_id = $(this).val();
+        load_designations(sec_id);
     });
 
-    // Department change populates Section dropdown and Designation dropdown
+    // Department change populates Section dropdown and resets Designation dropdown
     $('#emp_dept_id').change(function() {
-        $('.emp_sec_id').addClass('form-control input-sm');
-        $(".emp_sec_id > option").remove();
-        var id = $('#emp_dept_id').val();
-        var unit_id = $('#unit_id').val() || 1;
-        if (id) {
-            $.ajax({
-                type: "POST",
-                url: hostname + "common/ajax_section_by_dept_id/" + id + '/' + unit_id,
-                success: function(func_data) {
-                    $('.emp_sec_id').append("<option value=''>-- Select Section --</option>");
-                    $.each(func_data, function(id, name) {
-                        var opt = $('<option />');
-                        opt.val(id);
-                        opt.text(name);
-                        $('.emp_sec_id').append(opt);
-                    });
-                }
-            });
-        }
-        load_designations();
+        var dept_id = $(this).val();
+        load_sections(dept_id, null, function() {
+            load_designations('');
+        });
     });
     $('#unit_id').change(function() {
         var id = $('#unit_id').val();
@@ -802,6 +875,8 @@ $(document).ready(function() {
                     opt.text(name);
                     $('#emp_dept_id').append(opt);
                 });
+                $('.emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
+                $('.emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
             }
         });
     });
@@ -972,8 +1047,19 @@ $(document).ready(function() {
         });
     });
 
-    // Auto-load designations on page ready
-    load_designations();
+    // Auto-load section and designation if pre-selected
+    var initial_dept = $('#emp_dept_id').val();
+    var initial_sec = $('.emp_sec_id').val();
+    var initial_desi = $('.emp_desi_id').val();
+    if (initial_dept) {
+        load_sections(initial_dept, initial_sec, function() {
+            if (initial_sec) {
+                load_designations(initial_sec, initial_desi);
+            }
+        });
+    } else if (initial_sec) {
+        load_designations(initial_sec, initial_desi);
+    }
 });
 </script>
 
@@ -1109,6 +1195,14 @@ function get_last_id() {
         }
     })
 }
-get_last_id()
+get_last_id();
 
+$(document).ready(function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var emp_id = urlParams.get('emp_id');
+    if (emp_id) {
+        $('#employee_id').val(emp_id);
+        emp_id_search(emp_id);
+    }
+});
 </script>

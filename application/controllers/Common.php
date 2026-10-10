@@ -285,6 +285,43 @@ class Common extends CI_Controller {
         exit;
     }
 
+    function ajax_designation_by_sec_id($id, $unit_id = null){
+        $data = array();
+        if (!empty($id)) {
+            $this->db->select('dg.id, dg.desig_name, dg.desig_bangla');
+            $this->db->from('emp_dasignation_line_acl dl');
+            $this->db->join('emp_designation dg', 'dg.id = dl.designation_id', 'inner');
+            $this->db->where('dl.section_id', $id);
+            if (!empty($unit_id)) {
+                $this->db->where('dl.unit_id', $unit_id);
+            }
+            $this->db->group_by('dg.id');
+            $this->db->order_by('dg.desig_name', 'ASC');
+            $query = $this->db->get()->result();
+
+            if (empty($query)) {
+                $this->db->select('dg.id, dg.desig_name, dg.desig_bangla');
+                $this->db->from('pr_emp_com_info com');
+                $this->db->join('emp_designation dg', 'dg.id = com.emp_desi_id', 'inner');
+                $this->db->where('com.emp_sec_id', $id);
+                if (!empty($unit_id)) {
+                    $this->db->where('com.unit_id', $unit_id);
+                }
+                $this->db->group_by('dg.id');
+                $this->db->order_by('dg.desig_name', 'ASC');
+                $query = $this->db->get()->result();
+            }
+
+            foreach ($query as $row) {
+                $data[$row->id] = $row->desig_name;
+            }
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data);
+        exit;
+    }
+
     function ajax_district_by_div($id){
 
         $data = array();

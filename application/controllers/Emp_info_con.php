@@ -79,9 +79,9 @@ class Emp_info_con extends CI_Controller {
 		$this->form_validation->set_rules('name_en', 'Employee Name', 'trim|required');
 		$this->form_validation->set_rules('name_bn', 'Employee Bangla Name', 'trim|required');
 		$this->form_validation->set_rules('father_name_en', 'Employee Father\'s Name (English)', 'trim|required');
-		$this->form_validation->set_rules('father_name', 'Employee Father\'s Name (Bangla)', 'trim|required');
+		$this->form_validation->set_rules('father_name', 'Employee Father\'s Name (Bangla)', 'trim');
 		$this->form_validation->set_rules('mother_name_en', 'Employee Mother\'s Name (English)', 'trim|required');
-		$this->form_validation->set_rules('mother_name', 'Employee Mother\'s Name (Bangla)', 'trim|required');
+		$this->form_validation->set_rules('mother_name', 'Employee Mother\'s Name (Bangla)', 'trim');
 		$this->form_validation->set_rules('spouse_name_en', 'Employee Spouse Name (English)', 'trim');
 		$this->form_validation->set_rules('spouse_name', 'Employee Spouse Name (Bangla)', 'trim');
 		$this->form_validation->set_rules('emp_dob', 'Date of Birth', 'trim|required');
