@@ -93,6 +93,7 @@ class Emp_info_con extends CI_Controller {
 		$this->form_validation->set_rules('nid_dob_check', 'NID or DOB Status', 'trim|required');
 		$this->form_validation->set_rules('personal_mobile', 'Personal Mobile', 'trim|required');
 		$this->form_validation->set_rules('bank_bkash_no', 'Bank Account', 'trim|required');
+		$this->form_validation->set_rules('emp_per_shift', 'Emp Permanent Shift', 'trim');
 
 		$this->form_validation->set_error_delimiters("","");
 
@@ -644,7 +645,9 @@ class Emp_info_con extends CI_Controller {
             s.sec_name_en as sec_name,
             deg.desig_name,
             l.line_name_en,
-            g.gr_name
+            g.gr_name,
+            sh.shift_name as current_shift_name,
+            psh.shift_name as per_shift_name
         ');
         $this->db->from('pr_emp_com_info as com');
         $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
@@ -654,6 +657,8 @@ class Emp_info_con extends CI_Controller {
         $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
         $this->db->join('emp_line_num as l', 'l.id = com.emp_line_id', 'left');
         $this->db->join('pr_grade as g', 'g.gr_id = com.emp_sal_gra_id', 'left');
+        $this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+        $this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
         $this->db->where('com.emp_id', $emp_id);
         $emp = $this->db->get()->row();
 

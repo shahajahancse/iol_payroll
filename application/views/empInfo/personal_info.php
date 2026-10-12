@@ -480,6 +480,10 @@
                         $depts = $this->db->get('emp_depertment')->result();
                         $sections = $this->db->get('emp_section')->result();
                         $designations = $this->db->order_by('desig_name', 'ASC')->get('emp_designation')->result();
+                        $shifts = $this->db->where('unit_id',$user_data->unit_name)->get('pr_emp_shift')->result();
+                        if (empty($shifts)) {
+                            $shifts = $this->db->get('pr_emp_shift')->result();
+                        }
                     ?>
                     <div class="row">
                         <div class="col-md-3">
@@ -520,6 +524,19 @@
                                 <?php echo form_error('emp_desi_id');?>
                                 <select name="emp_desi_id" id="emp_desi_id" class="emp_desi_id form-control input-sm required" required>
                                     <option value="">-- Select Designation --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Emp Permanent Shift <span style="color: red;">*</span> </label>
+                                <?php echo form_error('emp_per_shift');?>
+                                <select name="emp_per_shift" id="emp_per_shift" class="form-control input-sm required" required>
+                                    <option value="">-- Select one --</option>
+                                    <?php foreach ($shifts as $key => $row) { ?>
+                                    <option value="<?= $row->id?>">
+                                        <?= $row->shift_name; ?></option>
+                                    <?php } ?>
                                 </select>
                             </div>
                         </div>
@@ -1363,7 +1380,7 @@ function emp_id_search(id = null) {
                     "bank_bkash_no", "unit_id", "emp_dept_id", "refer_village",
                     "emp_sec_id", "emp_line_id", "emp_desi_id",
                     "emp_sal_gra_id", "emp_type",
-                    "emp_cat_id", "proxi_id", "emp_shift", "gross_sal",
+                    "emp_cat_id", "proxi_id", "emp_shift", "emp_per_shift", "gross_sal",
                     "com_gross_sal", "ot_entitle", "com_ot_entitle", "transport", "img_source",
                     "lunch", "att_bonus", "salary_draw", "salary_type", "emp_join_date", "weekend",
                     "ref_district", "refer_village", "ref_thana", "ref_post","hight","symbol"
@@ -1401,6 +1418,11 @@ function emp_id_search(id = null) {
                         }
                     }
                 });
+                if (data.emp_per_shift) {
+                    $('#emp_per_shift').val(data.emp_per_shift);
+                } else if (data.emp_shift) {
+                    $('#emp_per_shift').val(data.emp_shift);
+                }
                 if (data.unit_id) {
                     $('#unit_id').val(data.unit_id);
                 }
@@ -1709,6 +1731,17 @@ function get_last_id() {
 get_last_id();
 
 $(document).ready(function() {
+    $('#emp_per_shift').change(function() {
+        if ($('#emp_shift').val() == '') {
+            $('#emp_shift').val($(this).val());
+        }
+    });
+    $('#emp_shift').change(function() {
+        if ($('#emp_per_shift').val() == '') {
+            $('#emp_per_shift').val($(this).val());
+        }
+    });
+
     var urlParams = new URLSearchParams(window.location.search);
     var emp_id = urlParams.get('emp_id');
     if (emp_id) {

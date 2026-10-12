@@ -167,6 +167,8 @@ $default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id)
                                 <tr><th style="background: #f1f3f5;">Designation</th><td id="v_desig_name">-</td></tr>
                                 <tr><th style="background: #f1f3f5;">Joining Date</th><td id="v_join_date">-</td></tr>
                                 <tr><th style="background: #f1f3f5;">Gross Salary</th><td id="v_gross_sal" style="font-weight: bold; color: #28a745;">-</td></tr>
+                                <tr><th style="background: #f1f3f5;">Permanent Shift</th><td id="v_per_shift" style="font-weight: bold; color: #0177bc;">-</td></tr>
+                                <tr><th style="background: #f1f3f5;">Current Shift</th><td id="v_shift">-</td></tr>
                                 <tr><th style="background: #f1f3f5;">Bank / bKash Account</th><td id="v_bank_acc">-</td></tr>
                             </table>
                         </div>
@@ -309,6 +311,8 @@ $(document).ready(function() {
                     $('#v_join_date').text(emp.emp_join_date || '-');
                     $('#v_gross_sal').text(emp.gross_sal ? '৳ ' + emp.gross_sal : '-');
                     $('#v_bank_acc').text(emp.bank_bkash_no || '-');
+                    $('#v_per_shift').text(emp.per_shift_name || emp.current_shift_name || '-');
+                    $('#v_shift').text(emp.current_shift_name || '-');
 
                     $('#v_edit_btn').attr('href', '<?= site_url("emp_info_con/personal_info_short") ?>?emp_id=' + emp.emp_id);
                     $('#empDetailsModal').modal('show');
