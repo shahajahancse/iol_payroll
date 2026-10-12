@@ -73,7 +73,16 @@ $default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id)
                         <option value="3">Resigned</option>
                     </select>
                 </div>
-                <div class="col-md-10 col-sm-6 style-actions" style="display: flex; align-items: flex-end; justify-content: flex-end; gap: 10px; margin-top: 15px;">
+                <div class="col-md-3 col-sm-6">
+                    <label style="font-size: 12px; font-weight: 600; color: #495057;">Emp Shift</label>
+                    <select id="filter_shift" class="form-control input-sm">
+                        <option value="" selected>All Shifts</option>
+                        <?php if (!empty($shifts)) { foreach ($shifts as $sh) { ?>
+                            <option value="<?= $sh->id ?>"><?= $sh->shift_name ?></option>
+                        <?php } } ?>
+                    </select>
+                </div>
+                <div class="col-md-7 col-sm-12 style-actions" style="display: flex; align-items: flex-end; justify-content: flex-end; gap: 10px; margin-top: 15px;">
                     <button type="button" id="btn_filter" class="btn btn-sm btn-primary" style="font-weight: 600; padding: 5px 20px;">
                         <i class="fa fa-filter"></i> Filter Results
                     </button>
@@ -201,6 +210,11 @@ $(document).ready(function() {
         $('#filter_sec').val('');
         $('#filter_desig').val('');
         $('#filter_status').val('');
+        $('#filter_shift').val('');
+        load_employees();
+    });
+
+    $('#filter_dept, #filter_sec, #filter_desig, #filter_status, #filter_shift').change(function() {
         load_employees();
     });
 
@@ -211,14 +225,15 @@ $(document).ready(function() {
     });
 
     function load_employees() {
-        $('#emp_tbody').html('<tr><td colspan="11" class="text-center text-muted" style="padding:30px;"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading employee records...</td></tr>');
+        $('#emp_tbody').html('<tr><td colspan="13" class="text-center text-muted" style="padding:30px;"><i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading employee records...</td></tr>');
 
         var params = {
             search: $('#search_input').val(),
             dept_id: $('#filter_dept').val(),
             sec_id: $('#filter_sec').val(),
             desig_id: $('#filter_desig').val(),
-            status: $('#filter_status').val()
+            status: $('#filter_status').val(),
+            shift_id: $('#filter_shift').val()
         };
 
         $.ajax({

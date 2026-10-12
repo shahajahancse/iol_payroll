@@ -552,6 +552,7 @@ class Emp_info_con extends CI_Controller {
         $this->data['departments']  = $this->db->select('dept_id, dept_name')->order_by('dept_name', 'ASC')->get('emp_depertment')->result();
         $this->data['sections']     = $this->db->select('id as sec_id, sec_name_en as sec_name')->order_by('sec_name_en', 'ASC')->get('emp_section')->result();
         $this->data['designations'] = $this->db->select('id, desig_name')->where('hide_status', 1)->order_by('desig_name', 'ASC')->get('emp_designation')->result();
+        $this->data['shifts']       = $this->db->select('id, shift_name')->order_by('shift_name', 'ASC')->get('pr_emp_shift')->result();
 
         $this->data['title']   = 'Employee List';
         $this->data['subview'] = 'empInfo/employee_list';
@@ -569,6 +570,7 @@ class Emp_info_con extends CI_Controller {
         $sec_id      = $this->input->get_post('sec_id');
         $desig_id    = $this->input->get_post('desig_id');
         $status      = $this->input->get_post('status');
+        $shift_id    = $this->input->get_post('shift_id');
         $search      = $this->input->get_post('search');
 
         $this->db->select('
@@ -613,6 +615,9 @@ class Emp_info_con extends CI_Controller {
         }
         if (!empty($status)) {
             $this->db->where('com.emp_cat_id', $status);
+        }
+        if (!empty($shift_id)) {
+            $this->db->where('com.emp_shift', $shift_id);
         }
         if (!empty($search)) {
             $this->db->group_start();
