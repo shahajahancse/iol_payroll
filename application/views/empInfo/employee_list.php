@@ -96,6 +96,8 @@ $default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id)
                         <th>Unit</th>
                         <th>Department</th>
                         <th>Designation</th>
+                        <th>Permanent Shift</th>
+                        <th>Emp Shift</th>
                         <th>Mobile</th>
                         <th>Joining Date</th>
                         <th style="width: 70px; text-align: center;">Status</th>
@@ -104,7 +106,7 @@ $default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id)
                 </thead>
                 <tbody id="emp_tbody">
                     <tr>
-                        <td colspan="11" class="text-center text-muted" style="padding: 30px;">
+                        <td colspan="13" class="text-center text-muted" style="padding: 30px;">
                             <i class="fa fa-spinner fa-spin fa-2x"></i><br>Loading employee records...
                         </td>
                     </tr>
@@ -251,6 +253,8 @@ $(document).ready(function() {
                         html += '<td>' + (emp.unit_name || '-') + '</td>';
                         html += '<td>' + (emp.dept_name || '-') + '</td>';
                         html += '<td>' + (emp.desig_name || '-') + '</td>';
+                        html += '<td>' + (emp.per_shift_name || '-') + '</td>';
+                        html += '<td>' + (emp.current_shift_name || '-') + '</td>';
                         html += '<td>' + mobile + '</td>';
                         html += '<td>' + join_date + '</td>';
                         html += '<td class="text-center">' + status_badge + '</td>';
@@ -269,12 +273,12 @@ $(document).ready(function() {
                     });
                 } else {
                     $('#record_count').text('0');
-                    html = '<tr><td colspan="11" class="text-center text-muted" style="padding:30px;"><em>No employee records found matching criteria.</em></td></tr>';
+                    html = '<tr><td colspan="13" class="text-center text-muted" style="padding:30px;"><em>No employee records found matching criteria.</em></td></tr>';
                 }
                 $('#emp_tbody').html(html);
             },
             error: function() {
-                $('#emp_tbody').html('<tr><td colspan="11" class="text-center text-danger" style="padding:20px;">Failed to load employee data. Please try again.</td></tr>');
+                $('#emp_tbody').html('<tr><td colspan="13" class="text-center text-danger" style="padding:20px;">Failed to load employee data. Please try again.</td></tr>');
             }
         });
     }

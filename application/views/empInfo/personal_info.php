@@ -1420,8 +1420,8 @@ function emp_id_search(id = null) {
                 });
                 if (data.emp_per_shift) {
                     $('#emp_per_shift').val(data.emp_per_shift);
-                } else if (data.emp_shift) {
-                    $('#emp_per_shift').val(data.emp_shift);
+                } else {
+                    $('#emp_per_shift').val('');
                 }
                 if (data.unit_id) {
                     $('#unit_id').val(data.unit_id);
@@ -1731,17 +1731,6 @@ function get_last_id() {
 get_last_id();
 
 $(document).ready(function() {
-    $('#emp_per_shift').change(function() {
-        if ($('#emp_shift').val() == '') {
-            $('#emp_shift').val($(this).val());
-        }
-    });
-    $('#emp_shift').change(function() {
-        if ($('#emp_per_shift').val() == '') {
-            $('#emp_per_shift').val($(this).val());
-        }
-    });
-
     var urlParams = new URLSearchParams(window.location.search);
     var emp_id = urlParams.get('emp_id');
     if (emp_id) {

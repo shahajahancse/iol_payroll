@@ -578,6 +578,10 @@ class Emp_info_con extends CI_Controller {
             com.gross_sal,
             com.emp_join_date,
             com.emp_cat_id,
+            com.emp_shift,
+            com.emp_per_shift,
+            sh.shift_name as current_shift_name,
+            psh.shift_name as per_shift_name,
             per.name_en,
             per.name_bn,
             per.personal_mobile,
@@ -592,6 +596,8 @@ class Emp_info_con extends CI_Controller {
         $this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
         $this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
         $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+        $this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+        $this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
 
         if (!empty($unit_id)) {
             $this->db->where('com.unit_id', $unit_id);

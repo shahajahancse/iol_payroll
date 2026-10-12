@@ -15,6 +15,7 @@ class Processdb extends CI_Model{
 		}
 		if (!$this->db->field_exists('emp_per_shift', 'pr_emp_com_info')) {
 			$this->db->query("ALTER TABLE `pr_emp_com_info` ADD `emp_per_shift` INT(11) NULL DEFAULT NULL AFTER `emp_shift`");
+			$this->db->query("UPDATE `pr_emp_com_info` SET `emp_per_shift` = `emp_shift` WHERE `emp_per_shift` IS NULL");
 		}
 		if (!$this->db->field_exists('father_name_en', 'pr_emp_per_info')) {
 			$this->db->query("ALTER TABLE `pr_emp_per_info` ADD `father_name_en` VARCHAR(255) NULL AFTER `father_name`");
@@ -61,7 +62,7 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
-			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : $this->input->post('emp_shift'),
+			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : null,
 			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal') ? $this->input->post('gross_sal') : ($this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : 0),
 			'com_gross_sal'		=> $this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : ($this->input->post('gross_sal') ? $this->input->post('gross_sal') : 0),
@@ -266,7 +267,7 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
-			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : $this->input->post('emp_shift'),
+			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : null,
 			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal'),
 			'com_gross_sal'		=> $this->input->post('gross_sal'),
@@ -326,7 +327,7 @@ class Processdb extends CI_Model{
 
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
-			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : $this->input->post('emp_shift'),
+			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : null,
 			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'emp_join_date'		=> $ejd,
 			'emp_sal_gra_id'  	=> $this->input->post('emp_sal_gra_id'),
@@ -584,7 +585,7 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
-			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : $this->input->post('emp_shift'),
+			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : null,
 			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal') ? $this->input->post('gross_sal') : ($this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : 0),
 			'com_gross_sal'		=> $this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : ($this->input->post('gross_sal') ? $this->input->post('gross_sal') : 0),
