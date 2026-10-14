@@ -113,3 +113,11 @@ $route['iclock/push'] = 'iclock/push';
 $route['iclock/device_list'] = 'iclock/device_list';
 $route['iclock/(:any)'] = 'iclock/$1';
 
+/*
+| -------------------------------------------------------------------------
+| Leave Management Workflow Routes
+| -------------------------------------------------------------------------
+*/
+$route['hr_leave_dashboard'] = 'leave_con/hr_dashboard';
+$route['admin_leave_dashboard'] = 'leave_con/admin_dashboard';
+

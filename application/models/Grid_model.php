@@ -910,7 +910,8 @@ class Grid_model extends CI_Model{
 			pr_emp_shift_log.ot,
 			pr_emp_shift_log.eot,
 			pr_emp_shift_log.deduction_hour,
-			pr_emp_shift_log.modify_eot
+			pr_emp_shift_log.modify_eot,
+			IFNULL(per_shift.shift_name, pr_emp_shift.shift_name) AS emp_per_shift
 		');
 
 		$this->db->from('pr_emp_com_info');
@@ -922,6 +923,7 @@ class Grid_model extends CI_Model{
 		$this->db->join('emp_line_num', 'emp_line_num.id = pr_emp_com_info.emp_line_id', 'LEFT');
 		$this->db->join('pr_emp_shift_log', 'pr_emp_shift_log.emp_id = pr_emp_com_info.emp_id', 'LEFT');
 		$this->db->join('pr_emp_shift', 'pr_emp_shift.id = IFNULL(pr_emp_shift_log.shift_id, pr_emp_com_info.emp_shift)', 'LEFT');
+		$this->db->join('pr_emp_shift as per_shift', 'per_shift.id = pr_emp_com_info.emp_per_shift', 'LEFT');
 
 		// Mandatory filters
 		$this->db->where('pr_emp_shift_log.shift_log_date', $date);
@@ -929,8 +931,12 @@ class Grid_model extends CI_Model{
 
 		/* ---------- TYPE CONDITIONS ---------- */
 
-		if ($type == 1) { // Present
-			$this->db->where("(pr_emp_shift_log.present_status = 'P' OR (pr_emp_shift_log.present_status = 'W' AND pr_emp_shift_log.in_time != '00:00:00'))");
+		if ($type == 1) { // Present — show if in_time OR out_time has a real value
+			$this->db->where("(
+				(pr_emp_shift_log.in_time  IS NOT NULL AND pr_emp_shift_log.in_time  != '' AND pr_emp_shift_log.in_time  != '00:00:00')
+				OR
+				(pr_emp_shift_log.out_time IS NOT NULL AND pr_emp_shift_log.out_time != '' AND pr_emp_shift_log.out_time != '00:00:00')
+			)");
 		}
 
 		if ($type == 2) { // Absent

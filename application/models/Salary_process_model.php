@@ -947,6 +947,7 @@ class Salary_process_model extends CI_Model{
         $this->db->where("emp_id",$emp_id);
         $this->db->where("leave_start >=", $start_date);
         $this->db->where("leave_end <=", $end_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $query = $this->db->get('pr_leave_trans')->row();
 		// dd(date($start_date));
 
@@ -973,6 +974,7 @@ class Salary_process_model extends CI_Model{
 		$this->db->where("emp_id", $emp_id);
 		$this->db->where("leave_start <= '{$end_date_current_month}'");
 		$this->db->where("leave_end >= '{$start_date_current_month}'");
+		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$this->db->group_by("leave_type");
 		$this->db->order_by("leave_type", 'ASC');
 		$querys = $this->db->get('pr_leave_trans')->result();
@@ -1067,6 +1069,7 @@ class Salary_process_model extends CI_Model{
         $this->db->where("emp_id",$emp_id);
         $this->db->where("leave_end >", $start_date);
         $this->db->where("leave_end <=", $end_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $this->db->order_by("id", 'DESC');
         $query = $this->db->get('pr_leave_trans')->row();
 		// dd($query);
@@ -1089,6 +1092,7 @@ class Salary_process_model extends CI_Model{
         $this->db->where("emp_id",$emp_id);
         $this->db->where("leave_start <", $end_date);
         $this->db->where("leave_end >", $end_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $query = $this->db->get('pr_leave_trans')->row();
 		if (!empty($query)) {
 			$start_date = $query->leave_start;
@@ -1110,6 +1114,7 @@ class Salary_process_model extends CI_Model{
         $this->db->where("leave_type",'ml');
         $this->db->where("leave_start <", $end_date);
         $this->db->where("leave_end >", $end_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $query = $this->db->get('pr_leave_trans')->row();
 		if (!empty($query)) {
 			$start_date = $query->leave_start;
@@ -1121,6 +1126,7 @@ class Salary_process_model extends CI_Model{
         $this->db->where("leave_type",'ml');
         $this->db->where("leave_end >", $start_date);
         $this->db->where("leave_end <=", $end_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $this->db->order_by("id", 'DESC');
         $query = $this->db->get('pr_leave_trans')->row();
 
@@ -1134,6 +1140,7 @@ class Salary_process_model extends CI_Model{
         $this->db->where("leave_type",'ml');
         $this->db->where("leave_start <=", $start_date);
         $this->db->where("leave_end >=", $end_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $this->db->order_by("id", 'DESC');
         $query = $this->db->get('pr_leave_trans')->row();
 

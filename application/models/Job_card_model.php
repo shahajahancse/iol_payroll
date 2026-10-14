@@ -13,6 +13,7 @@ class Job_card_model extends CI_Model{
 		$this->db->select("start_date");
 		$this->db->where("start_date BETWEEN '$sStartDate' AND '$sEndDate'");
 		$this->db->where("emp_id = '$emp_id'");
+		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$query = $this->db->get("pr_leave_trans");
 		$leave = array();
 		foreach ($query->result() as $row)
@@ -107,6 +108,7 @@ class Job_card_model extends CI_Model{
 		$this->db->where('emp_id', $emp_id);
 	    $this->db->where("leave_start <=", $shift_log_date);
         $this->db->where("leave_end >=", $shift_log_date);
+		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$query = $this->db->get('pr_leave_trans');
 		$row = $query->row();
 		// dd($this->db->last_query());

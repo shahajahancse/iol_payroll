@@ -32,6 +32,9 @@ class Attn_process_model extends CI_Model{
 		//=========================== Get emplpoyee list ============================
 		$table = 'att_'.date('Y_m',strtotime($process_date));
 		$this->attn_month_table_check($table);
+		// dd($unit);
+		$this->check_policy_shift_rotation($process_date, $unit);
+
 
 		$all_employee = $this->get_all_employee($grid_emp_id, 1);
 		foreach ($all_employee->result() as $rows){
@@ -60,6 +63,20 @@ class Attn_process_model extends CI_Model{
 			} else {
 
 				//GET CURRENT SHIFT INFORMATION
+				// For Shift A/B/C on a PREVIOUS date: use pr_rmp_shift_log to find the actual shift that day
+				$is_abc_shift = in_array(strtolower(trim($shift_name)), array('shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc'));
+				$is_previous_date = ($process_date < date('Y-m-d'));
+
+				if ($is_abc_shift && $is_previous_date) {
+					// Fetch the actual shift from pr_rmp_shift_log for that date
+					$rmp_shift = $this->get_shift_from_rmp_log($emp_id, $process_date);
+					if ($rmp_shift) {
+						$shift_id    = $rmp_shift->shift_id;
+						$schedule_id = $rmp_shift->schedule_id;
+						$shift_name  = $rmp_shift->shift_name;
+					}
+				}
+
 				$emp_shift = $this->emp_shift_check_process($emp_id, $shift_id, $schedule_id, $process_date);
 				$schedule  = $this->get_emp_schedule($emp_shift->schedule_id);
 
@@ -69,7 +86,7 @@ class Attn_process_model extends CI_Model{
                 $out_end_time 	= $schedule[0]["out_end"];
                 $ot_start_time 	= $schedule[0]["ot_start"];
                 $late_start_time = $schedule[0]["late_start"];
-
+				// dd($schedule);
 
             	// Check night shift / Shift C where in_end or out_end is next day
                 $out_date = $process_date;
@@ -115,7 +132,7 @@ class Attn_process_model extends CI_Model{
                     $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
                     $out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
                 }
-				// dd($in_time.'=='.$out_time);
+				// dd($in_start_time.'=='.$in_end_time);
 
 				if (empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
 					$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
@@ -393,6 +410,7 @@ class Attn_process_model extends CI_Model{
 					'unit_id'			=> $unit,
 					'alert_msg'			=> $alert_msg
 				);
+				// dd($data);
 				$this->db->where('shift_log_date', $process_date);
 				$this->db->where('emp_id', $emp_id);
 				$this->db->update('pr_emp_shift_log', $data);
@@ -400,50 +418,113 @@ class Attn_process_model extends CI_Model{
 		}
 
 		// check roster shift & policy rotation
-		$this->check_policy_shift_rotation($process_date, $unit);
-		if ($unit == 4 && strtotime(date('Y-m-d')) == strtotime($process_date)) {
-			$this->check_shift_roster($process_date, $unit);
-		}
+		// if ($unit == 4 && strtotime(date('Y-m-d')) == strtotime($process_date)) {
+		// 	$this->check_shift_roster($process_date, $unit);
+		// }
 		return true;
 	}
 
 	function check_policy_shift_rotation($date, $unit = 1)
 	{
-		$day_name = date('l', strtotime($date));
-		$day_num  = date('d', strtotime($date));
+		$rotation_date = date('Y-m-d', strtotime($date));
+		$day_name      = date('l', strtotime($date));
+		$day_num       = date('d', strtotime($date));
 
+		// Ensure pr_shift_rotation_log table exists (runs only once)
+		if (!$this->db->table_exists('pr_shift_rotation_log')) {
+			$this->db->query("
+				CREATE TABLE IF NOT EXISTS `pr_shift_rotation_log` (
+					`id`            INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+					`unit_id`       INT(11) NOT NULL,
+					`rotation_date` DATE NOT NULL,
+					`rotation_type` VARCHAR(20) NOT NULL,
+					`created_at`    DATETIME DEFAULT CURRENT_TIMESTAMP,
+					UNIQUE KEY `uq_unit_date_type` (`unit_id`, `rotation_date`, `rotation_type`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8
+			");
+		}
+		// Reset CI query builder state so rotation queries below work cleanly
+		$this->db->reset_query();
+
+		// -----------------------------------------------------------------------
 		// Saturday Shift Rotation for Shift A, Shift B, Shift C
+		// -----------------------------------------------------------------------
 		if ($day_name == 'Saturday') {
-			$shiftA = $this->db->where('shift_name', 'Shift A')->get('pr_emp_shift')->row();
-			$shiftB = $this->db->where('shift_name', 'Shift B')->get('pr_emp_shift')->row();
-			$shiftC = $this->db->where('shift_name', 'Shift C')->get('pr_emp_shift')->row();
 
-			if ($shiftA && $shiftB && $shiftC) {
-				$empA = $this->get_roster_shift_emp($shiftA->id, $unit);
-				$empB = $this->get_roster_shift_emp($shiftB->id, $unit);
-				$empC = $this->get_roster_shift_emp($shiftC->id, $unit);
+			$already_rotated = $this->db
+				->where('unit_id', $unit)
+				->where('rotation_date', $rotation_date)
+				->where('rotation_type', 'saturday')
+				->count_all_results('pr_shift_rotation_log');
 
-				if (!empty($empA)) $this->auto_change_roster_shift($empA, $shiftC->id, $unit);
-				if (!empty($empB)) $this->auto_change_roster_shift($empB, $shiftA->id, $unit);
-				if (!empty($empC)) $this->auto_change_roster_shift($empC, $shiftB->id, $unit);
+			if ($already_rotated == 0) {
+				$shiftA = $this->db->where('shift_name', 'Shift A')->get('pr_emp_shift')->row();
+				$shiftB = $this->db->where('shift_name', 'Shift B')->get('pr_emp_shift')->row();
+				$shiftC = $this->db->where('shift_name', 'Shift C')->get('pr_emp_shift')->row();
 
+				// dd($shiftA);
+
+				if ($shiftA && $shiftB && $shiftC) {
+
+					$empA = $this->get_roster_shift_emp($shiftA->id, $unit);
+					$empB = $this->get_roster_shift_emp($shiftB->id, $unit);
+					$empC = $this->get_roster_shift_emp($shiftC->id, $unit);
+
+					if (!empty($empA)) $this->auto_change_roster_shift($empA, $shiftC->id, $unit);
+					if (!empty($empB)) $this->auto_change_roster_shift($empB, $shiftA->id, $unit);
+					if (!empty($empC)) $this->auto_change_roster_shift($empC, $shiftB->id, $unit);
+
+					$this->db->insert('pr_shift_rotation_log', [
+						'unit_id'       => $unit,
+						'rotation_date' => $rotation_date,
+						'rotation_type' => 'saturday',
+					]);
+				}
 			}
 		}
 
-		// 15th & 30th Shift Rotation for Shift 12 A and Shift 12 B
-		if ($day_num == '15' || $day_num == '30') {
-			$shift12A = $this->db->where('shift_name', 'Shift 12 A')->get('pr_emp_shift')->row();
-			$shift12B = $this->db->where('shift_name', 'Shift 12 B')->get('pr_emp_shift')->row();
+		// -----------------------------------------------------------------------
+		// 15th & 30th Shift Rotation for Shift 12 Night and Shift 12 Morning
+		// -----------------------------------------------------------------------
+		$days_in_month = (int) date('t', strtotime($rotation_date));
 
-			if ($shift12A && $shift12B) {
-				$emp12A = $this->get_roster_shift_emp($shift12A->id, $unit);
-				$emp12B = $this->get_roster_shift_emp($shift12B->id, $unit);
+		$is_15th = ($day_num == '15');
+		$is_30th = ($day_num == '30' && $days_in_month >= 30);
 
-				if (!empty($emp12A)) $this->auto_change_roster_shift($emp12A, $shift12B->id, $unit);
-				if (!empty($emp12B)) $this->auto_change_roster_shift($emp12B, $shift12A->id, $unit);
+		if ($is_15th || $is_30th) {
+
+			$already_rotated_12nm = $this->db
+				->where('unit_id', $unit)
+				->where('rotation_date', $rotation_date)
+				->where('rotation_type', 'shift12_nm')
+				->count_all_results('pr_shift_rotation_log');
+
+			if ($already_rotated_12nm == 0) {
+
+				$shift12Night   = $this->db->where('shift_name', 'Shift 12 Night')->get('pr_emp_shift')->row();
+				$shift12Morning = $this->db->where('shift_name', 'Shift 12 Morning')->get('pr_emp_shift')->row();
+
+				if ($shift12Night && $shift12Morning) {
+
+					$empNight   = $this->get_roster_shift_emp($shift12Night->id,   $unit);
+					$empMorning = $this->get_roster_shift_emp($shift12Morning->id, $unit);
+
+					// Swap: Night → Morning, Morning → Night
+					if (!empty($empNight))   $this->auto_change_roster_shift($empNight,   $shift12Morning->id, $unit);
+					if (!empty($empMorning)) $this->auto_change_roster_shift($empMorning, $shift12Night->id,   $unit);
+
+					$this->db->insert('pr_shift_rotation_log', [
+						'unit_id'       => $unit,
+						'rotation_date' => $rotation_date,
+						'rotation_type' => 'shift12_nm',
+					]);
+				}
 			}
 		}
+
 	}
+
+
 
 	function autoNewToRegular($process_date)
 	{
@@ -537,7 +618,9 @@ class Attn_process_model extends CI_Model{
 			'emp_shift' => $emp_shift
 		);
 
+		
 		$this->db->where_in('emp_id', $emp_array)->where('unit_id', $unit_id)->update('pr_emp_com_info', $data);
+		// dd($data);
 		return true;
 	}
 
@@ -545,11 +628,13 @@ class Attn_process_model extends CI_Model{
 	{
 		$rs=$this->db->select('emp_id')->where('emp_shift',$emp_shift)->where('unit_id',$unit_id)->get('pr_emp_com_info');
 		$result = $rs->result_array();
+		// dd($result);
 		$output = array();
 
 		array_walk($result, function($entry) use (&$output) {
 		    $output[] = $entry["emp_id"];
 		});
+		// dd($output);
 
 		return $output;
 	}
@@ -604,6 +689,7 @@ class Attn_process_model extends CI_Model{
 		$this->db->order_by("date_time",$order_by);
 		$this->db->limit("1");
 		$query = $this->db->get();
+		// dd($this->db->last_query());
 
 		if ($query->num_rows() > 0) {
 			return $query->row()->date_time;
@@ -680,6 +766,7 @@ class Attn_process_model extends CI_Model{
         $this->db->where("leave_start <=", $process_date);
         $this->db->where("leave_end >=", $process_date);
         $this->db->where("emp_id", $emp_id);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $query = $this->db->get("pr_leave_trans");
 
         if($query->num_rows() > 0) {
@@ -736,6 +823,35 @@ class Attn_process_model extends CI_Model{
 			$data->schedule_id = $schedule_id;
 			return $data;
 		}
+	}
+
+	/**
+	 * Get the actual shift for an employee on a given (previous) date from pr_rmp_shift_log.
+	 * Joins with pr_emp_shift to retrieve schedule_id and shift_name.
+	 *
+	 * @param  string $emp_id
+	 * @param  string $process_date  Y-m-d
+	 * @return object|null  Object with shift_id, schedule_id, shift_name — or null if not found
+	 */
+	function get_shift_from_rmp_log($emp_id, $process_date)
+	{
+		$this->db->select('es.id as shift_id, es.schedule_id, es.shift_name');
+		$this->db->from('pr_emp_shift_log rsl');
+		$this->db->join('pr_emp_shift es', 'es.id = rsl.shift_id', 'inner');
+		$this->db->where('rsl.emp_id', $emp_id);
+		$this->db->where('rsl.shift_log_date', $process_date);
+		$this->db->limit(1);
+		$query = $this->db->get();
+
+		if ($query->num_rows() > 0) {
+			$row = $query->row();
+			$data = new stdClass();
+			$data->shift_id    = $row->shift_id;
+			$data->schedule_id = $row->schedule_id;
+			$data->shift_name  = $row->shift_name;
+			return $data;
+		}
+		return null;
 	}
 
 	function get_emp_schedule($schedule_id){

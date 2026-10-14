@@ -52,9 +52,29 @@
 
       <!-- Enty System -->
       <?php if(in_array(2,$acl)) { ?>
-      <li class="start <?= activate_class('entry_system_con') ?>"> <a href="javascript:;"> <i class="fa fa-pencil-square-o"></i>
-        <span class="title">Entry System</span> <span class="selected"></span> <span class="arrow <?= arrow_open('entry_system_con') ?>"></span> </a>
+      <li class="start <?= activate_class(array('entry_system_con', 'leave_con')) ?>"> <a href="javascript:;"> <i class="fa fa-pencil-square-o"></i>
+        <span class="title">Entry System</span> <span class="selected"></span> <span class="arrow <?= arrow_open(array('entry_system_con', 'leave_con')) ?>"></span> </a>
         <ul class="sub-menu">
+          <!-- HR Leave Management Dashboard -->
+          <li class="<?= (activate_class('leave_con') && activate_method('hr_dashboard')) ? 'active' : '' ?>">
+            <a href="<?= base_url('leave_con/hr_dashboard') ?>" class="anchor_cls">
+              <i class="fa fa-calendar-check-o text-info"></i> HR Leave Dashboard
+            </a>
+          </li>
+
+          <?php 
+            $u_data = $this->session->userdata('data');
+            $is_admin_user = ($u_data && (strtolower($u_data->id_number) === 'admin' || strtolower($u_data->id_number) === 'msa' || $u_data->level === 'All'));
+            if ($is_admin_user) { 
+          ?>
+            <!-- Admin Leave Approval Dashboard -->
+            <li class="<?= (activate_class('leave_con') && activate_method('admin_dashboard')) ? 'active' : '' ?>">
+              <a href="<?= base_url('leave_con/admin_dashboard') ?>" class="anchor_cls">
+                <i class="fa fa-shield text-danger"></i> Admin Leave Approval
+              </a>
+            </li>
+          <?php } ?>
+
           <?php if(in_array(13,$acl)) { ?>
             <li class="<?= activate_method('grid_entry_system') ?>">
               <a href="<?= base_url('entry_system_con/grid_entry_system')?>" class="anchor_cls">
@@ -70,6 +90,13 @@
               </a>
             </li>
           <?php } ?>
+
+          <li class="<?= activate_method('running_shift_change') ?>">
+            <a href="<?= base_url('entry_system_con/running_shift_change')?>" class="anchor_cls">
+              <i class="fa fa-random"></i> Emp Shift Change
+            </a>
+          </li>
+
 <!-- 
           < ?php if(in_array(15,$acl)) { ?>
             <li class="< ?= activate_method('emp_weekend_add') ?>">

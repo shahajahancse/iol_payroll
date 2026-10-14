@@ -374,8 +374,17 @@
        <?php } ?>   
 	     <?php } ?>	  
 		    <div class="document">
-            
-           
+            <a class="header" href="<?php echo base_url();?>leave_con/hr_dashboard" title="HR Leave Dashboard" target="right" id="dp13098" onClick="MakeColoredBack('13098');">HR Leave Dashboard</a>
+          </div>
+        <?php 
+          $u_data = $this->session->userdata('data');
+          if ($u_data && (strtolower($u_data->id_number) === 'admin' || strtolower($u_data->id_number) === 'msa' || $u_data->level === 'All')) { 
+        ?>
+		    <div class="document">
+            <a class="header" href="<?php echo base_url();?>leave_con/admin_dashboard" title="Admin Leave Approval" target="right" id="dp13099" onClick="MakeColoredBack('13099');">Admin Leave Approval</a>
+          </div>
+        <?php } ?>
+		    <div class="document">
             <a class="header" href="<?php echo base_url();?>entry_system_con/leave_transation" title="Leave Transaction" target="right" id="dp13002" onClick="MakeColoredBack('13002');">Leave Transaction</a>
           </div>
         <?php if(!in_array($user_id,$usr_arr_2)){  ?>

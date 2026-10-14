@@ -1328,6 +1328,355 @@ function get_all_emp_present_error($line_id, $unit_id, $report_date)
 
 	}
 
+	function get_dashboard_card_details($type, $report_date, $unit_id = null, $extra_id = null)
+	{
+		$all_id = get_all_emp_id(array(1), $unit_id);
+		$fromdate = date("Y-m-01", strtotime($report_date));
+		$todate = date("Y-m-t", strtotime($report_date));
 
+		switch ($type) {
+			case 'staff':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, "Staff" as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->where('com.emp_type', 2);
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'worker':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, "Worker" as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->where('com.emp_type', 1);
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'department':
+				$this->db->select('d.dept_id, d.dept_name, d.dept_bangla, COUNT(com.emp_id) as total_emp');
+				$this->db->from('emp_depertment as d');
+				if (!empty($all_id)) {
+					$id_list = implode(',', array_map(function($v){ return "'".$v."'"; }, $all_id));
+					$this->db->join('pr_emp_com_info as com', 'com.emp_dept_id = d.dept_id AND com.emp_cat_id = 1 AND com.emp_id IN ('.$id_list.')', 'left', false);
+				} else {
+					$this->db->join('pr_emp_com_info as com', '1=0', 'left', false);
+				}
+				if ($unit_id != null) {
+					$this->db->where('d.unit_id', $unit_id);
+				}
+				$this->db->group_by(array('d.dept_id', 'd.dept_name', 'd.dept_bangla'));
+				$this->db->order_by('d.dept_name', 'ASC');
+				return $this->db->get()->result();
+
+			case 'dept_employees':
+				if (empty($all_id) || empty($extra_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, (CASE WHEN com.emp_type = 2 THEN "Staff" ELSE "Worker" END) as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->where('com.emp_dept_id', $extra_id);
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'designation':
+				$this->db->select('deg.id as desig_id, deg.desig_name, deg.desig_bangla, COUNT(com.emp_id) as total_emp');
+				$this->db->from('emp_designation as deg');
+				if (!empty($all_id)) {
+					$id_list = implode(',', array_map(function($v){ return "'".$v."'"; }, $all_id));
+					$this->db->join('pr_emp_com_info as com', 'com.emp_desi_id = deg.id AND com.emp_cat_id = 1 AND com.emp_id IN ('.$id_list.')', 'left', false);
+				} else {
+					$this->db->join('pr_emp_com_info as com', '1=0', 'left', false);
+				}
+				$this->db->where('deg.hide_status', 1);
+				if ($unit_id != null) {
+					$this->db->where('deg.unit_id', $unit_id);
+				}
+				$this->db->group_by(array('deg.id', 'deg.desig_name', 'deg.desig_bangla'));
+				$this->db->order_by('deg.desig_name', 'ASC');
+				return $this->db->get()->result();
+
+			case 'desig_employees':
+				if (empty($all_id) || empty($extra_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, (CASE WHEN com.emp_type = 2 THEN "Staff" ELSE "Worker" END) as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->where('com.emp_desi_id', $extra_id);
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'section':
+				$this->db->select('s.id as sec_id, s.sec_name_en, s.sec_name_bn, d.dept_name, COUNT(com.emp_id) as total_emp');
+				$this->db->from('emp_section as s');
+				$this->db->join('emp_depertment as d', 'd.dept_id = s.depertment_id', 'left');
+				if (!empty($all_id)) {
+					$id_list = implode(',', array_map(function($v){ return "'".$v."'"; }, $all_id));
+					$this->db->join('pr_emp_com_info as com', 'com.emp_sec_id = s.id AND com.emp_cat_id = 1 AND com.emp_id IN ('.$id_list.')', 'left', false);
+				} else {
+					$this->db->join('pr_emp_com_info as com', '1=0', 'left', false);
+				}
+				if ($unit_id != null) {
+					$this->db->where('s.unit_id', $unit_id);
+				}
+				$this->db->group_by(array('s.id', 's.sec_name_en', 's.sec_name_bn', 'd.dept_name'));
+				$this->db->order_by('s.sec_name_en', 'ASC');
+				return $this->db->get()->result();
+
+			case 'sec_employees':
+				if (empty($all_id) || empty($extra_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, (CASE WHEN com.emp_type = 2 THEN "Staff" ELSE "Worker" END) as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->where('com.emp_sec_id', $extra_id);
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'others':
+			case 'line':
+				$this->db->select('l.id as line_id, l.line_name_en, l.line_name_bn, COUNT(com.emp_id) as total_emp');
+				$this->db->from('emp_line_num as l');
+				if (!empty($all_id)) {
+					$id_list = implode(',', array_map(function($v){ return "'".$v."'"; }, $all_id));
+					$this->db->join('pr_emp_com_info as com', 'com.emp_line_id = l.id AND com.emp_cat_id = 1 AND com.emp_id IN ('.$id_list.')', 'left', false);
+				} else {
+					$this->db->join('pr_emp_com_info as com', '1=0', 'left', false);
+				}
+				if ($unit_id != null) {
+					$this->db->where('l.unit_id', $unit_id);
+				}
+				$this->db->group_by(array('l.id', 'l.line_name_en', 'l.line_name_bn'));
+				$this->db->order_by('l.line_name_en', 'ASC');
+				return $this->db->get()->result();
+
+			case 'line_employees':
+				if (empty($all_id) || empty($extra_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, (CASE WHEN com.emp_type = 2 THEN "Staff" ELSE "Worker" END) as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->where('com.emp_line_id', $extra_id);
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'employee':
+			case 'regular':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, (CASE WHEN com.emp_type = 2 THEN "Staff" ELSE "Worker" END) as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'male':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, (CASE WHEN com.emp_type = 2 THEN "Staff" ELSE "Worker" END) as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->where('per.gender', 'Male');
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'female':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, (CASE WHEN com.emp_type = 2 THEN "Staff" ELSE "Worker" END) as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->where('per.gender', 'Female');
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'common':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, com.emp_join_date, (CASE WHEN com.emp_type = 2 THEN "Staff" ELSE "Worker" END) as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where_in('com.emp_id', $all_id);
+				$this->db->group_start();
+				$this->db->where('per.gender !=', 'Male');
+				$this->db->where('per.gender !=', 'Female');
+				$this->db->or_where('per.gender IS NULL');
+				$this->db->group_end();
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+				return $this->db->get()->result();
+
+			case 'present':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, log.in_time, log.out_time, log.late_status, log.late_time, log.ot, log.eot');
+				$this->db->from('pr_emp_shift_log as log');
+				$this->db->join('pr_emp_com_info as com', 'com.emp_id = log.emp_id');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = log.shift_id', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where('log.shift_log_date', $report_date);
+				$this->db->where('log.present_status', 'P');
+				$this->db->where_in('log.emp_id', $all_id);
+				$this->db->order_by('log.in_time ASC, CAST(com.emp_id AS UNSIGNED) ASC');
+				return $this->db->get()->result();
+
+			case 'absent':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, "Absent" as status_text');
+				$this->db->from('pr_emp_shift_log as log');
+				$this->db->join('pr_emp_com_info as com', 'com.emp_id = log.emp_id');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where('log.shift_log_date', $report_date);
+				$this->db->where('log.present_status', 'A');
+				$this->db->where_in('log.emp_id', $all_id);
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED) ASC');
+				return $this->db->get()->result();
+
+			case 'leave':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, "Leave" as status_text');
+				$this->db->from('pr_emp_shift_log as log');
+				$this->db->join('pr_emp_com_info as com', 'com.emp_id = log.emp_id');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where('log.shift_log_date', $report_date);
+				$this->db->where('log.present_status', 'L');
+				$this->db->where_in('log.emp_id', $all_id);
+				$this->db->order_by('CAST(com.emp_id AS UNSIGNED) ASC');
+				return $this->db->get()->result();
+
+			case 'late':
+				if (empty($all_id)) return [];
+				$this->db->select('com.emp_id, com.proxi_id, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, log.in_time, log.out_time, log.late_time');
+				$this->db->from('pr_emp_shift_log as log');
+				$this->db->join('pr_emp_com_info as com', 'com.emp_id = log.emp_id');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = log.shift_id', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				$this->db->where('log.shift_log_date', $report_date);
+				$this->db->where('log.late_status', '1');
+				$this->db->where_in('log.emp_id', $all_id);
+				$this->db->order_by('log.in_time ASC, CAST(com.emp_id AS UNSIGNED) ASC');
+				return $this->db->get()->result();
+
+			case 'new_join':
+				$this->db->select('com.emp_id, com.proxi_id, com.emp_join_date, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name, sh.shift_name, psh.shift_name as per_shift_name, (CASE WHEN com.emp_type = 2 THEN "Staff" ELSE "Worker" END) as emp_type_name');
+				$this->db->from('pr_emp_com_info as com');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				$this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+				$this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+				if ($unit_id != null) {
+					$this->db->where('deg.hide_status', 1);
+					$this->db->where('com.unit_id', $unit_id);
+				}
+				$this->db->where('com.emp_join_date >=', $fromdate);
+				$this->db->where('com.emp_join_date <=', $todate);
+				$this->db->order_by('com.emp_join_date DESC, CAST(com.emp_id AS UNSIGNED) ASC');
+				return $this->db->get()->result();
+
+			case 'resign':
+				$this->db->select('r.emp_id, r.resign_date, r.resign_reason, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name');
+				$this->db->from('pr_emp_resign_history as r');
+				$this->db->join('pr_emp_com_info as com', 'com.emp_id = r.emp_id', 'left');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = r.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				if ($unit_id != null) {
+					$this->db->where('r.unit_id', $unit_id);
+				}
+				$this->db->where('r.resign_date >=', $fromdate);
+				$this->db->where('r.resign_date <=', $todate);
+				$this->db->order_by('r.resign_date DESC, CAST(r.emp_id AS UNSIGNED) ASC');
+				return $this->db->get()->result();
+
+			case 'lefty':
+				$this->db->select('l.emp_id, l.left_date, l.remark, per.name_en, per.name_bn, per.gender, per.personal_mobile, d.dept_name, s.sec_name_en as sec_name, deg.desig_name');
+				$this->db->from('pr_emp_left_history as l');
+				$this->db->join('pr_emp_com_info as com', 'com.emp_id = l.emp_id', 'left');
+				$this->db->join('pr_emp_per_info as per', 'per.emp_id = l.emp_id', 'left');
+				$this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+				$this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+				$this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+				if ($unit_id != null) {
+					$this->db->where('l.unit_id', $unit_id);
+				}
+				$this->db->where('l.left_date >=', $fromdate);
+				$this->db->where('l.left_date <=', $todate);
+				$this->db->order_by('l.left_date DESC, CAST(l.emp_id AS UNSIGNED) ASC');
+				return $this->db->get()->result();
+
+			default:
+				return [];
+		}
+	}
 }
 ?>

@@ -220,6 +220,7 @@ class Leave_model extends CI_Model{
 		$this->db->select('id');	
 		$this->db->where('emp_id',$empid_leave);
 		$this->db->where('leave_type',$leave_type);
+		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$where="trim( substr(start_date,2,4 ) ) = '$startyear_leave' ";
 		$this->db->where($where);
 		$query_leave = $this->db->get('pr_leave_trans');
@@ -346,7 +347,7 @@ class Leave_model extends CI_Model{
 		$leave_type_ml='ml';
 		
 		$this->db->select('leave_type');
-	    $where="emp_id = '$empid' and leave_type = '$leave_type_cl' and trim( substr(start_date,1,4 ) ) = '$year' ";
+	    $where="emp_id = '$empid' and leave_type = '$leave_type_cl' and trim( substr(start_date,1,4 ) ) = '$year' and (status = 'approved' or status is null) ";
     	$this->db->where($where);
 		$query = $this->db->get('pr_leave_trans');
 		$total_casual_leave = $query->num_rows();
@@ -355,7 +356,7 @@ class Leave_model extends CI_Model{
 		
 		
 		$this->db->select('leave_type');
-	    $where="emp_id = '$empid' and leave_type = '$leave_type_sl' and trim( substr(start_date,1,4 ) ) = '$year' ";
+	    $where="emp_id = '$empid' and leave_type = '$leave_type_sl' and trim( substr(start_date,1,4 ) ) = '$year' and (status = 'approved' or status is null) ";
     	$this->db->where($where);
 		$query = $this->db->get('pr_leave_trans');
 		$total_sick_leave = $query->num_rows();
@@ -376,13 +377,13 @@ class Leave_model extends CI_Model{
 		// echo print_r($total_earn_leave);exit;
 		
 		$this->db->select('leave_type');
-	    $where="emp_id = '$empid' and leave_type = '$leave_type_pl' and trim( substr(start_date,1,4 ) ) = '$year' ";
+	    $where="emp_id = '$empid' and leave_type = '$leave_type_pl' and trim( substr(start_date,1,4 ) ) = '$year' and (status = 'approved' or status is null) ";
     	$this->db->where($where);
 		$query = $this->db->get('pr_leave_trans');
 		$total_paternity_leave = $query->num_rows();
 		
 		$this->db->select('leave_type');
-	    $where="emp_id = '$empid' and leave_type = '$leave_type_ml' and trim( substr(start_date,1,4 ) ) = '$year' ";
+	    $where="emp_id = '$empid' and leave_type = '$leave_type_ml' and trim( substr(start_date,1,4 ) ) = '$year' and (status = 'approved' or status is null) ";
     	$this->db->where($where);
 		$query = $this->db->get('pr_leave_trans');
 		$total_maternity_leave = $query->num_rows();

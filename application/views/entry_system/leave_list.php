@@ -3,12 +3,25 @@
     <nav class="navbar navbar-default" style="padding:15px;">
         <div class="container-fluid">
             <div class="row align-items-end">
-                <!-- Add Leave Button -->
-                <div class="col-md-2">
+                <!-- Add Leave Button & Dashboards -->
+                <div class="col-md-4">
                     <label style="visibility:hidden;">Action</label>
-                    <a class="btn btn-info btn-block" href="<?= base_url('entry_system_con/leave_transation') ?>">
-                        Add Leave
-                    </a>
+                    <div class="btn-group btn-group-justified">
+                        <a class="btn btn-primary" href="<?= base_url('leave_con/hr_dashboard') ?>">
+                            <i class="fa fa-dashboard"></i> HR Dashboard
+                        </a>
+                        <?php 
+                            $u_data = $this->session->userdata('data');
+                            if ($u_data && (strtolower($u_data->id_number) === 'admin' || strtolower($u_data->id_number) === 'msa' || $u_data->level === 'All')) { 
+                        ?>
+                        <a class="btn btn-default" href="<?= base_url('leave_con/admin_dashboard') ?>">
+                            <i class="fa fa-shield text-danger"></i> Admin Approval
+                        </a>
+                        <?php } ?>
+                        <a class="btn btn-info" href="<?= base_url('entry_system_con/leave_transation') ?>">
+                            <i class="fa fa-plus"></i> Add
+                        </a>
+                    </div>
                 </div>
 
                 <!-- From Date -->
@@ -98,6 +111,7 @@
                         <th>End Date</th>
                         <th>Total Day</th>
                         <th>Unit name</th>
+                        <th>Status</th>
                         <th <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(!in_array(10,$acl)) {echo '';} else { echo 'style="display:none;"';}?> >Delete</th>
                     </tr>
                 </thead>
@@ -165,17 +179,24 @@
                 var obj = JSON.parse(data)
 
                 obj.forEach(element => {
+                    let st = element.status || 'approved';
+                    let stBadge = '<span class="label label-success">Approved</span>';
+                    if (st === 'pending') stBadge = '<span class="label label-warning">Pending Admin</span>';
+                    else if (st === 'rejected') stBadge = '<span class="label label-danger">Rejected</span>';
+                    else if (st === 'returned') stBadge = '<span class="label label-default" style="background:#9333ea;color:#fff;">Returned</span>';
+
                     $('#tbody').append(`<tr>
                     <td>${++i}</td>
                     <td>${element.user_name}</td>
                     <td>${element.emp_id}</td>
-                    <td title="${element.leave_descrip}" ><a>${element.leave_type}</a></td>
+                    <td title="${element.leave_descrip}" ><a>${element.leave_type.toUpperCase()}</a></td>
                     <td>${element.leave_start}</td>
                     <td>${element.leave_end}</td>
                     <td>${element.total_leave}</td>
                     <td>${element.unit_name}</td>
+                    <td>${stBadge}</td>
                     <td>
-                        <a   <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(in_array(130,$acl)) {echo '';} else { echo 'style="display:none;"';}?>   href="<?=base_url('entry_system_con/emp_leave_del/')?>${element.id}" class="btn btn-danger" role="button">Delete</a>
+                        <a   <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(in_array(130,$acl)) {echo '';} else { echo 'style="display:none;"';}?>   href="<?=base_url('entry_system_con/emp_leave_del/')?>${element.id}" class="btn btn-danger btn-xs" role="button">Delete</a>
                     </td>
                 </tr>`)
                 });

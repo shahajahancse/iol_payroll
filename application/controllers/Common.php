@@ -23,10 +23,12 @@ class Common extends CI_Controller {
         ini_set("pcre.backtrack_limit", 100000000000);
         ini_set("pcre.recursion_limit", 10000000000);
     	$data = array();
-        $this->db->select('max(com.id) as id, max(com.emp_id) as emp_id, max(per.name_en) as name_en, max(per.name_bn) as name_bn');
+        $this->db->select('max(com.id) as id, max(com.emp_id) as emp_id, max(per.name_en) as name_en, max(per.name_bn) as name_bn, max(shft.shift_name) as shift_name, max(pshft.shift_name) as per_shift_name');
         $this->db->from('pr_emp_com_info as com');
         $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
         $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id AND deg.hide_status = 1', 'left');
+        $this->db->join('pr_emp_shift as shft', 'shft.id = com.emp_shift', 'left');
+        $this->db->join('pr_emp_shift as pshft', 'pshft.id = com.emp_per_shift', 'left');
         // $this->db->join('pr_emp_left_history', 'pr_emp_left_history.emp_id = com.emp_id', 'left');
         // $this->db->join('pr_emp_resign_history', 'pr_emp_resign_history.emp_id = com.emp_id', 'left');
         // $this->db->where('pr_emp_left_history.left_date <=',date('Y-m-d', strtotime('-360 days')));
@@ -50,6 +52,9 @@ class Common extends CI_Controller {
         }
         if (!empty($_GET['shift'])) {
             $this->db->where('com.emp_shift', $_GET['shift']);
+        }
+        if (!empty($_GET['per_shift'])) {
+            $this->db->where('com.emp_per_shift', $_GET['per_shift']);
         }
         if (!empty($_GET['status'])) {
             $this->db->where('com.emp_cat_id', $_GET['status']);

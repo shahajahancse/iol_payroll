@@ -102,7 +102,10 @@
                 <span style="font-size: 20px;"><?= $title ?></span>
             </div>
             <div class="col-lg-6">
-                <div class="input-group" style="display:flex;justify-content:space-between; gap: 20px">
+                <div class="input-group" style="display:flex;justify-content:space-between; gap: 10px">
+                    <a href="<?= base_url('leave_con/hr_dashboard') ?>" class="btn btn-warning btn-sm">
+                        <i class="fa fa-dashboard"></i> HR Dashboard
+                    </a>
                     <input class="btn btn-primary btn-sm" onclick='toggleSection("leave_entry")' type="button"
                         value='Leave Entry' />
                     <input class="btn btn-info btn-sm" onclick='toggleSection("leave_balance_check")' type="button"

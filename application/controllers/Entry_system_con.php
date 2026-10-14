@@ -750,6 +750,74 @@ class Entry_system_con extends CI_Controller
         $this->data['subview'] = 'entry_system/shift_change';
         $this->load->view('layout/template', $this->data);
     }
+
+    //-------------------------------------------------------------------------------------------------------
+    // Running Shift Change – change emp_shift in pr_emp_com_info (no date range)
+    //-------------------------------------------------------------------------------------------------------
+    public function running_shift_change()
+    {
+        if ($this->session->userdata('logged_in') == false) {
+            redirect("authentication");
+        }
+        $this->data['employees'] = array();
+        $this->db->select('pr_units.*');
+        $this->data['dept'] = $this->db->get('pr_units')->result_array();
+        if (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name != 'All') {
+            $this->data['employees'] = $this->get_emp_by_unit($this->data['user_data']->unit_name)->result();
+        }
+
+        $this->db->select('emp_depertment.*, pr_units.unit_name');
+        $this->db->from('emp_depertment');
+        $this->db->join('pr_units', 'pr_units.unit_id = emp_depertment.unit_id', 'left');
+        if (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name != 'All') {
+            $this->db->where('emp_depertment.unit_id', $this->data['user_data']->unit_name);
+        }
+        $this->data['departments'] = $this->db->get()->result();
+
+        $this->data['title']    = 'Emp Shift Change';
+        $this->data['username'] = $this->data['user_data']->id_number;
+        $this->data['subview']  = 'entry_system/running_shift_change';
+        $this->load->view('layout/template', $this->data);
+    }
+
+    // AJAX: update emp_shift / emp_per_shift in pr_emp_com_info – no date, no shift_log
+    public function running_shift_change_save()
+    {
+        $emp_ids     = $this->input->post('emp_ids');      // array
+        $shift_id    = $this->input->post('shift_id');     // int
+        $change_type = $this->input->post('change_type');    // 'running', 'permanent', or 'both'
+
+        if (empty($emp_ids) || empty($shift_id)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Missing data']);
+            return;
+        }
+
+        $shift = $this->db->where('id', $shift_id)->get('pr_emp_shift')->row();
+        if (!$shift) {
+            echo json_encode(['status' => 'error', 'msg' => 'Shift not found']);
+            return;
+        }
+
+        $update_data = [];
+        if ($change_type == 'permanent') {
+            $update_data['emp_per_shift'] = $shift->id;
+            $msg = 'Permanent shift updated successfully';
+        } elseif ($change_type == 'both') {
+            $update_data['emp_shift']     = $shift->id;
+            $update_data['emp_per_shift'] = $shift->id;
+            $msg = 'Running & Permanent shift updated successfully';
+        } else {
+            $update_data['emp_shift']     = $shift->id;
+            $msg = 'Running shift updated successfully';
+        }
+
+        $this->db->where_in('emp_id', $emp_ids)
+                 ->update('pr_emp_com_info', $update_data);
+
+        echo json_encode(['status' => 'success', 'msg' => $msg]);
+    }
+
+
     public function present_entry()
     {
         $sql         = $_POST['emp_id'];
@@ -2158,15 +2226,14 @@ class Entry_system_con extends CI_Controller
         $leave_end = date("Y-m-d", strtotime($to_date));
         $total_leave = date_diff(date_create($leave_start), date_create($leave_end))->format('%a') + 1;
 
-        // Check for duplicate entry
+        // Check for duplicate / overlapping entry
         $duplicate_check = $this->db->where('emp_id', $emp_id)
-                        ->where('leave_start', $leave_start)
-                        ->where('leave_end', $leave_end)
-                        ->where('leave_type', $leave_type)
+                        ->where("((leave_start <= '{$leave_end}' AND leave_end >= '{$leave_start}'))")
+                        ->where_in('status', array('pending', 'approved'))
                         ->get('pr_leave_trans')
                         ->num_rows();
         if ($duplicate_check > 0) {
-            echo "Duplicate leave entry found";
+            echo "An active or pending leave entry already exists for this date range";
             exit();
         }
 
@@ -2235,16 +2302,32 @@ class Entry_system_con extends CI_Controller
         }
         // dd($balance);
 
+        $user_id = isset($this->data['user_data']->id) ? $this->data['user_data']->id : (isset($this->session->userdata('data')->id) ? $this->session->userdata('data')->id : null);
+        $user_name = isset($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : (isset($this->session->userdata('data')->id_number) ? $this->session->userdata('data')->id_number : 'HR');
+        $history = array(
+            array(
+                'action' => 'submitted',
+                'by_id' => $user_id,
+                'by_name' => $user_name,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'note' => 'Leave request submitted by HR (Pending Admin Approval)'
+            )
+        );
+
         $formArray = array(
-            'emp_id'            => $emp_id,
-            'unit_id'           => $unit_id,
-            'start_date'        => $apply_date,
-            'leave_type'        => $leave_type,
-            'leave_start'       => $leave_start,
-            'leave_end'         => $leave_end,
-            'total_leave'       => $total_leave,
-            'leave_descrip'     => $reason,
-            'add_on_vacation'   => $add_on_vacation,
+            'emp_id'               => $emp_id,
+            'unit_id'              => $unit_id,
+            'start_date'           => $apply_date,
+            'leave_type'           => $leave_type,
+            'leave_start'          => $leave_start,
+            'leave_end'            => $leave_end,
+            'total_leave'          => $total_leave,
+            'status'               => 'pending',
+            'leave_descrip'        => $reason,
+            'add_on_vacation'      => $add_on_vacation,
+            'applied_by'           => $user_id,
+            'applied_at'           => date('Y-m-d H:i:s'),
+            'modification_history' => json_encode($history),
         );
         if ($this->db->insert('pr_leave_trans', $formArray)) {
             echo "success";
@@ -2305,6 +2388,7 @@ class Entry_system_con extends CI_Controller
         $this->db->where('emp_id', $emp_id);
         $this->db->where('leave_start >=', $first_date);
         $this->db->where('leave_end <=', $last_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $value = $this->db->get('pr_leave_trans')->row();
 
         $this->db->select("
@@ -2313,6 +2397,7 @@ class Entry_system_con extends CI_Controller
         $this->db->where('emp_id', $emp_id);
         $this->db->where('leave_start >=', $first_date);
         $this->db->where('leave_start <=', $last_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $met = $this->db->get('pr_leave_trans')->row();
 
         if (!empty($met)) {
@@ -2959,11 +3044,15 @@ class Entry_system_con extends CI_Controller
                     pr_emp_com_info.unit_id,
                     pr_emp_per_info.name_en,
                     pr_emp_per_info.name_bn,
+                    shft.shift_name,
+                    pshft.shift_name as per_shift_name
                 ');
         $this->db->from('pr_emp_com_info');
         $this->db->join('emp_designation as deg', 'deg.id = pr_emp_com_info.emp_desi_id AND deg.hide_status = 1', 'left');
         $this->db->join('pr_units', 'pr_units.unit_id = pr_emp_com_info.unit_id', 'left');
         $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_emp_com_info.emp_id', 'left');
+        $this->db->join('pr_emp_shift as shft', 'shft.id = pr_emp_com_info.emp_shift', 'left');
+        $this->db->join('pr_emp_shift as pshft', 'pshft.id = pr_emp_com_info.emp_per_shift', 'left');
         $this->db->where('pr_units.unit_id', $unit);
         $this->db->where('pr_emp_com_info.emp_cat_id', 1);
         $this->db->order_by('CAST(pr_emp_com_info.emp_id AS UNSIGNED)', 'ASC');
