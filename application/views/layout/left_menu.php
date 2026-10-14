@@ -56,11 +56,11 @@
         <span class="title">Entry System</span> <span class="selected"></span> <span class="arrow <?= arrow_open(array('entry_system_con', 'leave_con')) ?>"></span> </a>
         <ul class="sub-menu">
           <!-- HR Leave Management Dashboard -->
-          <li class="<?= (activate_class('leave_con') && activate_method('hr_dashboard')) ? 'active' : '' ?>">
+          <!-- <li class="<?= (activate_class('leave_con') && activate_method('hr_dashboard')) ? 'active' : '' ?>">
             <a href="<?= base_url('leave_con/hr_dashboard') ?>" class="anchor_cls">
               <i class="fa fa-calendar-check-o text-info"></i> HR Leave Dashboard
             </a>
-          </li>
+          </li> -->
 
           <?php 
             $u_data = $this->session->userdata('data');
@@ -68,11 +68,11 @@
             if ($is_admin_user) { 
           ?>
             <!-- Admin Leave Approval Dashboard -->
-            <li class="<?= (activate_class('leave_con') && activate_method('admin_dashboard')) ? 'active' : '' ?>">
+            <!-- <li class="<?= (activate_class('leave_con') && activate_method('admin_dashboard')) ? 'active' : '' ?>">
               <a href="<?= base_url('leave_con/admin_dashboard') ?>" class="anchor_cls">
                 <i class="fa fa-shield text-danger"></i> Admin Leave Approval
               </a>
-            </li>
+            </li> -->
           <?php } ?>
 
           <?php if(in_array(13,$acl)) { ?>
