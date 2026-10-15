@@ -52,8 +52,8 @@
 
       <!-- Enty System -->
       <?php if(in_array(2,$acl)) { ?>
-      <li class="start <?= activate_class(array('entry_system_con', 'leave_con')) ?>"> <a href="javascript:;"> <i class="fa fa-pencil-square-o"></i>
-        <span class="title">Entry System</span> <span class="selected"></span> <span class="arrow <?= arrow_open(array('entry_system_con', 'leave_con')) ?>"></span> </a>
+      <li class="start <?= activate_class(array('entry_system_con', 'leave_con', 'ot_approval_con')) ?>"> <a href="javascript:;"> <i class="fa fa-pencil-square-o"></i>
+        <span class="title">Entry System</span> <span class="selected"></span> <span class="arrow <?= arrow_open(array('entry_system_con', 'leave_con', 'ot_approval_con')) ?>"></span> </a>
         <ul class="sub-menu">
           <!-- HR Leave Management Dashboard -->
           <!-- <li class="<?= (activate_class('leave_con') && activate_method('hr_dashboard')) ? 'active' : '' ?>">
@@ -73,6 +73,11 @@
                 <i class="fa fa-shield text-danger"></i> Admin Leave Approval
               </a>
             </li> -->
+            <li class="<?= (activate_class('ot_approval_con') && activate_method('admin_dashboard')) ? 'active' : '' ?>">
+              <a href="<?= base_url('ot_approval_con/admin_dashboard') ?>" class="anchor_cls">
+                <i class="fa fa-clock-o text-warning"></i> Daily OT Approval
+              </a>
+            </li>
           <?php } ?>
 
           <?php if(in_array(13,$acl)) { ?>

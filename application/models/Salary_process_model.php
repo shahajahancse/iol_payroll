@@ -929,6 +929,17 @@ class Salary_process_model extends CI_Model{
         $query = $this->db->get('pr_emp_shift_log')->row();
 		// dd($query);
 
+        // Daily OT Approval workflow integration:
+        // If daily OT approval records exist for this employee & period, use ONLY Admin-approved OT hours!
+        // Pending and rejected OT records are strictly excluded from payroll calculations.
+        if ($query && $this->db->table_exists('pr_daily_ot_approval')) {
+            $this->load->model('Ot_approval_model');
+            $ot_approval_info = $this->Ot_approval_model->get_approved_ot_for_payroll($emp_id, $start_date, $end_date);
+            if (!empty($ot_approval_info['has_records'])) {
+                $query->ot  = $ot_approval_info['approved_ot'];
+                $query->eot = $ot_approval_info['approved_eot'];
+            }
+        }
 
         return $query;
     }

@@ -137,6 +137,10 @@
 							$att_status = "P(Error)";
 							$att_status_count = "P(Error)";
 						}
+						elseif($row->present_status == 'P'){
+							$att_status = "P";
+							$att_status_count = "P";
+						}
 						else{
 							$att_status = "A";
 							$att_status_count = "A";

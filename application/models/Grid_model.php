@@ -931,8 +931,10 @@ class Grid_model extends CI_Model{
 
 		/* ---------- TYPE CONDITIONS ---------- */
 
-		if ($type == 1) { // Present — show if in_time OR out_time has a real value
+		if ($type == 1) { // Present — show if in_time OR out_time has a real value, or present_status == 'P'
 			$this->db->where("(
+				pr_emp_shift_log.present_status = 'P'
+				OR
 				(pr_emp_shift_log.in_time  IS NOT NULL AND pr_emp_shift_log.in_time  != '' AND pr_emp_shift_log.in_time  != '00:00:00')
 				OR
 				(pr_emp_shift_log.out_time IS NOT NULL AND pr_emp_shift_log.out_time != '' AND pr_emp_shift_log.out_time != '00:00:00')
@@ -970,6 +972,7 @@ class Grid_model extends CI_Model{
 				OR pr_emp_shift_log.out_time = '00:00:00')
 			");
 			$this->db->where('pr_emp_shift_log.present_status', 'P');
+			$this->db->where("pr_emp_shift.shift_name NOT LIKE '%punch%'");
 		}
 
 		$this->db->order_by('pr_emp_com_info.emp_line_id', 'ASC');
@@ -1730,8 +1733,22 @@ class Grid_model extends CI_Model{
 		$this->db->where_in("pr_emp_com_info.emp_id", $grid_emp_id);
 		$this->db->where("pr_emp_shift_log.shift_log_date BETWEEN '$firstdate' AND '$seconddate'");
 		$this->db->group_by("pr_emp_com_info.emp_id");
-		$this->db->order_by("pr_emp_com_info.emp_id", "ASC");
 		$query = $this->db->get()->result_array();
+
+		// Integrate Admin approved OT hours if approval records exist
+		if (!empty($query) && $this->db->table_exists('pr_daily_ot_approval')) {
+			$this->load->model('Ot_approval_model');
+			foreach ($query as &$q_row) {
+				$emp_id = $q_row['emp_id'];
+				$approval_info = $this->Ot_approval_model->get_approved_ot_for_payroll($emp_id, $firstdate, $seconddate);
+				if (!empty($approval_info['has_records'])) {
+					$q_row['ot_hour']  = $approval_info['approved_ot'];
+					$q_row['eot_hour'] = $approval_info['approved_eot'];
+				}
+			}
+			unset($q_row);
+		}
+
 		return $query;
 	}
 
@@ -3760,7 +3777,7 @@ class Grid_model extends CI_Model{
 		$day = $year . "-" . $month . "-" . $date;
 
 		$this->db->distinct();
-		$this->db->select("pr_emp_shift_log.emp_id, pr_emp_shift_log.present_status, pr_emp_shift_log.in_time, pr_emp_shift_log.out_time");
+		$this->db->select("pr_emp_shift_log.emp_id, pr_emp_shift_log.present_status, pr_emp_shift_log.in_time, pr_emp_shift_log.out_time, pr_emp_shift_log.shift_id");
 		$this->db->from("pr_emp_shift_log");
 		$this->db->where_in("pr_emp_shift_log.emp_id", $grid_emp_id);
 		$this->db->where("pr_emp_shift_log.shift_log_date", $day);
@@ -3788,24 +3805,20 @@ class Grid_model extends CI_Model{
 				emp_line_num.line_name_en,
 				pr_id_proxi.proxi_id,
 				pr_emp_shift.shift_name,
-				pr_emp_com_info.emp_cat_id
+				pr_emp_com_info.emp_cat_id,
+				IFNULL(per_shift.shift_name, pr_emp_shift.shift_name) AS emp_per_shift
 			');
-			$this->db->from('pr_emp_per_info');
 			$this->db->from('pr_emp_com_info');
-			$this->db->from('emp_designation');
-			$this->db->from('emp_depertment');
-			$this->db->from('emp_section');
-			$this->db->from('emp_line_num');
-			$this->db->from('pr_id_proxi');
-			$this->db->from('pr_emp_shift');
-			$this->db->where('pr_emp_per_info.emp_id = pr_emp_com_info.emp_id');
-			$this->db->where('pr_emp_com_info.emp_desi_id = emp_designation.id');
-			$this->db->where('pr_emp_com_info.emp_dept_id = emp_depertment.dept_id');
-			$this->db->where('pr_emp_com_info.emp_sec_id = emp_section.id');
-			$this->db->where('pr_emp_com_info.emp_line_id = emp_line_num.id');
-			$this->db->where('pr_emp_com_info.emp_id = pr_id_proxi.emp_id');
-			$this->db->where('pr_emp_shift.id = pr_emp_com_info.emp_shift');
-			$this->db->where("pr_emp_per_info.emp_id", $emp_id);
+			$this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_emp_com_info.emp_id', 'LEFT');
+			$this->db->join('emp_designation', 'emp_designation.id = pr_emp_com_info.emp_desi_id', 'LEFT');
+			$this->db->join('emp_depertment', 'emp_depertment.dept_id = pr_emp_com_info.emp_dept_id', 'LEFT');
+			$this->db->join('emp_section', 'emp_section.id = pr_emp_com_info.emp_sec_id', 'LEFT');
+			$this->db->join('emp_line_num', 'emp_line_num.id = pr_emp_com_info.emp_line_id', 'LEFT');
+			$this->db->join('pr_id_proxi', 'pr_id_proxi.emp_id = pr_emp_com_info.emp_id', 'LEFT');
+			$shift_join_id = (!empty($rows->shift_id)) ? $rows->shift_id : 'pr_emp_com_info.emp_shift';
+			$this->db->join('pr_emp_shift', "pr_emp_shift.id = $shift_join_id", 'LEFT');
+			$this->db->join('pr_emp_shift as per_shift', 'per_shift.id = pr_emp_com_info.emp_per_shift', 'LEFT');
+			$this->db->where("pr_emp_com_info.emp_id", $emp_id);
 			$emp_query = $this->db->get();
 
 			if ($status_val == "L") {
@@ -3833,20 +3846,21 @@ class Grid_model extends CI_Model{
 
 				$emp_cat_id = $emp_row->emp_cat_id;
 				if ($emp_cat_id == 1 || $emp_cat_id == 2 || $emp_cat_id == 5) {
-					$data["emp_id"][]     = $emp_row->emp_id;
-					$data["proxi_id"][]   = $emp_row->proxi_id;
-					$data["emp_name"][]   = $emp_row->name_en;
-					$data["desig_name"][] = $emp_row->desig_name;
-					$data["doj"][]        = $emp_row->emp_join_date;
-					$data["dept_name"][]  = $emp_row->dept_name;
-					$data["sec_name"][]   = $emp_row->sec_name_en;
-					$data["line_name"][]  = $emp_row->line_name_en;
-					$data["floor_name"][] = "";
-					$data["emp_shift"][]  = $emp_shift;
-					$data["in_time"][]    = $in_time;
-					$data["out_time"][]   = $out_time;
-					$data["status"][]     = $status_val;
-					$data["p_out"][]      = $previous_day_out;
+					$data["emp_id"][]        = $emp_row->emp_id;
+					$data["proxi_id"][]      = $emp_row->proxi_id;
+					$data["emp_name"][]      = $emp_row->name_en;
+					$data["desig_name"][]    = $emp_row->desig_name;
+					$data["doj"][]           = $emp_row->emp_join_date;
+					$data["dept_name"][]     = $emp_row->dept_name;
+					$data["sec_name"][]      = $emp_row->sec_name_en;
+					$data["line_name"][]     = $emp_row->line_name_en;
+					$data["floor_name"][]    = "";
+					$data["emp_per_shift"][] = !empty($emp_row->emp_per_shift) ? $emp_row->emp_per_shift : '';
+					$data["emp_shift"][]     = $emp_shift;
+					$data["in_time"][]       = $in_time;
+					$data["out_time"][]      = $out_time;
+					$data["status"][]        = $status_val;
+					$data["p_out"][]         = $previous_day_out;
 				}
 			}
 		}
@@ -5488,6 +5502,7 @@ class Grid_model extends CI_Model{
 								   pr_emp_shift_log.shift_log_date,
 								   pr_emp_shift_log.ot,
 								   pr_emp_shift_log.eot,
+								   pr_emp_shift_log.present_status,
 								   pr_emp_shift_log.late_status');
 				$this->db->from('pr_emp_shift_log');
 				$this->db->where('pr_emp_shift_log.emp_id',$id);
@@ -5524,6 +5539,10 @@ class Grid_model extends CI_Model{
 					elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
 						$att_status = "P(Error)";
 						$att_status_count = "P(Error)";
+					}
+					elseif($row->present_status == 'P'){
+						$att_status = "P";
+						$att_status_count = "P";
 					}
 					else{
 						$att_status = "A";
@@ -5697,16 +5716,38 @@ class Grid_model extends CI_Model{
 
 	function check_weekend($sStartDate, $sEndDate, $emp_id)
 	{
+		// Get employee's assigned weekend from pr_emp_com_info
+		$com_emp = $this->db->select("weekend")->where("emp_id", $emp_id)->get("pr_emp_com_info")->row();
+		$com_weekend_day = (!empty($com_emp) && !empty($com_emp->weekend)) ? strtolower(trim($com_emp->weekend)) : 'friday';
+
+		$weekend = array();
+
+		// Add replacement / manual work off from attn_work_off, but ignore Friday if employee weekend is NOT Friday
 		$this->db->select("work_off_date");
 		$this->db->where("work_off_date BETWEEN '$sStartDate' AND '$sEndDate'");
 		$this->db->where("emp_id = '$emp_id'");
 		$query = $this->db->get("attn_work_off");
-		$weekend = array();
 		foreach ($query->result() as $row)
 		{
+			$row_day = strtolower(date('l', strtotime($row->work_off_date)));
+			if ($row_day === 'friday' && $com_weekend_day !== 'friday') {
+				continue;
+			}
 			$weekend[] = $row->work_off_date;
 		}
-		// dd($weekend);
+
+		// Add all days matching employee's designated weekend
+		$cur = strtotime($sStartDate);
+		$end = strtotime($sEndDate);
+		while ($cur <= $end) {
+			$cur_date = date('Y-m-d', $cur);
+			$cur_day = strtolower(date('l', $cur));
+			if ($cur_day === $com_weekend_day && !in_array($cur_date, $weekend)) {
+				$weekend[] = $cur_date;
+			}
+			$cur = strtotime('+1 day', $cur);
+		}
+
 		return $weekend;
 	}
 
@@ -5983,6 +6024,7 @@ class Grid_model extends CI_Model{
 								   pr_emp_shift_log.eot,
 								   pr_emp_shift_log.modify_eot,
 								   pr_emp_shift_log.deduction_hour,
+								   pr_emp_shift_log.present_status,
 								   pr_emp_shift_log.late_status');
 				$this->db->from('pr_emp_shift_log');
 				$this->db->where('pr_emp_shift_log.emp_id',$id);
@@ -6019,6 +6061,10 @@ class Grid_model extends CI_Model{
 					elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
 						$att_status = "P(Error)";
 						$att_status_count = "P(Error)";
+					}
+					elseif($row->present_status == 'P'){
+						$att_status = "P";
+						$att_status_count = "P";
 					}
 					else{
 						$att_status = "A";

@@ -24,14 +24,37 @@ class Job_card_model extends CI_Model{
 	}
 
 	function check_weekend($sStartDate, $sEndDate, $emp_id){
+		// Get employee's assigned weekend from pr_emp_com_info
+		$com_emp = $this->db->select("weekend")->where("emp_id", $emp_id)->get("pr_emp_com_info")->row();
+		$com_weekend_day = (!empty($com_emp) && !empty($com_emp->weekend)) ? strtolower(trim($com_emp->weekend)) : 'friday';
+
+		$weekend = array();
+
+		// Add replacement / manual work off from attn_work_off, but ignore Friday if employee weekend is NOT Friday
 		$this->db->select("work_off_date");
 		$this->db->where("work_off_date BETWEEN '$sStartDate' AND '$sEndDate'");
 		$this->db->where("emp_id = '$emp_id'");
 		$query = $this->db->get("attn_work_off");
-		$weekend = array();
 		foreach ($query->result() as $row){
+			$row_day = strtolower(date('l', strtotime($row->work_off_date)));
+			if ($row_day === 'friday' && $com_weekend_day !== 'friday') {
+				continue;
+			}
 			$weekend[] = $row->work_off_date;
 		}
+
+		// Add all days matching employee's designated weekend
+		$cur = strtotime($sStartDate);
+		$end = strtotime($sEndDate);
+		while ($cur <= $end) {
+			$cur_date = date('Y-m-d', $cur);
+			$cur_day = strtolower(date('l', $cur));
+			if ($cur_day === $com_weekend_day && !in_array($cur_date, $weekend)) {
+				$weekend[] = $cur_date;
+			}
+			$cur = strtotime('+1 day', $cur);
+		}
+
 		return $weekend;
 	}
 

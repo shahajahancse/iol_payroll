@@ -49,6 +49,7 @@ class Attn_process_model extends CI_Model{
 			$joining_date	= $rows->emp_join_date;
 			$shift_name     = isset($rows->shift_name) ? $rows->shift_name : '';
 			$sec_name       = isset($rows->sec_name) ? $rows->sec_name : '';
+			$com_weekend    = isset($rows->weekend) ? $rows->weekend : '';
 
 			$this->delete_double_entry($emp_id,$process_date);
 
@@ -177,7 +178,7 @@ class Attn_process_model extends CI_Model{
 				$tiffin_break_time2 = date("Y-m-d H:i:s",strtotime("+ $tiffin_minute2 minutes",strtotime($tiffin_break2)));
 
 				//WEEKEND CHECK FOR SPECIFIC ID: RETURN TRUE OR FALSE
-				$weekend 	= $this->check_weekend($emp_id, $process_date);
+				$weekend 	= $this->check_weekend($emp_id, $process_date, $com_weekend);
 				$holiday 	= $this->check_holiday($emp_id, $process_date);
 				$night_rules = $this->get_night_allowance_rules($process_date, $unit, $emp_desi_id);
 
@@ -245,7 +246,7 @@ class Attn_process_model extends CI_Model{
 				//============= Working day/Weeked/Holiday OT Calculation =============
 				if ($attn_status != 'A' && $in_time != "" && $out_time !="" && $in_time != $out_time) {
 					//======= Weeked/Holiday Extra OT Calculation==========
-					if($process_date == $weekend || $process_date == $holiday){
+					if($process_date == $weekend || $weekend === true || $process_date == $holiday || $holiday === true){
 
                 		$start_date_time = strtotime($in_time);
 						$end_date_time 	= strtotime($out_time);
@@ -421,6 +422,15 @@ class Attn_process_model extends CI_Model{
 		// if ($unit == 4 && strtotime(date('Y-m-d')) == strtotime($process_date)) {
 		// 	$this->check_shift_roster($process_date, $unit);
 		// }
+
+		// Automatically sync/generate Daily OT list for this date
+		try {
+			$this->load->model('Ot_approval_model');
+			$this->Ot_approval_model->generate_or_sync_daily_ot($process_date, $unit);
+		} catch (Exception $e) {
+			log_message('error', 'Daily OT sync error: ' . $e->getMessage());
+		}
+
 		return true;
 	}
 
@@ -662,6 +672,7 @@ class Attn_process_model extends CI_Model{
 				pr_emp_com_info.ot_entitle,
 				pr_emp_com_info.com_ot_entitle,
 				pr_emp_com_info.emp_join_date,
+				pr_emp_com_info.weekend,
 				pr_emp_shift.id as shift_id,
 				pr_emp_shift.shift_name,
 				pr_emp_shift.schedule_id,
@@ -723,22 +734,39 @@ class Attn_process_model extends CI_Model{
 		return false;
 	}
 
-	function check_weekend($emp_id, $att_date)
+	function check_weekend($emp_id, $att_date, $com_weekend = null)
 	{
+		if (empty($com_weekend)) {
+			$emp_info = $this->db->select("weekend")->where("emp_id", $emp_id)->get("pr_emp_com_info")->row();
+			if (!empty($emp_info) && !empty($emp_info->weekend)) {
+				$com_weekend = $emp_info->weekend;
+			}
+		}
+
+		$emp_weekend = !empty($com_weekend) ? strtolower(trim($com_weekend)) : 'friday';
+		$day_of_week = strtolower(date('l', strtotime($att_date)));
+
+		// If this day matches employee's weekend from pr_emp_com_info
+		if ($day_of_week === $emp_weekend) {
+			return true;
+		}
+
+		// Friday is NOT weekend if employee's assigned weekend is NOT Friday
+		if ($day_of_week === 'friday' && $emp_weekend !== 'friday') {
+			return false;
+		}
+
+		// Check replacement / manual work off from attn_work_off
 		$this->db->select("emp_id");
 		$this->db->from("attn_work_off");
 		$this->db->where("emp_id", $emp_id);
 		$this->db->where("work_off_date", $att_date);
 		$query = $this->db->get();
-		//echo $this->db->last_query();
-		if($query->num_rows() > 0)
-		{
+		if ($query->num_rows() > 0) {
 			return true;
 		}
-		else
-		{
-			return false;
-		}
+
+		return false;
 	}
 
 	function check_holiday($id, $att_date)

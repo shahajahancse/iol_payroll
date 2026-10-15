@@ -383,6 +383,9 @@
 		    <div class="document">
             <a class="header" href="<?php echo base_url();?>leave_con/admin_dashboard" title="Admin Leave Approval" target="right" id="dp13099" onClick="MakeColoredBack('13099');">Admin Leave Approval</a>
           </div>
+		    <div class="document">
+            <a class="header" href="<?php echo base_url();?>ot_approval_con/admin_dashboard" title="Daily OT Approval" target="right" id="dp13100" onClick="MakeColoredBack('13100');">Daily OT Approval</a>
+          </div>
         <?php } ?>
 		    <div class="document">
             <a class="header" href="<?php echo base_url();?>entry_system_con/leave_transation" title="Leave Transaction" target="right" id="dp13002" onClick="MakeColoredBack('13002');">Leave Transaction</a>

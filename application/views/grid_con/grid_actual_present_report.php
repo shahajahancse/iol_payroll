@@ -74,8 +74,8 @@
 				<th style="padding:4px;">row Name</th>
 				<th style="padding:4px">Designation</th>
 				<th style="padding:4px">Section</th>
-				<th style="padding:4px">Shift</th>
 				<th style="padding:4px">Per Shift</th>
+				<th style="padding:4px">Shift</th>
 				<th style="padding:4px">In Time</th>
 				<th style="padding:4px">Out Time</th>
 				<th style="padding:4px">OT Hour</th>
@@ -100,8 +100,8 @@
 					<td style="text-align:left; padding:2px"><?php echo $row['name_en']?></td>
 					<td style="text-align:left; padding:2px"><?php echo $row['desig_name']?></td>
 					<td style="text-align:left; padding:2px"><?php echo $row['sec_name_en']?></td>
-					<td style="text-align:left; padding:2px"><?php echo $row['shift_name']?></td>
 					<td style="text-align:left; padding:2px"><?php echo !empty($row['emp_per_shift']) ? $row['emp_per_shift'] : ''; ?></td>
+					<td style="text-align:left; padding:2px"><?php echo $row['shift_name']?></td>
 					<td style="text-align:center; padding:2px"><?php echo $row['in_time']; ?> </td>
 					<td style="text-align:center; padding:2px"><?php echo $row['out_time'];?> </td>
 

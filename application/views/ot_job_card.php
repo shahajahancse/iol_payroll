@@ -197,7 +197,9 @@ for($i = 0 ; $i < $emp_id_count; $i++)
 		}	
 
 			if (empty($values[$emp_id]["in_time"][$k]) && empty($values[$emp_id]["out_time"][$k])) {
-				$values[$emp_id]["att_status"][$k] = "A";
+				if ($values[$emp_id]["present_status"][$k] != 'P' && $values[$emp_id]["present_status"][$k] != 'W' && $values[$emp_id]["present_status"][$k] != 'H' && $values[$emp_id]["present_status"][$k] != 'L') {
+					$values[$emp_id]["att_status"][$k] = "A";
+				}
 			}
 
 		?> 

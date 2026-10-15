@@ -121,3 +121,10 @@ $route['iclock/(:any)'] = 'iclock/$1';
 $route['hr_leave_dashboard'] = 'leave_con/hr_dashboard';
 $route['admin_leave_dashboard'] = 'leave_con/admin_dashboard';
 
+/*
+| -------------------------------------------------------------------------
+| Daily OT Approval & Admin Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['admin_ot_dashboard'] = 'ot_approval_con/admin_dashboard';
+

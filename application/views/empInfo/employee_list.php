@@ -68,9 +68,11 @@ $default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id)
                     <label style="font-size: 12px; font-weight: 600; color: #495057;">Status</label>
                     <select id="filter_status" class="form-control input-sm">
                         <option value="" selected>All Status</option>
-                        <option value="1">Regular / Active</option>
+                        <option value="1">Regular</option>
                         <option value="2">Left</option>
-                        <option value="3">Resigned</option>
+                        <option value="3">Resign</option>
+                        <option value="4">New</option>
+                        <option value="5">Transfer</option>
                     </select>
                 </div>
                 <div class="col-md-3 col-sm-6">
@@ -172,6 +174,7 @@ $default_unit_id = !empty($user_unit) ? $user_unit : (!empty($units[0]->unit_id)
                             <table class="table table-sm table-bordered" style="margin-bottom: 0; font-size: 13px;">
                                 <tr><th style="width: 35%; background: #f1f3f5;">Employee ID</th><td id="v_emp_id_val" style="font-weight: bold; color: #0177bc;">-</td></tr>
                                 <tr><th style="background: #f1f3f5;">Punch / Proxy ID</th><td id="v_proxi_id" style="font-weight: bold;">-</td></tr>
+                                <tr><th style="background: #f1f3f5;">Status</th><td id="v_status">-</td></tr>
                                 <tr><th style="background: #f1f3f5;">Unit</th><td id="v_unit_name">-</td></tr>
                                 <tr><th style="background: #f1f3f5;">Department</th><td id="v_dept_name">-</td></tr>
                                 <tr><th style="background: #f1f3f5;">Section</th><td id="v_sec_name">-</td></tr>
@@ -252,9 +255,13 @@ $(document).ready(function() {
                         } else if (emp.emp_cat_id == 2) {
                             status_badge = '<span class="label label-warning" style="background-color:#ffc107; color:#000; padding:3px 7px; border-radius:3px;">Left</span>';
                         } else if (emp.emp_cat_id == 3) {
-                            status_badge = '<span class="label label-danger" style="background-color:#dc3545; color:#fff; padding:3px 7px; border-radius:3px;">Resigned</span>';
+                            status_badge = '<span class="label label-danger" style="background-color:#dc3545; color:#fff; padding:3px 7px; border-radius:3px;">Resign</span>';
+                        } else if (emp.emp_cat_id == 4) {
+                            status_badge = '<span class="label label-info" style="background-color:#17a2b8; color:#fff; padding:3px 7px; border-radius:3px;">New</span>';
+                        } else if (emp.emp_cat_id == 5) {
+                            status_badge = '<span class="label label-primary" style="background-color:#6f42c1; color:#fff; padding:3px 7px; border-radius:3px;">Transfer</span>';
                         } else {
-                            status_badge = '<span class="label label-default" style="background-color:#6c757d; color:#fff; padding:3px 7px; border-radius:3px;">Inactive</span>';
+                            status_badge = '<span class="label label-default" style="background-color:#6c757d; color:#fff; padding:3px 7px; border-radius:3px;">-</span>';
                         }
 
                         var join_date = emp.emp_join_date ? emp.emp_join_date : '-';
@@ -313,6 +320,21 @@ $(document).ready(function() {
                     $('#v_emp_id').text(emp.emp_id);
                     $('#v_emp_id_val').text(emp.emp_id);
                     $('#v_proxi_id').text(emp.proxi_id || '-');
+                    
+                    var status_modal = '-';
+                    if (emp.emp_cat_id == 1) {
+                        status_modal = '<span class="label label-success" style="background-color:#28a745; color:#fff; padding:3px 7px; border-radius:3px;">Regular</span>';
+                    } else if (emp.emp_cat_id == 2) {
+                        status_modal = '<span class="label label-warning" style="background-color:#ffc107; color:#000; padding:3px 7px; border-radius:3px;">Left</span>';
+                    } else if (emp.emp_cat_id == 3) {
+                        status_modal = '<span class="label label-danger" style="background-color:#dc3545; color:#fff; padding:3px 7px; border-radius:3px;">Resign</span>';
+                    } else if (emp.emp_cat_id == 4) {
+                        status_modal = '<span class="label label-info" style="background-color:#17a2b8; color:#fff; padding:3px 7px; border-radius:3px;">New</span>';
+                    } else if (emp.emp_cat_id == 5) {
+                        status_modal = '<span class="label label-primary" style="background-color:#6f42c1; color:#fff; padding:3px 7px; border-radius:3px;">Transfer</span>';
+                    }
+                    $('#v_status').html(status_modal);
+
                     $('#v_name_en').text(emp.name_en || '-');
                     $('#v_name_bn').text(emp.name_bn || '-');
                     $('#v_father_name').text(emp.father_name || '-');
