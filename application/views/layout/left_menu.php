@@ -74,10 +74,10 @@
               </a>
             </li> -->
             <li class="<?= (activate_class('ot_approval_con') && activate_method('admin_dashboard')) ? 'active' : '' ?>">
-              <a href="<?= base_url('ot_approval_con/admin_dashboard') ?>" class="anchor_cls">
+              <!-- <a href="<?= base_url('ot_approval_con/admin_dashboard') ?>" class="anchor_cls">
                 <i class="fa fa-clock-o text-warning"></i> Daily OT Approval
               </a>
-            </li>
+            </li> -->
           <?php } ?>
 
           <?php if(in_array(13,$acl)) { ?>

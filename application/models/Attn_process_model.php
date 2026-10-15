@@ -426,7 +426,7 @@ class Attn_process_model extends CI_Model{
 		// Automatically sync/generate Daily OT list for this date
 		try {
 			$this->load->model('Ot_approval_model');
-			$this->Ot_approval_model->generate_or_sync_daily_ot($process_date, $unit);
+			$this->Ot_approval_model->generate_or_sync_daily_ot($process_date, $process_date, $unit);
 		} catch (Exception $e) {
 			log_message('error', 'Daily OT sync error: ' . $e->getMessage());
 		}

@@ -83,9 +83,18 @@ class Ot_approval_model extends CI_Model
     {
         $this->ensure_table_exists();
 
-        if (empty($end_date)) {
+        // If 2nd parameter is actually unit_id (numeric or not a valid date format)
+        if ($unit_id === null && !empty($end_date) && (is_numeric($end_date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($end_date)))) {
+            $unit_id = (int)$end_date;
             $end_date = $start_date;
         }
+
+        if (empty($end_date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($end_date))) {
+            $end_date = $start_date;
+        }
+
+        $start_date = date('Y-m-d', strtotime($start_date));
+        $end_date   = date('Y-m-d', strtotime($end_date));
 
         // Query eligible employees with actual overtime in pr_emp_shift_log
         $this->db->select('
@@ -265,9 +274,18 @@ class Ot_approval_model extends CI_Model
     {
         $this->ensure_table_exists();
 
-        if (empty($end_date)) {
+        // If 2nd parameter is actually unit_id (numeric or not a valid date format)
+        if ($unit_id === null && !empty($end_date) && (is_numeric($end_date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($end_date)))) {
+            $unit_id = (int)$end_date;
             $end_date = $start_date;
         }
+
+        if (empty($end_date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($end_date))) {
+            $end_date = $start_date;
+        }
+
+        $start_date = date('Y-m-d', strtotime($start_date));
+        $end_date   = date('Y-m-d', strtotime($end_date));
 
         // Total OT Eligible Employees
         $this->db->from('pr_emp_com_info');
