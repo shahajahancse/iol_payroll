@@ -96,76 +96,100 @@ class Attn_process_model extends CI_Model{
                 $late_start_time = $schedule[0]["late_start"];
 				// dd($schedule);
 
-            	// Check night shift / Shift C / Shift 7 Night where in_end or out_end is next day
-                $out_date = $process_date;
-                $is_night_shift = (
-                    strtotime($out_end_time) < strtotime('12:00:00') ||
-                    strtotime($in_end_time) < strtotime($in_start_time) ||
-                    in_array(strtolower(trim($shift_name)), array('shift c', 'shiftc', 'shift 7 night')) ||
-                    strpos(strtolower(trim($shift_name)), '7 night') !== false
-                );
-                if ($is_night_shift) {
-                    $out_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
-                }
+            	// Schedule datetime boundary calculation:
+            	// IN TIME range: in_start to in_end
+            	// OUT TIME range: out_start to out_end
+            	$in_start_dt = "$process_date $in_start_time";
 
-                $in_end_date = $process_date;
-                if (strtotime($in_end_time) < strtotime($in_start_time) || in_array(strtolower(trim($shift_name)), array('shift c', 'shiftc', 'shift 7 night')) || strpos(strtolower(trim($shift_name)), '7 night') !== false) {
-                    // dd($in_end_time.'=='.$in_start_time);
-                    $in_end_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
-                }
+            	// in_end crosses midnight? (e.g. Shift C: 21:30 to 02:00 next day; Shift 12 Night: 17:30 to 00:00 next day)
+            	if (strtotime($in_end_time) < strtotime($in_start_time) || ($in_end_time == '00:00:00' && strtotime($in_start_time) > strtotime('12:00:00'))) {
+            		$in_end_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
+            	} else {
+            		$in_end_date = $process_date;
+            	}
+            	$in_end_dt = "$in_end_date $in_end_time";
 
-                // OT start time define,
-                // some worker OT start inday, and some worker OT start next day
-                $is_shift_night_type = in_array(strtolower(trim($shift_name)), array('shift c', 'shiftc', 'shift 7 night', 'shift 7 night(7pm-7am)', 'shift 12 night', '12 night')) || strpos(strtolower(trim($shift_name)), '7 night') !== false;
-                if ($out_date != $process_date && strtotime($ot_start_time) < strtotime('12:00:00')) {
-	                $ot_start = "$out_date $ot_start_time";
-                } elseif (strtotime($in_end_time) > strtotime('12:00:00') && !$is_shift_night_type){
-	                $ot_start = "$process_date $ot_start_time";
-                } else {
-	                $ot_start = "$out_date $ot_start_time";
-                }
+            	// out_start crosses midnight relative to in_start?
+            	// (e.g. Shift C: in_start 21:30 -> out_start 05:50 next day; Shift 12 Night: in_start 17:30 -> out_start 05:50 next day)
+            	if (strtotime($out_start_time) < strtotime($in_start_time)) {
+            		$out_start_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
+            	} else {
+            		$out_start_date = $process_date;
+            	}
+            	$out_start_dt = "$out_start_date $out_start_time";
 
-                $in_start_time = "$process_date $in_start_time";
-                $in_end_time   = "$in_end_date $in_end_time";
-                $out_end_time  = "$out_date $out_end_time";
+            	// out_end crosses midnight relative to out_start?
+            	if ($out_start_date == $process_date) {
+            		// If out_start is today, but out_end is less than out_start, it crosses midnight to next day
+            		// (e.g. Shift B: 21:50 to 06:00 next day; General: 16:00 to 06:00 next day)
+            		if (strtotime($out_end_time) < strtotime($out_start_time)) {
+            			$out_end_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
+            		} else {
+            			$out_end_date = $process_date;
+            		}
+            	} else {
+            		// out_start is already next day (e.g. Shift C: 05:50 next day)
+            		if (strtotime($out_end_time) < strtotime($out_start_time)) {
+            			$out_end_date = date('Y-m-d', strtotime($out_start_date . ' + 1 days'));
+            		} else {
+            			$out_end_date = $out_start_date;
+            		}
+            	}
+            	$out_end_dt = "$out_end_date $out_end_time";
 
+            	$out_date = $out_end_date;
 
-                $table = 'att_'.date('Y_m',strtotime($process_date));
-				// dd($shift_name);
-                if (strtolower(trim($shift_name)) == 'single') {
-					// dd('single');
+            	// OT start time define
+            	$is_shift_night_type = in_array(strtolower(trim($shift_name)), array('shift c', 'shiftc', 'shift 7 night', 'shift 7 night(7pm-7am)', 'shift 12 night', '12 night')) || strpos(strtolower(trim($shift_name)), '7 night') !== false;
+            	if ($out_start_date != $process_date && strtotime($ot_start_time) < strtotime('12:00:00')) {
+            		$ot_start = "$out_start_date $ot_start_time";
+            	} elseif (strtotime($in_end_time) > strtotime('12:00:00') && !$is_shift_night_type){
+            		$ot_start = "$process_date $ot_start_time";
+            	} else {
+            		$ot_start = "$out_end_date $ot_start_time";
+            	}
 
-                    $in_time  = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'ASC', $table);
-                    $out_time = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'DESC', $table);
-                    if ($in_time != '' && $in_time == $out_time) {
-                        $out_time = '00:00:00';
-                    }
-                } elseif (strtolower(trim($shift_name)) == 'billing' || strtolower(trim($sec_name)) == 'billing') {
-					// dd('billing');
+            	$in_start_time  = $in_start_dt;
+            	$in_end_time    = $in_end_dt;
+            	$out_start_time = $out_start_dt;
+            	$out_end_time   = $out_end_dt;
 
-                    $next_day = date('Y-m-d', strtotime($process_date . ' + 1 days'));
-                    $in_time  = $this->time_check_in("$process_date 07:00:00", "$next_day 06:00:00", $emp_id, 'ASC', $table);
-                    $out_time = $this->time_check_in("$process_date 07:00:00", "$next_day 12:00:00", $emp_id, 'DESC', $table);
-                    if ($in_time != '' && $in_time == $out_time) {
-                        $out_time = '00:00:00';
-                    }
-                } else {
-                    // General, General 2, General 3 & Standard Shifts: Normal schedule in/out calculation
-					// dd('else');
-                    $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
-                    $out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
-					// dd($in_end_time.'=='.$out_end_time);
-                }
-				// dd($in_end_time.'=='.$out_end_time);
+            	$table = 'att_'.date('Y_m',strtotime($process_date));
+
+            	if (strtolower(trim($shift_name)) == 'single') {
+            		$in_time  = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'ASC', $table);
+            		$out_time = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'DESC', $table);
+            		if ($in_time != '' && $in_time == $out_time) {
+            			$out_time = '00:00:00';
+            		}
+            	} elseif (strtolower(trim($shift_name)) == 'billing' || strtolower(trim($sec_name)) == 'billing') {
+            		$next_day = date('Y-m-d', strtotime($process_date . ' + 1 days'));
+            		$in_time  = $this->time_check_in("$process_date 07:00:00", "$next_day 06:00:00", $emp_id, 'ASC', $table);
+            		$out_time = $this->time_check_in("$process_date 07:00:00", "$next_day 12:00:00", $emp_id, 'DESC', $table);
+            		if ($in_time != '' && $in_time == $out_time) {
+            			$out_time = '00:00:00';
+            		}
+            	} else {
+            		// Standard & Rotating Shifts: Shift A, Shift B, Shift C, General 1/2/3, Shift 7/12 Morning/Night, etc.
+            		// in_time within in_start to in_end
+            		// out_time within out_start to out_end
+            		$in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
+            		if (!empty($in_time)) {
+            			$out_time = $this->time_check_in($out_start_time, $out_end_time, $emp_id, 'DESC', $table);
+            			if ($in_time == $out_time) {
+            				$out_time = '00:00:00';
+            			}
+            		} else {
+            			$out_time = '00:00:00';
+            		}
+            	}
 				// dd($out_time);
 
-				if (empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
-					// dd('if t');
-
-					$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
-					$table = 'att_'.date('Y_m',strtotime($next_day));
-					$out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
-				}
+            	if (!empty($in_time) && empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
+            		$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
+            		$table_next = 'att_'.date('Y_m',strtotime($next_day));
+            		$out_time = $this->time_check_in($out_start_time, $out_end_time, $emp_id, 'DESC', $table_next);
+            	}
 				// dd($out_time);
 
 				//=================OT CALCULATION ========================
@@ -850,22 +874,84 @@ class Attn_process_model extends CI_Model{
 		return $query = $this->db->get();
 	}
 
-	function time_check_in($start_time, $end_time, $emp_id, $order_by, $table){
-		$this->db->select("date_time");
-		$this->db->from($table);
+	function time_check_in($start_time, $end_time, $emp_id, $order_by, $table = null){
+		$t1 = 'att_' . date('Y_m', strtotime($start_time));
+		$t2 = 'att_' . date('Y_m', strtotime($end_time));
 
-		$this->db->where("$table.proxi_id",$emp_id);
-		$this->db->where("date_time BETWEEN '$start_time' and '$end_time'");
-		$this->db->order_by("date_time",$order_by);
-		$this->db->limit("1");
-		$query = $this->db->get();
-		// dd($this->db->last_query());?
+		if ($t1 === $t2) {
+			$target_table = !empty($table) ? $table : $t1;
+			if (!$this->db->table_exists($target_table)) {
+				return '';
+			}
+			$this->db->select("date_time");
+			$this->db->from($target_table);
+			$this->db->where("$target_table.proxi_id", $emp_id);
+			$this->db->where("date_time BETWEEN '$start_time' and '$end_time'");
+			$this->db->order_by("date_time", $order_by);
+			$this->db->limit(1);
+			$query = $this->db->get();
 
-		if ($query->num_rows() > 0) {
-			return $query->row()->date_time;
-		}else{
-			return '';
+			if ($query->num_rows() > 0) {
+				return $query->row()->date_time;
+			} else {
+				return '';
+			}
 		}
+
+		// Cross-month search
+		if ($order_by === 'ASC') {
+			if ($this->db->table_exists($t1)) {
+				$this->db->select("date_time");
+				$this->db->from($t1);
+				$this->db->where("$t1.proxi_id", $emp_id);
+				$this->db->where("date_time BETWEEN '$start_time' and '$end_time'");
+				$this->db->order_by("date_time", 'ASC');
+				$this->db->limit(1);
+				$q1 = $this->db->get();
+				if ($q1->num_rows() > 0) {
+					return $q1->row()->date_time;
+				}
+			}
+			if ($this->db->table_exists($t2)) {
+				$this->db->select("date_time");
+				$this->db->from($t2);
+				$this->db->where("$t2.proxi_id", $emp_id);
+				$this->db->where("date_time BETWEEN '$start_time' and '$end_time'");
+				$this->db->order_by("date_time", 'ASC');
+				$this->db->limit(1);
+				$q2 = $this->db->get();
+				if ($q2->num_rows() > 0) {
+					return $q2->row()->date_time;
+				}
+			}
+		} else {
+			if ($this->db->table_exists($t2)) {
+				$this->db->select("date_time");
+				$this->db->from($t2);
+				$this->db->where("$t2.proxi_id", $emp_id);
+				$this->db->where("date_time BETWEEN '$start_time' and '$end_time'");
+				$this->db->order_by("date_time", 'DESC');
+				$this->db->limit(1);
+				$q2 = $this->db->get();
+				if ($q2->num_rows() > 0) {
+					return $q2->row()->date_time;
+				}
+			}
+			if ($this->db->table_exists($t1)) {
+				$this->db->select("date_time");
+				$this->db->from($t1);
+				$this->db->where("$t1.proxi_id", $emp_id);
+				$this->db->where("date_time BETWEEN '$start_time' and '$end_time'");
+				$this->db->order_by("date_time", 'DESC');
+				$this->db->limit(1);
+				$q1 = $this->db->get();
+				if ($q1->num_rows() > 0) {
+					return $q1->row()->date_time;
+				}
+			}
+		}
+
+		return '';
 	}
 
 	function check_resign($id, $att_date)
