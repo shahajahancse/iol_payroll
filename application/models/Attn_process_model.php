@@ -64,12 +64,19 @@ class Attn_process_model extends CI_Model{
 			} else {
 
 				//GET CURRENT SHIFT INFORMATION
-				// For Shift A/B/C on a PREVIOUS date: use pr_rmp_shift_log to find the actual shift that day
-				$is_abc_shift = in_array(strtolower(trim($shift_name)), array('shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc'));
+				// For rotating shifts (Shift A/B/C, Shift 7 Morning/Night, Shift 12 Morning/Night) on a PREVIOUS date:
+				// use pr_emp_shift_log to find the actual shift that day
+				$sh_name_lower = strtolower(trim($shift_name));
+				$is_rotating_shift = in_array($sh_name_lower, array(
+					'shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc',
+					'shift 7 morning', 'shift 7 night',
+					'shift 7 morning(7am-7pm)', 'shift 7 night(7pm-7am)',
+					'shift 12 morning', 'shift 12 night'
+				)) || strpos($sh_name_lower, '7 morning') !== false || strpos($sh_name_lower, '7 night') !== false || strpos($sh_name_lower, '12 morning') !== false || strpos($sh_name_lower, '12 night') !== false;
 				$is_previous_date = ($process_date < date('Y-m-d'));
 
-				if ($is_abc_shift && $is_previous_date) {
-					// Fetch the actual shift from pr_rmp_shift_log for that date
+				if ($is_rotating_shift && $is_previous_date) {
+					// Fetch the actual shift from pr_emp_shift_log for that date
 					$rmp_shift = $this->get_shift_from_rmp_log($emp_id, $process_date);
 					if ($rmp_shift) {
 						$shift_id    = $rmp_shift->shift_id;
@@ -89,20 +96,30 @@ class Attn_process_model extends CI_Model{
                 $late_start_time = $schedule[0]["late_start"];
 				// dd($schedule);
 
-            	// Check night shift / Shift C where in_end or out_end is next day
+            	// Check night shift / Shift C / Shift 7 Night where in_end or out_end is next day
                 $out_date = $process_date;
-                if (strtotime($out_end_time) < strtotime('12:00:00') || strtotime($in_end_time) < strtotime($in_start_time) || strtolower(trim($shift_name)) == 'shift c' || strtolower(trim($shift_name)) == 'shiftc') {
+                $is_night_shift = (
+                    strtotime($out_end_time) < strtotime('12:00:00') ||
+                    strtotime($in_end_time) < strtotime($in_start_time) ||
+                    in_array(strtolower(trim($shift_name)), array('shift c', 'shiftc', 'shift 7 night')) ||
+                    strpos(strtolower(trim($shift_name)), '7 night') !== false
+                );
+                if ($is_night_shift) {
                     $out_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
                 }
 
                 $in_end_date = $process_date;
-                if (strtotime($in_end_time) < strtotime($in_start_time) || strtolower(trim($shift_name)) == 'shift c' || strtolower(trim($shift_name)) == 'shiftc') {
+                if (strtotime($in_end_time) < strtotime($in_start_time) || in_array(strtolower(trim($shift_name)), array('shift c', 'shiftc', 'shift 7 night')) || strpos(strtolower(trim($shift_name)), '7 night') !== false) {
+                    // dd($in_end_time.'=='.$in_start_time);
                     $in_end_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
                 }
 
                 // OT start time define,
                 // some worker OT start inday, and some worker OT start next day
-                if (strtotime($in_end_time) > strtotime('12:00:00') && strtolower(trim($shift_name)) != 'shift c' && strtolower(trim($shift_name)) != 'shiftc'){
+                $is_shift_night_type = in_array(strtolower(trim($shift_name)), array('shift c', 'shiftc', 'shift 7 night', 'shift 7 night(7pm-7am)', 'shift 12 night', '12 night')) || strpos(strtolower(trim($shift_name)), '7 night') !== false;
+                if ($out_date != $process_date && strtotime($ot_start_time) < strtotime('12:00:00')) {
+	                $ot_start = "$out_date $ot_start_time";
+                } elseif (strtotime($in_end_time) > strtotime('12:00:00') && !$is_shift_night_type){
 	                $ot_start = "$process_date $ot_start_time";
                 } else {
 	                $ot_start = "$out_date $ot_start_time";
@@ -116,12 +133,16 @@ class Attn_process_model extends CI_Model{
                 $table = 'att_'.date('Y_m',strtotime($process_date));
 				// dd($shift_name);
                 if (strtolower(trim($shift_name)) == 'single') {
+					// dd('single');
+
                     $in_time  = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'ASC', $table);
                     $out_time = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'DESC', $table);
                     if ($in_time != '' && $in_time == $out_time) {
                         $out_time = '00:00:00';
                     }
                 } elseif (strtolower(trim($shift_name)) == 'billing' || strtolower(trim($sec_name)) == 'billing') {
+					// dd('billing');
+
                     $next_day = date('Y-m-d', strtotime($process_date . ' + 1 days'));
                     $in_time  = $this->time_check_in("$process_date 07:00:00", "$next_day 06:00:00", $emp_id, 'ASC', $table);
                     $out_time = $this->time_check_in("$process_date 07:00:00", "$next_day 12:00:00", $emp_id, 'DESC', $table);
@@ -130,16 +151,22 @@ class Attn_process_model extends CI_Model{
                     }
                 } else {
                     // General, General 2, General 3 & Standard Shifts: Normal schedule in/out calculation
+					// dd('else');
                     $in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
                     $out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
+					// dd($in_end_time.'=='.$out_end_time);
                 }
-				// dd($in_start_time.'=='.$in_end_time);
+				// dd($in_end_time.'=='.$out_end_time);
+				// dd($out_time);
 
 				if (empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
+					// dd('if t');
+
 					$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
 					$table = 'att_'.date('Y_m',strtotime($next_day));
 					$out_time = $this->time_check_in($in_end_time, $out_end_time, $emp_id, 'DESC', $table);
 				}
+				// dd($out_time);
 
 				//=================OT CALCULATION ========================
 				$tot_hour 		   = 0;
@@ -163,7 +190,7 @@ class Attn_process_model extends CI_Model{
                 $tiffin_break2 		= $schedule[0]["tiffin_break2"];
                 $tiffin_minute2		= $schedule[0]["tiffin_minute2"];
                 $acual_in_time 		= $schedule[0]["in_time"];
-
+				// dd($schedule);
                 $lunch_in = "$process_date $lunch_start";
 				$lunch_in_time = date("Y-m-d H:i:s",strtotime("+ $lunch_minute minutes",strtotime($lunch_in)));
 
@@ -434,104 +461,234 @@ class Attn_process_model extends CI_Model{
 		return true;
 	}
 
+	function init_shift_rotation_log_table()
+	{
+		if (!$this->db->table_exists('pr_shift_rotation_log')) {
+			$this->db->query("
+				CREATE TABLE IF NOT EXISTS `pr_shift_rotation_log` (
+					`id`              INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+					`unit_id`         INT(11) NOT NULL,
+					`rotation_date`   DATE NOT NULL,
+					`from_shift_id`   INT(11) NULL,
+					`to_shift_id`     INT(11) NULL,
+					`from_shift_name` VARCHAR(100) NULL,
+					`to_shift_name`   VARCHAR(100) NULL,
+					`emp_count`       INT(11) DEFAULT 0,
+					`rotation_type`   VARCHAR(50) NOT NULL,
+					`created_at`      DATETIME DEFAULT CURRENT_TIMESTAMP,
+					UNIQUE KEY `uq_unit_date_type` (`unit_id`, `rotation_date`, `rotation_type`)
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8
+			");
+		} else {
+			if (!$this->db->field_exists('from_shift_id', 'pr_shift_rotation_log')) {
+				$this->db->query("ALTER TABLE `pr_shift_rotation_log` ADD COLUMN `from_shift_id` INT(11) NULL AFTER `rotation_date`");
+			}
+			if (!$this->db->field_exists('to_shift_id', 'pr_shift_rotation_log')) {
+				$this->db->query("ALTER TABLE `pr_shift_rotation_log` ADD COLUMN `to_shift_id` INT(11) NULL AFTER `from_shift_id`");
+			}
+			if (!$this->db->field_exists('from_shift_name', 'pr_shift_rotation_log')) {
+				$this->db->query("ALTER TABLE `pr_shift_rotation_log` ADD COLUMN `from_shift_name` VARCHAR(100) NULL AFTER `to_shift_id`");
+			}
+			if (!$this->db->field_exists('to_shift_name', 'pr_shift_rotation_log')) {
+				$this->db->query("ALTER TABLE `pr_shift_rotation_log` ADD COLUMN `to_shift_name` VARCHAR(100) NULL AFTER `from_shift_name`");
+			}
+			if (!$this->db->field_exists('emp_count', 'pr_shift_rotation_log')) {
+				$this->db->query("ALTER TABLE `pr_shift_rotation_log` ADD COLUMN `emp_count` INT(11) DEFAULT 0 AFTER `to_shift_name`");
+			}
+			$this->db->query("ALTER TABLE `pr_shift_rotation_log` MODIFY COLUMN `rotation_type` VARCHAR(50) NOT NULL");
+		}
+		$this->db->reset_query();
+	}
+
+	function is_shift_rotated($unit, $rotation_date, $from_shift_id, $rotation_type)
+	{
+		$this->db->where('unit_id', $unit);
+		$this->db->where('rotation_date', $rotation_date);
+		$this->db->group_start();
+			if (!empty($from_shift_id)) {
+				$this->db->where('from_shift_id', $from_shift_id);
+				$this->db->or_where('rotation_type', $rotation_type);
+			} else {
+				$this->db->where('rotation_type', $rotation_type);
+			}
+			if (strpos($rotation_type, 'saturday') !== false) {
+				$this->db->or_where('rotation_type', 'saturday');
+			} elseif (strpos($rotation_type, 'shift12') !== false) {
+				$this->db->or_where('rotation_type', 'shift12_nm');
+			}
+		$this->db->group_end();
+		$count = $this->db->count_all_results('pr_shift_rotation_log');
+		$this->db->reset_query();
+		return ($count > 0);
+	}
+
+	function insert_shift_rotation_log($unit, $rotation_date, $from_shift_id, $to_shift_id, $from_shift_name, $to_shift_name, $emp_count, $rotation_type)
+	{
+		$this->db->insert('pr_shift_rotation_log', [
+			'unit_id'         => $unit,
+			'rotation_date'   => $rotation_date,
+			'from_shift_id'   => $from_shift_id,
+			'to_shift_id'     => $to_shift_id,
+			'from_shift_name' => $from_shift_name,
+			'to_shift_name'   => $to_shift_name,
+			'emp_count'       => $emp_count,
+			'rotation_type'   => $rotation_type,
+		]);
+		$this->db->reset_query();
+	}
+
+	function get_shift_by_name($name)
+	{
+		$shift = $this->db->where('TRIM(shift_name)', trim($name))->get('pr_emp_shift')->row();
+		if ($shift) return $shift;
+
+		$shift = $this->db->where('TRIM(LOWER(shift_name))', strtolower(trim($name)))->get('pr_emp_shift')->row();
+		if ($shift) return $shift;
+
+		if (stripos($name, '7 morning') !== false || stripos($name, '7morning') !== false) {
+			$shift = $this->db->like('shift_name', '7 morning')->get('pr_emp_shift')->row();
+			if ($shift) return $shift;
+		}
+		if (stripos($name, '7 night') !== false || stripos($name, '7night') !== false) {
+			$shift = $this->db->like('shift_name', '7 night')->get('pr_emp_shift')->row();
+			if ($shift) return $shift;
+		}
+
+		return null;
+	}
+
 	function check_policy_shift_rotation($date, $unit = 1)
 	{
 		$rotation_date = date('Y-m-d', strtotime($date));
 		$day_name      = date('l', strtotime($date));
 		$day_num       = date('d', strtotime($date));
 
-		// Ensure pr_shift_rotation_log table exists (runs only once)
-		if (!$this->db->table_exists('pr_shift_rotation_log')) {
-			$this->db->query("
-				CREATE TABLE IF NOT EXISTS `pr_shift_rotation_log` (
-					`id`            INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-					`unit_id`       INT(11) NOT NULL,
-					`rotation_date` DATE NOT NULL,
-					`rotation_type` VARCHAR(20) NOT NULL,
-					`created_at`    DATETIME DEFAULT CURRENT_TIMESTAMP,
-					UNIQUE KEY `uq_unit_date_type` (`unit_id`, `rotation_date`, `rotation_type`)
-				) ENGINE=InnoDB DEFAULT CHARSET=utf8
-			");
-		}
-		// Reset CI query builder state so rotation queries below work cleanly
-		$this->db->reset_query();
+		$this->init_shift_rotation_log_table();
 
 		// -----------------------------------------------------------------------
-		// Saturday Shift Rotation for Shift A, Shift B, Shift C
+		// Saturday Shift Rotation
+		// -----------------------------------------------------------------------
+		// Rules on every Saturday:
+		// 1) Shift A  to Shift C
+		// 2) Shift B  to Shift A
+		// 3) Shift C  to Shift B
+		// 4) Shift 7 Morning to Shift 7 Night
+		// 5) Shift 7 Night   to Shift 7 Morning
 		// -----------------------------------------------------------------------
 		if ($day_name == 'Saturday') {
 
-			$already_rotated = $this->db
-				->where('unit_id', $unit)
-				->where('rotation_date', $rotation_date)
-				->where('rotation_type', 'saturday')
-				->count_all_results('pr_shift_rotation_log');
+			// --- 1. Shift A, Shift B, Shift C Rotation ---
+			$shiftA = $this->get_shift_by_name('Shift A');
+			$shiftB = $this->get_shift_by_name('Shift B');
+			$shiftC = $this->get_shift_by_name('Shift C');
 
-			if ($already_rotated == 0) {
-				$shiftA = $this->db->where('shift_name', 'Shift A')->get('pr_emp_shift')->row();
-				$shiftB = $this->db->where('shift_name', 'Shift B')->get('pr_emp_shift')->row();
-				$shiftC = $this->db->where('shift_name', 'Shift C')->get('pr_emp_shift')->row();
+			if ($shiftA && $shiftB && $shiftC) {
+				$rotateA = !$this->is_shift_rotated($unit, $rotation_date, $shiftA->id, 'saturday_shift_a_to_c');
+				$rotateB = !$this->is_shift_rotated($unit, $rotation_date, $shiftB->id, 'saturday_shift_b_to_a');
+				$rotateC = !$this->is_shift_rotated($unit, $rotation_date, $shiftC->id, 'saturday_shift_c_to_b');
 
-				// dd($shiftA);
-
-				if ($shiftA && $shiftB && $shiftC) {
-
+				if ($rotateA || $rotateB || $rotateC) {
+					// CRITICAL: Fetch employee lists for all shifts BEFORE modifying any shift to avoid cascade overwrite
 					$empA = $this->get_roster_shift_emp($shiftA->id, $unit);
 					$empB = $this->get_roster_shift_emp($shiftB->id, $unit);
 					$empC = $this->get_roster_shift_emp($shiftC->id, $unit);
 
-					if (!empty($empA)) $this->auto_change_roster_shift($empA, $shiftC->id, $unit);
-					if (!empty($empB)) $this->auto_change_roster_shift($empB, $shiftA->id, $unit);
-					if (!empty($empC)) $this->auto_change_roster_shift($empC, $shiftB->id, $unit);
+					if ($rotateA) {
+						if (!empty($empA)) {
+							$this->auto_change_roster_shift($empA, $shiftC->id, $unit);
+						}
+						$this->insert_shift_rotation_log($unit, $rotation_date, $shiftA->id, $shiftC->id, $shiftA->shift_name, $shiftC->shift_name, count($empA), 'saturday_shift_a_to_c');
+					}
 
-					$this->db->insert('pr_shift_rotation_log', [
-						'unit_id'       => $unit,
-						'rotation_date' => $rotation_date,
-						'rotation_type' => 'saturday',
-					]);
+					if ($rotateB) {
+						if (!empty($empB)) {
+							$this->auto_change_roster_shift($empB, $shiftA->id, $unit);
+						}
+						$this->insert_shift_rotation_log($unit, $rotation_date, $shiftB->id, $shiftA->id, $shiftB->shift_name, $shiftA->shift_name, count($empB), 'saturday_shift_b_to_a');
+					}
+
+					if ($rotateC) {
+						if (!empty($empC)) {
+							$this->auto_change_roster_shift($empC, $shiftB->id, $unit);
+						}
+						$this->insert_shift_rotation_log($unit, $rotation_date, $shiftC->id, $shiftB->id, $shiftC->shift_name, $shiftB->shift_name, count($empC), 'saturday_shift_c_to_b');
+					}
+				}
+			}
+
+			// --- 2. Shift 7 Morning & Night Swap ---
+			$shift7Morning = $this->get_shift_by_name('Shift 7 Morning');
+			$shift7Night   = $this->get_shift_by_name('Shift 7 Night');
+
+			if ($shift7Morning && $shift7Night) {
+				$rotate7m = !$this->is_shift_rotated($unit, $rotation_date, $shift7Morning->id, 'saturday_shift_7m_to_7n');
+				$rotate7n = !$this->is_shift_rotated($unit, $rotation_date, $shift7Night->id,   'saturday_shift_7n_to_7m');
+
+				if ($rotate7m || $rotate7n) {
+					// CRITICAL: Fetch employee lists for both shifts BEFORE modifying either
+					$emp7m = $this->get_roster_shift_emp($shift7Morning->id, $unit);
+					$emp7n = $this->get_roster_shift_emp($shift7Night->id,   $unit);
+
+					if ($rotate7m) {
+						if (!empty($emp7m)) {
+							$this->auto_change_roster_shift($emp7m, $shift7Night->id, $unit);
+						}
+						$this->insert_shift_rotation_log($unit, $rotation_date, $shift7Morning->id, $shift7Night->id, $shift7Morning->shift_name, $shift7Night->shift_name, count($emp7m), 'saturday_shift_7m_to_7n');
+					}
+
+					if ($rotate7n) {
+						if (!empty($emp7n)) {
+							$this->auto_change_roster_shift($emp7n, $shift7Morning->id, $unit);
+						}
+						$this->insert_shift_rotation_log($unit, $rotation_date, $shift7Night->id, $shift7Morning->id, $shift7Night->shift_name, $shift7Morning->shift_name, count($emp7n), 'saturday_shift_7n_to_7m');
+					}
 				}
 			}
 		}
 
 		// -----------------------------------------------------------------------
-		// 15th & 30th Shift Rotation for Shift 12 Night and Shift 12 Morning
+		// 5th & 25th Shift Rotation for Shift 12 Night and Shift 12 Morning
 		// -----------------------------------------------------------------------
-		$days_in_month = (int) date('t', strtotime($rotation_date));
+		// 4 tarikh theke 24 tarikh porjonto duty seshe 25 tarikh swap:
+		// Shift 12 Night   -> Shift 12 Morning
+		// Shift 12 Morning -> Shift 12 Night
+		//
+		// 25 tarikh theke 4 tarikh porjonto duty seshe 5 tarikh swap:
+		// Shift 12 Morning -> Shift 12 Night
+		// Shift 12 Night   -> Shift 12 Morning
+		// -----------------------------------------------------------------------
+		$is_5th  = ((int)$day_num == 5);
+		$is_25th = ((int)$day_num == 25);
 
-		$is_15th = ($day_num == '15');
-		$is_30th = ($day_num == '30' && $days_in_month >= 30);
+		if ($is_5th || $is_25th) {
+			$shift12Night   = $this->get_shift_by_name('Shift 12 Night');
+			$shift12Morning = $this->get_shift_by_name('Shift 12 Morning');
 
-		if ($is_15th || $is_30th) {
+			if ($shift12Night && $shift12Morning) {
+				$rotate12n = !$this->is_shift_rotated($unit, $rotation_date, $shift12Night->id,   'shift12_night_to_morning');
+				$rotate12m = !$this->is_shift_rotated($unit, $rotation_date, $shift12Morning->id, 'shift12_morning_to_night');
 
-			$already_rotated_12nm = $this->db
-				->where('unit_id', $unit)
-				->where('rotation_date', $rotation_date)
-				->where('rotation_type', 'shift12_nm')
-				->count_all_results('pr_shift_rotation_log');
-
-			if ($already_rotated_12nm == 0) {
-
-				$shift12Night   = $this->db->where('shift_name', 'Shift 12 Night')->get('pr_emp_shift')->row();
-				$shift12Morning = $this->db->where('shift_name', 'Shift 12 Morning')->get('pr_emp_shift')->row();
-
-				if ($shift12Night && $shift12Morning) {
-
+				if ($rotate12n || $rotate12m) {
+					// CRITICAL: Fetch employee lists for both shifts BEFORE modifying either
 					$empNight   = $this->get_roster_shift_emp($shift12Night->id,   $unit);
 					$empMorning = $this->get_roster_shift_emp($shift12Morning->id, $unit);
 
-					// Swap: Night → Morning, Morning → Night
-					if (!empty($empNight))   $this->auto_change_roster_shift($empNight,   $shift12Morning->id, $unit);
-					if (!empty($empMorning)) $this->auto_change_roster_shift($empMorning, $shift12Night->id,   $unit);
+					if ($rotate12n) {
+						if (!empty($empNight)) {
+							$this->auto_change_roster_shift($empNight, $shift12Morning->id, $unit);
+						}
+						$this->insert_shift_rotation_log($unit, $rotation_date, $shift12Night->id, $shift12Morning->id, $shift12Night->shift_name, $shift12Morning->shift_name, count($empNight), 'shift12_night_to_morning');
+					}
 
-					$this->db->insert('pr_shift_rotation_log', [
-						'unit_id'       => $unit,
-						'rotation_date' => $rotation_date,
-						'rotation_type' => 'shift12_nm',
-					]);
+					if ($rotate12m) {
+						if (!empty($empMorning)) {
+							$this->auto_change_roster_shift($empMorning, $shift12Night->id, $unit);
+						}
+						$this->insert_shift_rotation_log($unit, $rotation_date, $shift12Morning->id, $shift12Night->id, $shift12Morning->shift_name, $shift12Night->shift_name, count($empMorning), 'shift12_morning_to_night');
+					}
 				}
 			}
 		}
-
 	}
 
 
@@ -624,11 +781,13 @@ class Attn_process_model extends CI_Model{
 
 	function auto_change_roster_shift($emp_array, $emp_shift, $unit_id)
 	{
+		if (empty($emp_array)) {
+			return true;
+		}
 		$data = array(
 			'emp_shift' => $emp_shift
 		);
 
-		
 		$this->db->where_in('emp_id', $emp_array)->where('unit_id', $unit_id)->update('pr_emp_com_info', $data);
 		// dd($data);
 		return true;
@@ -700,7 +859,7 @@ class Attn_process_model extends CI_Model{
 		$this->db->order_by("date_time",$order_by);
 		$this->db->limit("1");
 		$query = $this->db->get();
-		// dd($this->db->last_query());
+		// dd($this->db->last_query());?
 
 		if ($query->num_rows() > 0) {
 			return $query->row()->date_time;

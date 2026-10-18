@@ -1188,6 +1188,7 @@ class Entry_system_con extends CI_Controller
         $first_date  = date('Y-m-d', strtotime($_POST['first_date']));
         $second_date = date('Y-m-d', strtotime($_POST['second_date']));
         $emp_ids     = explode(',', $sql);
+        // dd($_POST);
 
         if (empty($sql)) {
             echo "Please select employee Id";
@@ -1216,7 +1217,7 @@ class Entry_system_con extends CI_Controller
 
         $this->db->where("shift_log_date BETWEEN '$first_date' and '$second_date' ")->where_in('emp_id', $emp_ids);
         $this->db->where('unit_id', $unit_id)->delete('pr_emp_shift_log');
-
+        // dd($this->db->last_query());
         $this->load->model('Attn_process_model');
         foreach ($emp_ids as $emp_id) {
             $cur = $first_date;
