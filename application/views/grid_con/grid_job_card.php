@@ -105,13 +105,31 @@
 						// dd($row);
 						$extra_ot_hour = 0;
 
-						if($row->present_status == 'L'){
-							$leave_type = $this->job_card_model->get_leave_type($row->shift_log_date,$value->emp_id);
+						$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+						$is_leave = false;
+						$leave_name = '';
+
+						if (isset($emp_data['leave'][$row->shift_log_date])) {
+							$is_leave = true;
+							$leave_name = $emp_data['leave'][$row->shift_log_date];
+						} elseif (in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+							$is_leave = true;
+							$leave_name = strtoupper(trim($row->present_status));
+							if ($leave_name == 'L') {
+								$lt = $this->job_card_model->get_leave_type($row->shift_log_date, $value->emp_id);
+								$leave_name = !empty($lt) ? $lt : 'Leave';
+							}
+						}
+
+						if ($is_leave) {
 							$att_status_count = "Leave";
-							$att_status = $leave_type;
+							$att_status = $leave_name;
 							$row->in_time = "00:00:00";
 							$row->out_time = "00:00:00";
+							$row->ot = 0;
+							$row->com_ot = 0;
 							$extra_ot_hour = 0;
+							$row->late_status = 0;
 						}
 						elseif(in_array($row->shift_log_date,$emp_data['holiday'])){
 							$att_status = "Holiday";
@@ -228,7 +246,7 @@
 							elseif($att_status == "A"){
 								$absent_count++;
 							}
-							elseif($att_status_count == "Leave"){
+							elseif($att_status_count == "Leave" || in_array($att_status, $leave_codes)){
 								$leave_count++;
 							}
 							elseif($att_status == "P(Error)"){
@@ -240,7 +258,7 @@
 							elseif($att_status == "Holiday"){
 								$holiday_count++;
 							}
-							if($row->late_status == 1){
+							if($att_status_count != "Leave" && !in_array($att_status, $leave_codes) && $row->late_status == 1){
 								$remark = "Late";
 								$late_count++;
 							} else{

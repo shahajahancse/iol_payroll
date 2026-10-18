@@ -156,7 +156,23 @@ class Attn_process_model extends CI_Model{
 
             	$table = 'att_'.date('Y_m',strtotime($process_date));
 
-            	if (strtolower(trim($shift_name)) == 'single') {
+            	// Check if employee is on approved leave (SL, CL, EL, ML, WP, etc.)
+            	$leaves = $this->leave_chech($process_date, $emp_id);
+
+            	// Rule: If single-day SL or CL, and next calendar day is already Absent (A), forfeit leave
+            	if ($leaves && $this->check_single_day_sl_cl($process_date, $emp_id)) {
+            		$next_cal_date = date('Y-m-d', strtotime("$process_date + 1 days"));
+            		$next_cal_log = $this->db->select('present_status')->where('emp_id', $emp_id)->where('shift_log_date', $next_cal_date)->get('pr_emp_shift_log')->row();
+            		if (!empty($next_cal_log) && strtoupper(trim($next_cal_log->present_status)) == 'A') {
+            			$leaves = false;
+            		}
+            	}
+
+            	if ($leaves) {
+            		// When employee is on leave, no in-time or out-time should be recorded or shown
+            		$in_time  = '00:00:00';
+            		$out_time = '00:00:00';
+            	} elseif (strtolower(trim($shift_name)) == 'single') {
             		$in_time  = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'ASC', $table);
             		$out_time = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'DESC', $table);
             		if ($in_time != '' && $in_time == $out_time) {
@@ -185,7 +201,7 @@ class Attn_process_model extends CI_Model{
             	}
 				// dd($out_time);
 
-            	if (!empty($in_time) && empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
+            	if (!$leaves && !empty($in_time) && empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
             		$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
             		$table_next = 'att_'.date('Y_m',strtotime($next_day));
             		$out_time = $this->time_check_in($out_start_time, $out_end_time, $emp_id, 'DESC', $table_next);
@@ -234,10 +250,23 @@ class Attn_process_model extends CI_Model{
 				$night_rules = $this->get_night_allowance_rules($process_date, $unit, $emp_desi_id);
 
 				//============= Check employee attendance status & Special Shift Policies =============
-				$leaves = $this->leave_chech($process_date, $emp_id);
 				$attn_status = 'A';
 				if($leaves){
 					$attn_status = "L";
+					$in_time = '00:00:00';
+					$out_time = '00:00:00';
+					$tot_hour = 0;
+					$ot_hour = 0;
+					$eot_hour = 0;
+					$ot_eot_12am = 0;
+					$ot_eot_4pm = 0;
+					$deduction_hour = 0;
+					$late_status = 0;
+					$early_exit = 0;
+					$night_allo = 0;
+					$holiday_allo = 0;
+					$weekly_allo = 0;
+					$alert_msg = 0;
 				}elseif ($process_date == $holiday || $holiday === true){
 					$attn_status = "H";
 				}elseif ($process_date == $weekend || $weekend === true){
@@ -295,7 +324,7 @@ class Attn_process_model extends CI_Model{
 				//============= Check employee attendance status =============
 
 				//============= Working day/Weeked/Holiday OT Calculation =============
-				if ($attn_status != 'A' && $in_time != "" && $out_time !="" && $in_time != $out_time) {
+				if ($attn_status != 'A' && $attn_status != 'L' && $in_time != "" && $in_time != "00:00:00" && $out_time !="" && $out_time != "00:00:00" && $in_time != $out_time) {
 					//======= Weeked/Holiday Extra OT Calculation==========
 					if($process_date == $weekend || $weekend === true || $process_date == $holiday || $holiday === true){
 
@@ -416,7 +445,7 @@ class Attn_process_model extends CI_Model{
 
 				// Late Status check
 				$late_start_time = "$process_date $late_start_time";
-				if ($attn_status == 'W' || $attn_status == 'H') {
+				if ($attn_status == 'W' || $attn_status == 'H' || $attn_status == 'L') {
 					$late_status = 0;
 				} elseif ($in_time > $late_start_time && $in_time != '' && $in_time != '00:00:00') {
 					$late_status = 1;
@@ -426,10 +455,10 @@ class Attn_process_model extends CI_Model{
 				// Late Status
 
 				// week and holiday allownance check
-				if($attn_status == "W" && $in_time != ''){
+				if($attn_status == "W" && $in_time != '' && $in_time != '00:00:00'){
 				 	$weekly_allo = 1;
 				}
-				if($attn_status == "H" && $in_time != ''){
+				if($attn_status == "H" && $in_time != '' && $in_time != '00:00:00'){
 				 	$holiday_allo = 1;
 				}
 				// week and holiday end
@@ -466,6 +495,36 @@ class Attn_process_model extends CI_Model{
 				$this->db->where('shift_log_date', $process_date);
 				$this->db->where('emp_id', $emp_id);
 				$this->db->update('pr_emp_shift_log', $data);
+
+				// Rule: If an employee takes a single-day SL or CL, and is absent (A) on the next calendar day,
+				// both the leave date and the next date must be shown as Absent (A).
+				$prev_cal_date = date('Y-m-d', strtotime("$process_date - 1 days"));
+				if ($attn_status == 'A') {
+					if ($this->check_single_day_sl_cl($prev_cal_date, $emp_id)) {
+						$this->db->where('emp_id', $emp_id)
+								 ->where('shift_log_date', $prev_cal_date)
+								 ->update('pr_emp_shift_log', array(
+									'present_status' => 'A',
+									'in_time'        => '00:00:00',
+									'out_time'       => '00:00:00',
+									'tot'            => 0,
+									'ot'             => 0,
+									'eot'            => 0,
+									'late_status'    => 0,
+									'weekly_allo'    => 0,
+									'holiday_allo'   => 0
+								 ));
+					}
+				} else {
+					if ($this->check_single_day_sl_cl($prev_cal_date, $emp_id)) {
+						$this->db->where('emp_id', $emp_id)
+								 ->where('shift_log_date', $prev_cal_date)
+								 ->where('present_status', 'A')
+								 ->update('pr_emp_shift_log', array(
+									'present_status' => 'L'
+								 ));
+					}
+				}
 			}
 		}
 
@@ -1035,9 +1094,7 @@ class Attn_process_model extends CI_Model{
 
     function leave_chech($process_date, $emp_id)
     {
-
-        $this->db->where("leave_start <=", $process_date);
-        $this->db->where("leave_end >=", $process_date);
+        $this->db->where("((leave_start <= '$process_date' AND leave_end >= '$process_date') OR start_date = '$process_date')");
         $this->db->where("emp_id", $emp_id);
         $this->db->where("(status = 'approved' OR status IS NULL)");
         $query = $this->db->get("pr_leave_trans");
@@ -1047,6 +1104,27 @@ class Attn_process_model extends CI_Model{
         } else {
             return false;
         }
+    }
+
+    function check_single_day_sl_cl($date, $emp_id)
+    {
+        $this->db->select("leave_type, leave_start, leave_end, start_date, total_leave");
+        $this->db->where("((leave_start <= '$date' AND leave_end >= '$date') OR start_date = '$date')");
+        $this->db->where("emp_id", $emp_id);
+        $this->db->where_in("LOWER(leave_type)", array('sl', 'cl'));
+        $this->db->where("(status = 'approved' OR status IS NULL)");
+        $query = $this->db->get("pr_leave_trans");
+        if ($query->num_rows() > 0) {
+            foreach ($query->result() as $row) {
+                $start = !empty($row->leave_start) ? $row->leave_start : $row->start_date;
+                $end   = !empty($row->leave_end) ? $row->leave_end : $start;
+                $total = !empty($row->total_leave) ? $row->total_leave : 1;
+                if ($total == 1 || $start == $end) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 	function get_night_allowance_rules($process_date, $unit_id, $desig_id){

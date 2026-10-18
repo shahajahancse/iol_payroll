@@ -10,17 +10,67 @@ class Job_card_model extends CI_Model{
 	// start 9pm eot job card
 	function leave_per_emp($sStartDate, $sEndDate, $emp_id)
 	{
-		$this->db->select("start_date");
-		$this->db->where("start_date BETWEEN '$sStartDate' AND '$sEndDate'");
+		$this->db->select("leave_type, leave_start, leave_end, start_date");
+		$this->db->where("((leave_start <= '$sEndDate' AND leave_end >= '$sStartDate') OR (start_date BETWEEN '$sStartDate' AND '$sEndDate'))");
 		$this->db->where("emp_id = '$emp_id'");
 		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$query = $this->db->get("pr_leave_trans");
 		$leave = array();
 		foreach ($query->result() as $row)
 		{
-			$leave[] = $row->start_date;
+			$start = !empty($row->leave_start) ? $row->leave_start : $row->start_date;
+			$end   = !empty($row->leave_end) ? $row->leave_end : $start;
+			$cur   = max(strtotime($sStartDate), strtotime($start));
+			$end_t = min(strtotime($sEndDate), strtotime($end));
+			while ($cur <= $end_t) {
+				$d = date('Y-m-d', $cur);
+				$leave[$d] = strtoupper(trim($row->leave_type));
+				$cur = strtotime('+1 day', $cur);
+			}
 		}
 		return $leave;
+	}
+
+	function get_single_day_leaves($sStartDate, $sEndDate, $emp_id)
+	{
+		$this->db->select("leave_type, leave_start, leave_end, start_date, total_leave");
+		$this->db->where("((leave_start <= '$sEndDate' AND leave_end >= '$sStartDate') OR (start_date BETWEEN '$sStartDate' AND '$sEndDate'))");
+		$this->db->where("emp_id", $emp_id);
+		$this->db->where_in("LOWER(leave_type)", array('sl', 'cl'));
+		$this->db->where("(status = 'approved' OR status IS NULL)");
+		$query = $this->db->get("pr_leave_trans");
+		$single_leaves = array();
+		foreach ($query->result() as $row)
+		{
+			$start = !empty($row->leave_start) ? $row->leave_start : $row->start_date;
+			$end   = !empty($row->leave_end) ? $row->leave_end : $start;
+			$total = !empty($row->total_leave) ? $row->total_leave : 1;
+			if ($total == 1 || $start == $end) {
+				$single_leaves[$start] = strtoupper(trim($row->leave_type));
+			}
+		}
+		return $single_leaves;
+	}
+
+	function check_single_day_sl_cl($date, $emp_id)
+	{
+		$this->db->select("leave_type, leave_start, leave_end, start_date, total_leave");
+		$this->db->where("((leave_start <= '$date' AND leave_end >= '$date') OR start_date = '$date')");
+		$this->db->where("emp_id", $emp_id);
+		$this->db->where_in("LOWER(leave_type)", array('sl', 'cl'));
+		$this->db->where("(status = 'approved' OR status IS NULL)");
+		$query = $this->db->get("pr_leave_trans");
+		if ($query->num_rows() > 0) {
+			foreach ($query->result() as $row) {
+				$start = !empty($row->leave_start) ? $row->leave_start : $row->start_date;
+				$end   = !empty($row->leave_end) ? $row->leave_end : $start;
+				$total = !empty($row->total_leave) ? $row->total_leave : 1;
+				if ($total == 1 || $start == $end) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	function check_weekend($sStartDate, $sEndDate, $emp_id){
@@ -129,14 +179,11 @@ class Job_card_model extends CI_Model{
    function get_leave_type($shift_log_date,$emp_id){	
    		$this->db->select('leave_type');
 		$this->db->where('emp_id', $emp_id);
-	    $this->db->where("leave_start <=", $shift_log_date);
-        $this->db->where("leave_end >=", $shift_log_date);
+	    $this->db->where("((leave_start <= '$shift_log_date' AND leave_end >= '$shift_log_date') OR start_date = '$shift_log_date')");
 		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$query = $this->db->get('pr_leave_trans');
 		$row = $query->row();
-		// dd($this->db->last_query());
-		$leave_type = $row->leave_type;
-		return $leave_type;
+		return (!empty($row) && !empty($row->leave_type)) ? strtoupper(trim($row->leave_type)) : '';
    }
 
 	function get_join_date($emp_id, $sStartDate, $sEndDate)
@@ -269,6 +316,77 @@ class Job_card_model extends CI_Model{
 		$this->db->order_by("shift_log_date");
 		$query = $this->db->get("pr_emp_shift_log")->result();
 
+		$leaves = $this->leave_per_emp($start_date, $end_date, $emp_id);
+		$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+		foreach ($query as $row) {
+			$is_leave = false;
+			$leave_type = '';
+			if (isset($leaves[$row->shift_log_date])) {
+				$is_leave = true;
+				$leave_type = $leaves[$row->shift_log_date];
+			} elseif (in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+				$is_leave = true;
+				$leave_type = strtoupper(trim($row->present_status));
+				if ($leave_type == 'L') {
+					$lt = $this->get_leave_type($row->shift_log_date, $emp_id);
+					$leave_type = !empty($lt) ? $lt : 'L';
+				}
+			}
+
+			if ($is_leave) {
+				$row->present_status = $leave_type;
+				$row->in_time        = '00:00:00';
+				$row->out_time       = '00:00:00';
+				$row->ot             = 0;
+				$row->eot            = 0;
+				$row->com_ot         = 0;
+				$row->com_eot        = 0;
+				$row->late_status    = 0;
+				$row->deduction_hour = 0;
+			}
+		}
+
+		// Rule: If an employee takes a single-day SL or CL, and is absent (A) on the next calendar day,
+		// then both the leave date and the next date must be shown as Absent (A).
+		$single_leaves = $this->get_single_day_leaves($start_date, $end_date, $emp_id);
+		$date_map = array();
+		foreach ($query as $idx => $row) {
+			$date_map[$row->shift_log_date] = $idx;
+		}
+
+		foreach ($query as $idx => $row) {
+			$cur_date = $row->shift_log_date;
+			if (isset($single_leaves[$cur_date])) {
+				$next_date = date('Y-m-d', strtotime("$cur_date + 1 days"));
+				$next_is_absent = false;
+
+				if (isset($date_map[$next_date])) {
+					$next_idx = $date_map[$next_date];
+					$next_status = strtoupper(trim($query[$next_idx]->present_status));
+					if ($next_status == 'A') {
+						$next_is_absent = true;
+					}
+				} else {
+					$next_row = $this->db->select('present_status')->where('emp_id', $emp_id)->where('shift_log_date', $next_date)->get('pr_emp_shift_log')->row();
+					if (!empty($next_row) && strtoupper(trim($next_row->present_status)) == 'A') {
+						$next_is_absent = true;
+					}
+				}
+
+				if ($next_is_absent) {
+					$row->present_status = 'A';
+					$row->in_time        = '00:00:00';
+					$row->out_time       = '00:00:00';
+					$row->ot             = 0;
+					$row->eot            = 0;
+					$row->com_ot         = 0;
+					$row->com_eot        = 0;
+					$row->late_status    = 0;
+					$row->deduction_hour = 0;
+				}
+			}
+		}
+
 		$data['emp_data'] = $query;
 
 		return $data;
@@ -340,6 +458,84 @@ class Job_card_model extends CI_Model{
 		$this->db->where("pr_emp_shift_log.shift_log_date <=", $end_date);
 		$this->db->order_by("pr_emp_shift_log.shift_log_date");
 		$query = $this->db->get()->result();
+
+		$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+		foreach ($query as $row) {
+			$is_leave = false;
+			$leave_type = '';
+
+			if (isset($data['leave'][$row->shift_log_date])) {
+				$is_leave = true;
+				$leave_type = $data['leave'][$row->shift_log_date];
+			} elseif (in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+				$is_leave = true;
+				$leave_type = strtoupper(trim($row->present_status));
+				if ($leave_type == 'L') {
+					$lt = $this->get_leave_type($row->shift_log_date, $emp_id);
+					$leave_type = !empty($lt) ? $lt : 'L';
+				}
+			}
+
+			if ($is_leave) {
+				$row->present_status = $leave_type;
+				$row->in_time        = '00:00:00';
+				$row->out_time       = '00:00:00';
+				$row->ot             = 0;
+				$row->eot            = 0;
+				$row->com_ot         = 0;
+				$row->com_eot        = 0;
+				$row->ot_eot_4pm     = 0;
+				$row->ot_eot_12am    = 0;
+				$row->late_status    = 0;
+				$row->deduction_hour = 0;
+			}
+		}
+
+		// Rule: If an employee takes a single-day SL or CL, and is absent (A) on the next calendar day,
+		// then both the leave date and the next date must be shown as Absent (A).
+		$single_leaves = $this->get_single_day_leaves($start_date, $end_date, $emp_id);
+		$date_map = array();
+		foreach ($query as $idx => $row) {
+			$date_map[$row->shift_log_date] = $idx;
+		}
+
+		foreach ($query as $idx => $row) {
+			$cur_date = $row->shift_log_date;
+			if (isset($single_leaves[$cur_date])) {
+				$next_date = date('Y-m-d', strtotime("$cur_date + 1 days"));
+				$next_is_absent = false;
+
+				if (isset($date_map[$next_date])) {
+					$next_idx = $date_map[$next_date];
+					$next_status = strtoupper(trim($query[$next_idx]->present_status));
+					if ($next_status == 'A') {
+						$next_is_absent = true;
+					}
+				} else {
+					$next_row = $this->db->select('present_status')->where('emp_id', $emp_id)->where('shift_log_date', $next_date)->get('pr_emp_shift_log')->row();
+					if (!empty($next_row) && strtoupper(trim($next_row->present_status)) == 'A') {
+						$next_is_absent = true;
+					}
+				}
+
+				if ($next_is_absent) {
+					$row->present_status = 'A';
+					$row->in_time        = '00:00:00';
+					$row->out_time       = '00:00:00';
+					$row->ot             = 0;
+					$row->eot            = 0;
+					$row->com_ot         = 0;
+					$row->com_eot        = 0;
+					$row->ot_eot_4pm     = 0;
+					$row->ot_eot_12am    = 0;
+					$row->late_status    = 0;
+					$row->deduction_hour = 0;
+					if (isset($data['leave'][$cur_date])) {
+						unset($data['leave'][$cur_date]);
+					}
+				}
+			}
+		}
 
 		$data['emp_data'] = $query;
 		// dd($data);

@@ -109,10 +109,11 @@
 							$extra_ot_hour = $row->com_eot;
 						}
 
-						if($row->present_status == 'L'){
-							$leave_type = $this->job_card_model->get_leave_type($row->shift_log_date,$value->emp_id);
+						$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+						if(in_array(strtoupper(trim($row->present_status)), $leave_codes) || (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date]))){
+							$leave_type = (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date])) ? $emp_data['leave'][$row->shift_log_date] : $this->job_card_model->get_leave_type($row->shift_log_date,$value->emp_id);
 							$att_status_count = "Leave";
-							$att_status = $leave_type;
+							$att_status = !empty($leave_type) ? $leave_type : $row->present_status;
 							$row->in_time = "00:00:00";
 							$row->out_time = "00:00:00";
 							$extra_ot_hour = 0;
