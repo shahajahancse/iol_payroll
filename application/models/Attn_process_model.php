@@ -187,17 +187,18 @@ class Attn_process_model extends CI_Model{
             		if ($in_time != '' && $in_time == $out_time) {
             			$out_time = '00:00:00';
             		}
+            	} elseif (in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))) {
+            		// No Punch shift: no punches required
+            		$in_time  = '00:00:00';
+            		$out_time = '00:00:00';
             	} else {
             		// Standard & Rotating Shifts: Shift A, Shift B, Shift C, General 1/2/3, Shift 7/12 Morning/Night, etc.
             		// in_time within in_start to in_end
             		// out_time within out_start to out_end
+            		// Check both in_time and out_time independently so single punch (in only or out only) is captured
             		$in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
-            		if (!empty($in_time)) {
-            			$out_time = $this->time_check_in($out_start_time, $out_end_time, $emp_id, 'DESC', $table);
-            			if ($in_time == $out_time) {
-            				$out_time = '00:00:00';
-            			}
-            		} else {
+            		$out_time = $this->time_check_in($out_start_time, $out_end_time, $emp_id, 'DESC', $table);
+            		if (!empty($in_time) && !empty($out_time) && $in_time == $out_time) {
             			$out_time = '00:00:00';
             		}
             	}
@@ -269,6 +270,20 @@ class Attn_process_model extends CI_Model{
 					$holiday_allo = 0;
 					$weekly_allo = 0;
 					$alert_msg = 0;
+				}elseif (in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))){
+					// No Punch Policy: status all time P dekhabe, and every day present hisabe count korbe
+					$attn_status = "P";
+					$in_time = '00:00:00';
+					$out_time = '00:00:00';
+					$tot_hour = 0;
+					$ot_hour = 0;
+					$eot_hour = 0;
+					$ot_eot_12am = 0;
+					$ot_eot_4pm = 0;
+					$deduction_hour = 0;
+					$late_status = 0;
+					$early_exit = 0;
+					$alert_msg = 0;
 				}elseif ($process_date == $holiday || $holiday === true){
 					$attn_status = "H";
 				}elseif ($process_date == $weekend || $weekend === true){
@@ -281,9 +296,6 @@ class Attn_process_model extends CI_Model{
 					$late_status = 0;
 					$early_exit = 0;
 					$alert_msg = 0;
-				}elseif (in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))){
-					// No Punch Policy: auto present
-					$attn_status = "P";
 				}elseif (strtolower(trim($shift_name)) == 'single'){
 					// Single Punch Policy: single punch at any time during 24 hrs (00:00:00 to 23:59:59) counted as present, otherwise absent
 					if ($in_time != '' || ($out_time != '' && $out_time != '00:00:00')) {
@@ -328,7 +340,8 @@ class Attn_process_model extends CI_Model{
 							$deduction_hour = 8;
 						}
 					}
-				}elseif ($in_time != ''){
+				}elseif (($in_time != '' && $in_time != '00:00:00') || ($out_time != '' && $out_time != '00:00:00')){
+					// Single punch (in only OR out only) or normal punches: ALWAYS P!
 					$attn_status = "P";
 				}
 				//============= Check employee attendance status =============
@@ -455,7 +468,7 @@ class Attn_process_model extends CI_Model{
 
 				// Late Status check
 				$late_start_time = "$process_date $late_start_time";
-				if ($attn_status == 'W' || $attn_status == 'H' || $attn_status == 'L' || $attn_status == 'OD') {
+				if ($attn_status == 'W' || $attn_status == 'H' || $attn_status == 'L' || $attn_status == 'OD' || in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))) {
 					$late_status = 0;
 				} elseif ($in_time > $late_start_time && $in_time != '' && $in_time != '00:00:00') {
 					$late_status = 1;
@@ -480,8 +493,8 @@ class Attn_process_model extends CI_Model{
 				}
 
 				$data = array(
-					'in_time' 			=> $in_time,
-					'out_time' 			=> $out_time,
+					'in_time' 			=> (!empty($in_time)) ? $in_time : '00:00:00',
+					'out_time' 			=> (!empty($out_time)) ? $out_time : '00:00:00',
 					'tot' 				=> $tot_hour,
 					'ot' 				=> $ot_hour,
 					'eot' 				=> $eot_hour,

@@ -131,6 +131,14 @@
 							$extra_ot_hour = 0;
 							$row->late_status = 0;
 						}
+						elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))) {
+							// No Punch Policy: always P, every day present
+							$att_status = "P";
+							$att_status_count = "P";
+							$row->in_time = "00:00:00";
+							$row->out_time = "00:00:00";
+							$row->late_status = 0;
+						}
 						elseif(in_array($row->shift_log_date,$emp_data['holiday'])){
 							$att_status = "Holiday";
 							$att_status_count = "Holiday";
@@ -152,8 +160,9 @@
 							$att_status_count = "P";
 						}
 						elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
-							$att_status = "P(Error)";
-							$att_status_count = "P(Error)";
+							// Single punch: show P instead of P(Error)
+							$att_status = "P";
+							$att_status_count = "P";
 						}
 						elseif($row->present_status == 'P'){
 							$att_status = "P";
@@ -237,10 +246,10 @@
 							echo "&nbsp;</td>";
 
 							echo "<td style='text-transform:uppercase;'>&nbsp;";
-							echo $att_status;
+							echo ($att_status == "P(Error)") ? "P" : $att_status;
 							echo "&nbsp;</td>";
 
-							if($att_status == "P"){
+							if($att_status == "P" || $att_status == "P(Error)"){
 								$present_count++;
 							}
 							elseif($att_status == "A"){
@@ -248,9 +257,6 @@
 							}
 							elseif($att_status_count == "Leave" || in_array($att_status, $leave_codes)){
 								$leave_count++;
-							}
-							elseif($att_status == "P(Error)"){
-								$perror_count++;
 							}
 							elseif($att_status == "Work Off"){
 								$wk_off_count++;

@@ -905,7 +905,7 @@ class Salary_process_model extends CI_Model{
     {
 		// dd($emp_id.'==='.$start_date.'=='.$end_date);
         $this->db->select("
-                COALESCE(SUM(CASE WHEN present_status = 'P' THEN 1 ELSE 0 END ), 0) AS attend,
+                COALESCE(SUM(CASE WHEN present_status = 'P' OR present_status = 'OD' THEN 1 ELSE 0 END ), 0) AS attend,
                 COALESCE(SUM(CASE WHEN present_status = 'A' THEN 1 ELSE 0 END ), 0) AS absent,
                 COALESCE(SUM(CASE WHEN present_status = 'W' THEN 1 ELSE 0 END ), 0) AS weekend,
                 COALESCE(SUM(CASE WHEN present_status = 'H' THEN 1 ELSE 0 END ), 0) AS holiday,

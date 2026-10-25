@@ -2916,7 +2916,7 @@ class Grid_model extends CI_Model{
 				$data["in_time"][] 		= $rows->in_time;
 				$out_time = $rows->out_time;
 				if($out_time == "00:00:00"){
-					$out_time = "P(Error)";
+					$out_time = "";
 				}
 				$data["out_time"][] 	= $out_time;
 			}
@@ -3726,7 +3726,7 @@ class Grid_model extends CI_Model{
 				$previous_day_out = $this->get_previous_day_out_status($year, $month, $date, $emp_id);
 				if($previous_day_out =='00:00:00')
 				{
-					$previous_day_out = 'P(Error)';
+					$previous_day_out = '';
 				}
 				elseif($previous_day_out !='A' and $previous_day_out !='L' and $previous_day_out !='W' and $previous_day_out !='H')
 				{
@@ -3838,8 +3838,8 @@ class Grid_model extends CI_Model{
 
 				$previous_day_out = $this->get_previous_day_out_status($year, $month, $date, $emp_id);
 				if ($previous_day_out == '00:00:00') {
-					$previous_day_out = 'P(Error)';
-				} elseif ($previous_day_out != 'A' && $previous_day_out != 'L' && $previous_day_out != 'W' && $previous_day_out != 'H' && $previous_day_out != 'OD' && !empty($previous_day_out) && $previous_day_out != 'P(Error)') {
+					$previous_day_out = '';
+				} elseif ($previous_day_out != 'A' && $previous_day_out != 'L' && $previous_day_out != 'W' && $previous_day_out != 'H' && $previous_day_out != 'OD' && !empty($previous_day_out)) {
 					$previous_day_out = date("h:i:s A", strtotime($previous_day_out));
 				}
 
@@ -5502,8 +5502,10 @@ class Grid_model extends CI_Model{
 								   pr_emp_shift_log.ot,
 								   pr_emp_shift_log.eot,
 								   pr_emp_shift_log.present_status,
-								   pr_emp_shift_log.late_status');
+								   pr_emp_shift_log.late_status,
+								   pr_emp_shift.shift_name');
 				$this->db->from('pr_emp_shift_log');
+				$this->db->join('pr_emp_shift', 'pr_emp_shift.id = pr_emp_shift_log.shift_id', 'left');
 				$this->db->where('pr_emp_shift_log.emp_id',$id);
 				$this->db->where("pr_emp_shift_log.shift_log_date", $day);
 				$this->db->order_by("pr_emp_shift_log.shift_log_date");
@@ -5514,6 +5516,13 @@ class Grid_model extends CI_Model{
 						$leave_type = $this->get_leave_type($row->shift_log_date,$emp_id);
 						$att_status_count = "Leave";
 						$att_status = $leave_type;
+						$row->in_time = "00:00:00";
+						$row->out_time = "00:00:00";
+					}
+					elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))){
+						// No Punch Policy: always P, every day present
+						$att_status = "P";
+						$att_status_count = "P";
 						$row->in_time = "00:00:00";
 						$row->out_time = "00:00:00";
 					}
@@ -5536,8 +5545,9 @@ class Grid_model extends CI_Model{
 						$att_status_count = "P";
 					}
 					elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
-						$att_status = "P(Error)";
-						$att_status_count = "P(Error)";
+						// Single punch: show P instead of P(Error)
+						$att_status = "P";
+						$att_status_count = "P";
 					}
 					elseif($row->present_status == 'P'){
 						$att_status = "P";
@@ -6024,8 +6034,10 @@ class Grid_model extends CI_Model{
 								   pr_emp_shift_log.modify_eot,
 								   pr_emp_shift_log.deduction_hour,
 								   pr_emp_shift_log.present_status,
-								   pr_emp_shift_log.late_status');
+								   pr_emp_shift_log.late_status,
+								   pr_emp_shift.shift_name');
 				$this->db->from('pr_emp_shift_log');
+				$this->db->join('pr_emp_shift', 'pr_emp_shift.id = pr_emp_shift_log.shift_id', 'left');
 				$this->db->where('pr_emp_shift_log.emp_id',$id);
 				$this->db->where("pr_emp_shift_log.shift_log_date", $day);
 				$this->db->order_by("pr_emp_shift_log.shift_log_date");
@@ -6036,6 +6048,13 @@ class Grid_model extends CI_Model{
 						$leave_type = $this->get_leave_type($row->shift_log_date,$emp_id);
 						$att_status_count = "Leave";
 						$att_status = $leave_type;
+						$row->in_time = "00:00:00";
+						$row->out_time = "00:00:00";
+					}
+					elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))){
+						// No Punch Policy: always P, every day present
+						$att_status = "P";
+						$att_status_count = "P";
 						$row->in_time = "00:00:00";
 						$row->out_time = "00:00:00";
 					}
@@ -6058,8 +6077,9 @@ class Grid_model extends CI_Model{
 						$att_status_count = "P";
 					}
 					elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
-						$att_status = "P(Error)";
-						$att_status_count = "P(Error)";
+						// Single punch: show P instead of P(Error)
+						$att_status = "P";
+						$att_status_count = "P";
 					}
 					elseif($row->present_status == 'P'){
 						$att_status = "P";
@@ -6289,8 +6309,9 @@ class Grid_model extends CI_Model{
 				{
 					$holiday = $this->check_holiday($emp_id, $day);
 				}
-				$this->db->select('pr_emp_shift_log.in_time , pr_emp_shift_log.out_time, pr_emp_shift_log.shift_log_date, pr_emp_shift_log.ot, pr_emp_shift_log.eot,pr_emp_shift_log.late_status');
+				$this->db->select('pr_emp_shift_log.in_time , pr_emp_shift_log.out_time, pr_emp_shift_log.shift_log_date, pr_emp_shift_log.ot, pr_emp_shift_log.eot,pr_emp_shift_log.late_status, pr_emp_shift.shift_name');
 				$this->db->from('pr_emp_shift_log');
+				$this->db->join('pr_emp_shift', 'pr_emp_shift.id = pr_emp_shift_log.shift_id', 'left');
 				$this->db->where('pr_emp_shift_log.emp_id',$emp_id);
 				$this->db->where("pr_emp_shift_log.shift_log_date", $day);
 				$this->db->order_by("pr_emp_shift_log.shift_log_date");
@@ -6305,6 +6326,14 @@ class Grid_model extends CI_Model{
 						$leave_type = $this->get_leave_type($row3->shift_log_date,$emp_id);
 						$att_status_count = "Leave";
 						$att_status = $leave_type;
+						$row->in_time = "00:00:00";
+						$row->out_time = "00:00:00";
+					}
+					elseif(isset($row3->shift_name) && in_array(strtolower(trim($row3->shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch')))
+					{
+						// No Punch Policy: always P, every day present
+						$att_status = "P";
+						$att_status_count = "P";
 						$row->in_time = "00:00:00";
 						$row->out_time = "00:00:00";
 					}
@@ -6332,8 +6361,9 @@ class Grid_model extends CI_Model{
 					}
 					elseif($row3->in_time !='00:00:00' or $row3->out_time !='00:00:00')
 					{
-						$att_status = "P(Error)";
-						$att_status_count = "P(Error)";
+						// Single punch: show P instead of P(Error)
+						$att_status = "P";
+						$att_status_count = "P";
 					}
 					else
 					{
@@ -11746,7 +11776,7 @@ function grid_emp_job_application($grid_emp_id){
 						$out_time	= $row->out_time;
 						if($in_time !="00:00:00" && $out_time =="00:00:00")
 						{
-							$out_time = "P(Error)";
+							$out_time = "";
 						}
 
 						$data["shift_log_date"][] 	= $row->shift_log_date;
@@ -11953,7 +11983,7 @@ function grid_emp_job_application($grid_emp_id){
 					$out_time	= $row->out_time;
 					if($in_time !="00:00:00" && $out_time =="00:00:00")
 					{
-						$out_time = "P(Error)";
+						$out_time = "";
 					}
 
 

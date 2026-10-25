@@ -86,9 +86,9 @@ for($i=0; $i<$count; $i++ )
 		
 	echo "<td width='80' align='center'>";
 	$out_time =  $values["out_time"][$i];
-	if($in_time == $out_time or $out_time == '00:00:00')
+	if($in_time == $out_time or $out_time == '00:00:00' or empty($out_time))
 	{
-		echo 'P(Error)';	
+		echo '';	
 	}
 	else
 	{

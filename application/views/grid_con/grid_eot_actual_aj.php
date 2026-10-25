@@ -103,6 +103,15 @@
                                 $row->ot = 0;
                                 $row->eot = 0;
                             }
+                            elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))) {
+                                // No Punch Policy: always P, every day present
+                                $att_status = "P";
+                                $att_status_count = "P";
+                                $row->in_time = "00:00:00";
+                                $row->out_time = "00:00:00";
+                                $row->ot = 0;
+                                $row->eot = 0;
+                            }
                             elseif(in_array($row->shift_log_date,$emp_data['holiday'])){
                                 $att_status = "Holiday";
                                 $att_status_count = "Holiday";
@@ -116,8 +125,9 @@
                                 $att_status_count = "P";
                             }
                             elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
-                                $att_status = "P(Error)";
-                                $att_status_count = "P(Error)";
+                                // Single punch: show P instead of P(Error)
+                                $att_status = "P";
+                                $att_status_count = "P";
                             }
                             elseif($row->present_status == 'P'){
                                 $att_status = "P";

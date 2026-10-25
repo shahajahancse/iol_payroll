@@ -177,16 +177,16 @@
 
                 <?php if($daily_status==1 || $daily_status== 5 || $daily_status==6 || $daily_status==7 || $daily_status==8){?>
 					<td style="text-align:center; padding:0 4px">
-						<?php echo $employee['in_time'] !='00:00:00' ? date('h:i:s A',strtotime($employee['in_time'])) : "P(ERROR)"?>
+						<?php echo (!empty($employee['in_time']) && $employee['in_time'] !='00:00:00') ? date('h:i:s A',strtotime($employee['in_time'])) : ""?>
 					</td>
 					<td style="text-align:center; padding:0 4px">
 					<?php
 					//dd($daily_status);
 					if ($daily_status==5 &&  $employee['ot']>=2) {
 						//dd($employee['ot']);
-						$text= ($employee['out_time'] !='00:00:00')? date('7:i:s A',strtotime($employee['out_time'])) : "P(ERROR)";
+						$text= (!empty($employee['out_time']) && $employee['out_time'] !='00:00:00')? date('7:i:s A',strtotime($employee['out_time'])) : "";
 					}else{
-						$text= ($employee['out_time'] !='00:00:00')? date('h:i:s A',strtotime($employee['out_time'])) : "P(ERROR)";
+						$text= (!empty($employee['out_time']) && $employee['out_time'] !='00:00:00')? date('h:i:s A',strtotime($employee['out_time'])) : "";
 					}
 					?>
 
