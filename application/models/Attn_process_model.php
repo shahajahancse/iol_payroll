@@ -1131,7 +1131,7 @@ class Attn_process_model extends CI_Model{
     function check_single_day_sl_cl($date, $emp_id)
     {
         $this->db->select("leave_type, leave_start, leave_end, start_date, total_leave");
-        $this->db->where("((leave_start <= '$date' AND leave_end >= '$date') ");
+        $this->db->where("(leave_start <= '$date' AND leave_end >= '$date') ");
         $this->db->where("emp_id", $emp_id);
         $this->db->where_in("LOWER(leave_type)", array('sl', 'cl'));
         $this->db->where("(status = 'approved' OR status IS NULL)");
