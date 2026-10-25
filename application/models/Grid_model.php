@@ -3839,7 +3839,7 @@ class Grid_model extends CI_Model{
 				$previous_day_out = $this->get_previous_day_out_status($year, $month, $date, $emp_id);
 				if ($previous_day_out == '00:00:00') {
 					$previous_day_out = 'P(Error)';
-				} elseif ($previous_day_out != 'A' && $previous_day_out != 'L' && $previous_day_out != 'W' && $previous_day_out != 'H' && !empty($previous_day_out) && $previous_day_out != 'P(Error)') {
+				} elseif ($previous_day_out != 'A' && $previous_day_out != 'L' && $previous_day_out != 'W' && $previous_day_out != 'H' && $previous_day_out != 'OD' && !empty($previous_day_out) && $previous_day_out != 'P(Error)') {
 					$previous_day_out = date("h:i:s A", strtotime($previous_day_out));
 				}
 

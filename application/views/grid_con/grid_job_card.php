@@ -259,8 +259,14 @@
 								$holiday_count++;
 							}
 							if($att_status_count != "Leave" && !in_array($att_status, $leave_codes) && $row->late_status == 1){
-								$remark = "Late";
-								$late_count++;
+								if (!empty($row->is_waived)) {
+									$remark = !empty($row->remarks) ? $row->remarks : "Late (Waived)";
+								} else {
+									$remark = !empty($row->remarks) ? $row->remarks : "Late";
+									$late_count++;
+								}
+							} elseif (!empty($row->remarks)) {
+								$remark = $row->remarks;
 							} else{
 								$remark = "";
 							}

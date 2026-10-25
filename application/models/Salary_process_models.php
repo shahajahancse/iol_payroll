@@ -3053,6 +3053,7 @@ class Salary_process_model extends CI_Model{
 		$this->db->where("shift_log_date BETWEEN '$FS_on_date' AND '$FS_off_date'");
 		$this->db->where('emp_id', $emp_id);
 		$this->db->where('late_status', '1');
+		$this->db->where('(is_waived = 0 OR is_waived IS NULL)');
 		$this->db->from('pr_emp_shift_log');
 		return  $this->db->count_all_results();
 

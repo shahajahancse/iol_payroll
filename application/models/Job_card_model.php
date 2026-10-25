@@ -346,6 +346,32 @@ class Job_card_model extends CI_Model{
 			}
 		}
 
+		// Synchronize Approved Outside Duty (OD)
+		if ($this->db->table_exists('pr_emp_od_dates')) {
+			$od_rows = $this->db->select('od_date')
+				->where('emp_id', $emp_id)
+				->where('status', 'approved')
+				->where("od_date >=", $start_date)
+				->where("od_date <=", $end_date)
+				->get('pr_emp_od_dates')
+				->result();
+			if (!empty($od_rows)) {
+				$od_map = array();
+				foreach ($od_rows as $odr) {
+					$od_map[$odr->od_date] = true;
+				}
+				foreach ($query as $row) {
+					if (isset($od_map[$row->shift_log_date])) {
+						if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+							$row->present_status = 'OD';
+							$row->late_status    = 0;
+							$row->deduction_hour = 0;
+						}
+					}
+				}
+			}
+		}
+
 		// Rule: If an employee takes a single-day SL or CL, and is absent (A) on the next calendar day,
 		// then both the leave date and the next date must be shown as Absent (A).
 		$single_leaves = $this->get_single_day_leaves($start_date, $end_date, $emp_id);
@@ -491,6 +517,8 @@ class Job_card_model extends CI_Model{
 						pr_emp_shift_log.present_status,
 						pr_emp_shift_log.deduction_hour,
 						pr_emp_shift_log.modify_eot,
+						pr_emp_shift_log.remarks,
+						pr_emp_shift_log.is_waived,
 						pr_emp_shift_schedule.sh_type as shift_name
 					');
 
@@ -532,6 +560,32 @@ class Job_card_model extends CI_Model{
 				$row->ot_eot_12am    = 0;
 				$row->late_status    = 0;
 				$row->deduction_hour = 0;
+			}
+		}
+
+		// Synchronize Approved Outside Duty (OD)
+		if ($this->db->table_exists('pr_emp_od_dates')) {
+			$od_rows = $this->db->select('od_date')
+				->where('emp_id', $emp_id)
+				->where('status', 'approved')
+				->where("od_date >=", $start_date)
+				->where("od_date <=", $end_date)
+				->get('pr_emp_od_dates')
+				->result();
+			if (!empty($od_rows)) {
+				$od_map = array();
+				foreach ($od_rows as $odr) {
+					$od_map[$odr->od_date] = true;
+				}
+				foreach ($query as $row) {
+					if (isset($od_map[$row->shift_log_date])) {
+						if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+							$row->present_status = 'OD';
+							$row->late_status    = 0;
+							$row->deduction_hour = 0;
+						}
+					}
+				}
 			}
 		}
 

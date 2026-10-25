@@ -910,7 +910,7 @@ class Salary_process_model extends CI_Model{
                 COALESCE(SUM(CASE WHEN present_status = 'W' THEN 1 ELSE 0 END ), 0) AS weekend,
                 COALESCE(SUM(CASE WHEN present_status = 'H' THEN 1 ELSE 0 END ), 0) AS holiday,
                 COALESCE(SUM(CASE WHEN present_status = 'L' THEN 1 ELSE 0 END ), 0) AS total_leave,
-                COALESCE(SUM(CASE WHEN late_status   = '1' THEN 1 ELSE 0 END ), 0) AS late_status,
+                COALESCE(SUM(CASE WHEN late_status   = '1' AND (is_waived = 0 OR is_waived IS NULL) THEN 1 ELSE 0 END ), 0) AS late_status,
                 COALESCE(SUM(CASE WHEN holiday_allo = '1' THEN 1 ELSE 0 END ), 0) AS holiday_allo,
                 COALESCE(SUM(CASE WHEN weekly_allo  = '1' THEN 1 ELSE 0 END ), 0) AS weekly_allo,
                 COALESCE(SUM(CASE WHEN night_allo   = '1' THEN 1 ELSE 0 END ), 0) AS night_allo,
@@ -1771,6 +1771,7 @@ class Salary_process_model extends CI_Model{
 		$this->db->where("trim(substr(shift_log_date,1,7)) = '$year_month'");
 		$this->db->where('emp_id', $emp_id);
 		$this->db->where('late_status', '1');
+		$this->db->where('(is_waived = 0 OR is_waived IS NULL)');
 		$this->db->from('pr_emp_shift_log');
 		return  $this->db->count_all_results();
 

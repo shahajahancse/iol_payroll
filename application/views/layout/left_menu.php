@@ -12,8 +12,12 @@
       </li>
 
       <?php
-        $user_id = $this->session->userdata('data')->id;
-        $acl = check_acl_list($user_id);
+        $user_session = $this->session->userdata('data');
+        $user_id      = isset($user_session->id) ? $user_session->id : 0;
+        $u_username   = isset($user_session->id_number) ? strtolower(trim($user_session->id_number)) : '';
+        $acl          = check_acl_list($user_id);
+        $curr_class   = $this->router->fetch_class();
+        $curr_method  = $this->router->fetch_method();
       ?>
 
       <!-- Personal -->
@@ -255,17 +259,6 @@
           <?php } ?>
 
           <?php if(in_array(30,$acl)) { ?>
-            <?php /*
-            <li class="<?= activate_method('alert_msg_list') ?>">
-              <a href="<?=base_url('attn_process_con/alert_msg_list')?>" class="anchor_cls">
-                <i class="fa fa-bell"></i> Alert List
-                <span class="badge badge-danger pull-right" style="margin-right:10px;">
-                  <?= alt_ntf(); ?>
-                </span>
-              </a>
-            </li>
-            */ ?>
-
             <li class="<?= activate_method('grid_window') ?>">
               <a href="<?=base_url('attn_process_con/grid_window')?>" class="anchor_cls">
                 <i class="fa fa-bar-chart"></i> Reports
@@ -279,6 +272,88 @@
               </a>
             </li>
           <?php } ?>
+        </ul>
+      </li>
+      <?php } ?>
+
+      <!-- Outside Duty (OD) Standalone Menu -->
+      <?php if(in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
+      <li class="start <?= activate_class('od_management_con') ?>">
+        <a href="javascript:;">
+          <i class="fa fa-briefcase"></i>
+          <span class="title">Outside Duty (OD)</span>
+          <span class="selected"></span>
+          <span class="arrow <?= arrow_open('od_management_con') ?>"></span>
+        </a>
+        <ul class="sub-menu">
+          <li class="<?= ($curr_class === 'od_management_con' && $curr_method === 'dashboard') ? 'active' : '' ?>">
+            <a href="<?= base_url('od/dashboard') ?>" class="anchor_cls">
+              <i class="fa fa-tachometer text-info"></i> OD Dashboard
+            </a>
+          </li>
+          <li class="<?= ($curr_class === 'od_management_con' && $curr_method === 'create') ? 'active' : '' ?>">
+            <a href="<?= base_url('od/create') ?>" class="anchor_cls">
+              <i class="fa fa-plus-circle text-primary"></i> OD Assignment
+            </a>
+          </li>
+          <li class="<?= ($curr_class === 'od_management_con' && $curr_method === 'list') ? 'active' : '' ?>">
+            <a href="<?= base_url('od/list') ?>" class="anchor_cls">
+              <i class="fa fa-list text-success"></i> OD List
+            </a>
+          </li>
+          <?php if ($u_username === 'admin' || $u_username === 'payroll') { ?>
+          <li class="<?= ($curr_class === 'od_management_con' && $curr_method === 'approval') ? 'active' : '' ?>">
+            <a href="<?= base_url('od/approval') ?>" class="anchor_cls">
+              <i class="fa fa-check-square-o text-warning"></i> OD Approval
+            </a>
+          </li>
+          <?php } ?>
+          <li class="<?= ($curr_class === 'od_management_con' && $curr_method === 'reports') ? 'active' : '' ?>">
+            <a href="<?= base_url('od/reports') ?>" class="anchor_cls">
+              <i class="fa fa-file-text-o text-danger"></i> OD Reports
+            </a>
+          </li>
+        </ul>
+      </li>
+      <?php } ?>
+
+      <!-- Attendance Regularization & Remarks -->
+      <?php if(in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
+      <li class="start <?= activate_class('attn_regularization_con') ?>">
+        <a href="javascript:;">
+          <i class="fa fa-calendar-check-o text-warning"></i>
+          <span class="title">Attn. Regularization</span>
+          <span class="selected"></span>
+          <span class="arrow <?= arrow_open('attn_regularization_con') ?>"></span>
+        </a>
+        <ul class="sub-menu">
+          <li class="<?= ($curr_class === 'attn_regularization_con' && $curr_method === 'dashboard') ? 'active' : '' ?>">
+            <a href="<?= base_url('attn_regularization/dashboard') ?>" class="anchor_cls">
+              <i class="fa fa-tachometer text-info"></i> Dashboard
+            </a>
+          </li>
+          <li class="<?= ($curr_class === 'attn_regularization_con' && $curr_method === 'create') ? 'active' : '' ?>">
+            <a href="<?= base_url('attn_regularization/create') ?>" class="anchor_cls">
+              <i class="fa fa-plus-circle text-primary"></i> Add Regularization
+            </a>
+          </li>
+          <li class="<?= ($curr_class === 'attn_regularization_con' && $curr_method === 'list') ? 'active' : '' ?>">
+            <a href="<?= base_url('attn_regularization/list') ?>" class="anchor_cls">
+              <i class="fa fa-list text-success"></i> Regularization List
+            </a>
+          </li>
+          <?php if ($u_username === 'admin' || $u_username === 'payroll') { ?>
+          <li class="<?= ($curr_class === 'attn_regularization_con' && $curr_method === 'approval') ? 'active' : '' ?>">
+            <a href="<?= base_url('attn_regularization/approval') ?>" class="anchor_cls">
+              <i class="fa fa-check-square-o text-warning"></i> Approval
+            </a>
+          </li>
+          <?php } ?>
+          <li class="<?= ($curr_class === 'attn_regularization_con' && $curr_method === 'reports') ? 'active' : '' ?>">
+            <a href="<?= base_url('attn_regularization/reports') ?>" class="anchor_cls">
+              <i class="fa fa-file-text-o text-danger"></i> Reports
+            </a>
+          </li>
         </ul>
       </li>
       <?php } ?>

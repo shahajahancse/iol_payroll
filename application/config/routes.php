@@ -128,3 +128,33 @@ $route['admin_leave_dashboard'] = 'leave_con/admin_dashboard';
 */
 $route['admin_ot_dashboard'] = 'ot_approval_con/admin_dashboard';
 
+/*
+| -------------------------------------------------------------------------
+| Outside Duty (OD) Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['od']             = 'od_management_con/dashboard';
+$route['od/dashboard']   = 'od_management_con/dashboard';
+$route['od/create']      = 'od_management_con/create';
+$route['od/edit/(:num)'] = 'od_management_con/edit/$1';
+$route['od/list']        = 'od_management_con/list';
+$route['od/approval']    = 'od_management_con/approval';
+$route['od/reports']     = 'od_management_con/reports';
+
+/*
+| -------------------------------------------------------------------------
+| Attendance Regularization & Remark Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['attn_regularization']               = 'attn_regularization_con/dashboard';
+$route['attn_regularization/dashboard']     = 'attn_regularization_con/dashboard';
+$route['attn_regularization/create']        = 'attn_regularization_con/create';
+$route['attn_regularization/save']          = 'attn_regularization_con/save';
+$route['attn_regularization/list']          = 'attn_regularization_con/list';
+$route['attn_regularization/approval']      = 'attn_regularization_con/approval';
+$route['attn_regularization/action']        = 'attn_regularization_con/action';
+$route['attn_regularization/reports']       = 'attn_regularization_con/reports';
+$route['attn_regularization/delete/(:num)'] = 'attn_regularization_con/delete/$1';
+
+
+

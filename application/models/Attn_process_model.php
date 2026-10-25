@@ -158,6 +158,8 @@ class Attn_process_model extends CI_Model{
 
             	// Check if employee is on approved leave (SL, CL, EL, ML, WP, etc.)
             	$leaves = $this->leave_chech($process_date, $emp_id);
+            	// Check if employee is on approved Outside Duty (OD)
+            	$is_od  = $this->od_check($process_date, $emp_id);
 
             	// Rule: If single-day SL or CL, and next calendar day is already Absent (A), forfeit leave
             	if ($leaves && $this->check_single_day_sl_cl($process_date, $emp_id)) {
@@ -271,6 +273,14 @@ class Attn_process_model extends CI_Model{
 					$attn_status = "H";
 				}elseif ($process_date == $weekend || $weekend === true){
 					$attn_status = "W";
+				}elseif ($is_od){
+					// Outside Duty (OD) Policy:
+					// Employee assigned on official outside duty.
+					// If actual punches exist, they are preserved; otherwise 00:00:00.
+					$attn_status = "OD";
+					$late_status = 0;
+					$early_exit = 0;
+					$alert_msg = 0;
 				}elseif (in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))){
 					// No Punch Policy: auto present
 					$attn_status = "P";
@@ -445,7 +455,7 @@ class Attn_process_model extends CI_Model{
 
 				// Late Status check
 				$late_start_time = "$process_date $late_start_time";
-				if ($attn_status == 'W' || $attn_status == 'H' || $attn_status == 'L') {
+				if ($attn_status == 'W' || $attn_status == 'H' || $attn_status == 'L' || $attn_status == 'OD') {
 					$late_status = 0;
 				} elseif ($in_time > $late_start_time && $in_time != '' && $in_time != '00:00:00') {
 					$late_status = 1;
@@ -1106,10 +1116,22 @@ class Attn_process_model extends CI_Model{
         }
     }
 
+    function od_check($process_date, $emp_id)
+    {
+        if (!$this->db->table_exists('pr_emp_od_dates')) {
+            return false;
+        }
+        $this->db->where("od_date", $process_date);
+        $this->db->where("emp_id", $emp_id);
+        $this->db->where("status", "approved");
+        $query = $this->db->get("pr_emp_od_dates");
+        return ($query->num_rows() > 0);
+    }
+
     function check_single_day_sl_cl($date, $emp_id)
     {
         $this->db->select("leave_type, leave_start, leave_end, start_date, total_leave");
-        $this->db->where("((leave_start <= '$date' AND leave_end >= '$date') OR start_date = '$date')");
+        $this->db->where("((leave_start <= '$date' AND leave_end >= '$date') ");
         $this->db->where("emp_id", $emp_id);
         $this->db->where_in("LOWER(leave_type)", array('sl', 'cl'));
         $this->db->where("(status = 'approved' OR status IS NULL)");
