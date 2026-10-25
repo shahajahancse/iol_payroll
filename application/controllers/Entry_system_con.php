@@ -2490,6 +2490,220 @@ class Entry_system_con extends CI_Controller
         $this->session->set_flashdata('success', 'Record Deleted successfully!');
         redirect(base_url('entry_system_con/leave_list'));
     }
+
+    /**
+     * Helper to retrieve all filtered leave records without pagination limit for export
+     */
+    private function get_filtered_leave_records($filters = array())
+    {
+        $from_date  = !empty($filters['from_date'])  ? trim($filters['from_date'])  : '';
+        $to_date    = !empty($filters['to_date'])    ? trim($filters['to_date'])    : '';
+        $month      = !empty($filters['month'])      ? trim($filters['month'])      : '';
+        $year       = !empty($filters['year'])       ? trim($filters['year'])       : '';
+        $emp_id     = !empty($filters['emp_id'])     ? trim($filters['emp_id'])     : '';
+        $dept_id    = !empty($filters['dept_id'])    ? trim($filters['dept_id'])    : '';
+        $leave_type = !empty($filters['leave_type']) ? trim($filters['leave_type']) : '';
+        $status     = !empty($filters['status'])     ? trim($filters['status'])     : '';
+        $unit_id    = !empty($filters['unit_id'])    ? trim($filters['unit_id'])    : '';
+
+        $this->db->select("
+            pr_leave_trans.*,
+            pr_units.unit_name,
+            pr_emp_per_info.name_en,
+            pr_emp_per_info.name_bn,
+            pr_emp_per_info.name_en as user_name,
+            emp_depertment.dept_name,
+            emp_designation.desig_name
+        ");
+        $this->db->from('pr_leave_trans');
+        $this->db->join('pr_units', 'pr_units.unit_id = pr_leave_trans.unit_id', 'left');
+        $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_leave_trans.emp_id', 'left');
+        $this->db->join('pr_emp_com_info', 'pr_emp_com_info.emp_id = pr_leave_trans.emp_id', 'left');
+        $this->db->join('emp_depertment', 'emp_depertment.dept_id = pr_emp_com_info.emp_dept_id', 'left');
+        $this->db->join('emp_designation', 'emp_designation.id = pr_emp_com_info.emp_desi_id', 'left');
+
+        // Scoped unit logic
+        if (!empty($unit_id) && $unit_id !== 'All') {
+            $this->db->where('pr_leave_trans.unit_id', $unit_id);
+        } elseif (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name !== 'All') {
+            $this->db->where('pr_leave_trans.unit_id', $this->data['user_data']->unit_name);
+        }
+
+        // Date range
+        if (!empty($from_date) && !empty($to_date) && $from_date <= $to_date) {
+            $this->db->where('pr_leave_trans.leave_start >=', $from_date);
+            $this->db->where('pr_leave_trans.leave_end <=', $to_date);
+        } elseif (!empty($from_date)) {
+            $this->db->where('pr_leave_trans.leave_start >=', $from_date);
+        } elseif (!empty($to_date)) {
+            $this->db->where('pr_leave_trans.leave_end <=', $to_date);
+        }
+
+        // Month filter (YYYY-MM)
+        if (!empty($month)) {
+            $this->db->where("DATE_FORMAT(pr_leave_trans.leave_start, '%Y-%m') =", $month);
+        }
+
+        // Year filter
+        if (!empty($year)) {
+            $this->db->where('YEAR(pr_leave_trans.leave_start)', $year);
+        }
+
+        // Employee filter (ID or Name)
+        if (!empty($emp_id)) {
+            $this->db->group_start();
+            $this->db->like('pr_leave_trans.emp_id', $emp_id);
+            $this->db->or_like('pr_emp_per_info.name_en', $emp_id);
+            $this->db->group_end();
+        }
+
+        // Department filter
+        if (!empty($dept_id)) {
+            $this->db->where('pr_emp_com_info.emp_dept_id', $dept_id);
+        }
+
+        // Leave type filter
+        if (!empty($leave_type)) {
+            $this->db->where('pr_leave_trans.leave_type', $leave_type);
+        }
+
+        // Status filter
+        if (!empty($status) && strtolower($status) !== 'all') {
+            $this->db->where('pr_leave_trans.status', $status);
+        }
+
+        $this->db->order_by('pr_leave_trans.leave_start', 'DESC');
+        $this->db->order_by('pr_leave_trans.id', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Export Leave List to Excel (.xls)
+     */
+    public function export_leave_excel()
+    {
+        $filters = array(
+            'from_date'  => $this->input->get_post('from_date'),
+            'to_date'    => $this->input->get_post('to_date'),
+            'month'      => $this->input->get_post('month'),
+            'year'       => $this->input->get_post('year'),
+            'emp_id'     => $this->input->get_post('emp_id'),
+            'dept_id'    => $this->input->get_post('dept_id'),
+            'leave_type' => $this->input->get_post('leave_type'),
+            'status'     => $this->input->get_post('status'),
+            'unit_id'    => $this->input->get_post('unit_id'),
+        );
+
+        $records = $this->get_filtered_leave_records($filters);
+
+        // Build filter summary string
+        $summary_parts = array();
+        if (!empty($filters['from_date']) && !empty($filters['to_date'])) {
+            $summary_parts[] = "Date: " . date('d-M-Y', strtotime($filters['from_date'])) . " to " . date('d-M-Y', strtotime($filters['to_date']));
+        } elseif (!empty($filters['from_date'])) {
+            $summary_parts[] = "From: " . date('d-M-Y', strtotime($filters['from_date']));
+        } elseif (!empty($filters['to_date'])) {
+            $summary_parts[] = "To: " . date('d-M-Y', strtotime($filters['to_date']));
+        }
+        if (!empty($filters['month'])) {
+            $summary_parts[] = "Month: " . date('F Y', strtotime($filters['month'] . '-01'));
+        }
+        if (!empty($filters['year'])) {
+            $summary_parts[] = "Year: " . $filters['year'];
+        }
+        if (!empty($filters['emp_id'])) {
+            $summary_parts[] = "Emp ID: " . $filters['emp_id'];
+        }
+        if (!empty($filters['status']) && strtolower($filters['status']) !== 'all') {
+            $summary_parts[] = "Status: " . ucfirst($filters['status']);
+        }
+        if (!empty($filters['leave_type'])) {
+            $summary_parts[] = "Type: " . strtoupper($filters['leave_type']);
+        }
+        $filter_summary = !empty($summary_parts) ? implode(' | ', $summary_parts) : 'All Records';
+
+        $unit_id = !empty($filters['unit_id']) ? $filters['unit_id'] : (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name !== 'All' ? $this->data['user_data']->unit_name : null);
+        $company_info = null;
+        if (!empty($unit_id)) {
+            $company_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row();
+        }
+        if (empty($company_info)) {
+            $company_info = $this->db->get('company_infos')->row();
+        }
+
+        $data = array(
+            'records'        => $records,
+            'filters'        => $filters,
+            'filter_summary' => $filter_summary,
+            'company_info'   => $company_info,
+        );
+
+        $this->load->view('entry_system/leave_list_excel', $data);
+    }
+
+    /**
+     * Export Leave List to PDF Report Preview (Print / Save as PDF)
+     */
+    public function export_leave_pdf()
+    {
+        $filters = array(
+            'from_date'  => $this->input->get_post('from_date'),
+            'to_date'    => $this->input->get_post('to_date'),
+            'month'      => $this->input->get_post('month'),
+            'year'       => $this->input->get_post('year'),
+            'emp_id'     => $this->input->get_post('emp_id'),
+            'dept_id'    => $this->input->get_post('dept_id'),
+            'leave_type' => $this->input->get_post('leave_type'),
+            'status'     => $this->input->get_post('status'),
+            'unit_id'    => $this->input->get_post('unit_id'),
+        );
+
+        $records = $this->get_filtered_leave_records($filters);
+
+        // Build filter summary string
+        $summary_parts = array();
+        if (!empty($filters['from_date']) && !empty($filters['to_date'])) {
+            $summary_parts[] = "Date: " . date('d-M-Y', strtotime($filters['from_date'])) . " to " . date('d-M-Y', strtotime($filters['to_date']));
+        } elseif (!empty($filters['from_date'])) {
+            $summary_parts[] = "From: " . date('d-M-Y', strtotime($filters['from_date']));
+        } elseif (!empty($filters['to_date'])) {
+            $summary_parts[] = "To: " . date('d-M-Y', strtotime($filters['to_date']));
+        }
+        if (!empty($filters['month'])) {
+            $summary_parts[] = "Month: " . date('F Y', strtotime($filters['month'] . '-01'));
+        }
+        if (!empty($filters['year'])) {
+            $summary_parts[] = "Year: " . $filters['year'];
+        }
+        if (!empty($filters['emp_id'])) {
+            $summary_parts[] = "Emp ID: " . $filters['emp_id'];
+        }
+        if (!empty($filters['status']) && strtolower($filters['status']) !== 'all') {
+            $summary_parts[] = "Status: " . ucfirst($filters['status']);
+        }
+        if (!empty($filters['leave_type'])) {
+            $summary_parts[] = "Type: " . strtoupper($filters['leave_type']);
+        }
+        $filter_summary = !empty($summary_parts) ? implode(' | ', $summary_parts) : 'All Records';
+
+        $unit_id = !empty($filters['unit_id']) ? $filters['unit_id'] : (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name !== 'All' ? $this->data['user_data']->unit_name : null);
+        $company_info = null;
+        if (!empty($unit_id)) {
+            $company_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row();
+        }
+        if (empty($company_info)) {
+            $company_info = $this->db->get('company_infos')->row();
+        }
+
+        $data = array(
+            'records'        => $records,
+            'filters'        => $filters,
+            'filter_summary' => $filter_summary,
+            'company_info'   => $company_info,
+        );
+
+        $this->load->view('entry_system/leave_list_pdf_report', $data);
+    }
     //--------------------------------------------------------------------------------------
     // Leave end
     //--------------------------------------------------------------------------------------

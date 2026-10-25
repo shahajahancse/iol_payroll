@@ -26,20 +26,32 @@ class Ot_approval_con extends CI_Controller
     }
 
     /**
-     * Determine if current user has Admin privileges
+     * Get current logged-in username in lowercase
      */
-    public function is_admin()
+    private function get_current_username()
     {
-        $user = $this->data['user_data'];
-        if (!$user) {
-            return false;
+        $user = isset($this->data['user_data']) ? $this->data['user_data'] : null;
+        if ($user && !empty($user->id_number)) {
+            return strtolower(trim($user->id_number));
         }
-        $username = strtolower(trim($user->id_number));
-        return ($username === 'admin' || $username === 'msa' || $user->level === 'All');
+        $session_username = $this->session->userdata('username');
+        if (!empty($session_username)) {
+            return strtolower(trim($session_username));
+        }
+        return '';
     }
 
     /**
-     * Enforce strict admin-only authorization for all approval actions
+     * Determine if current user has Admin privileges (strictly username "admin")
+     */
+    public function is_admin()
+    {
+        return ($this->get_current_username() === 'admin');
+    }
+
+    /**
+     * Enforce strict admin-only authorization for all approval actions.
+     * Redirects anyone except admin to the Dashboard (payroll_con).
      */
     private function require_admin()
     {
@@ -53,9 +65,23 @@ class Ot_approval_con extends CI_Controller
                              )));
                 exit();
             }
-            show_error('Access denied. You do not have permission to access the Daily OT Approval Management module.', 403, '403 Forbidden');
+            $this->session->set_flashdata('error', 'Access Denied: Daily OT Approval is restricted exclusively to Admin.');
+            redirect('payroll_con');
             exit();
         }
+    }
+
+    /**
+     * Default index: Redirect non-admin to dashboard, or admin to admin_dashboard
+     */
+    public function index()
+    {
+        if (!$this->is_admin()) {
+            $this->session->set_flashdata('error', 'Access Denied: Daily OT Approval is restricted exclusively to Admin.');
+            redirect('payroll_con');
+            return;
+        }
+        redirect('ot_approval_con/admin_dashboard');
     }
 
     /**

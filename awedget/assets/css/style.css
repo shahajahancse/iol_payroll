@@ -5014,7 +5014,7 @@ form legend,
 }
 .label-success,
 .badge-success {
-  background-color: white;
+  background-color: #0aa699;
   color: #ffffff;
 }
 .label-warning,
@@ -5039,7 +5039,7 @@ form legend,
 }
 .label-green,
 .badge-green {
-  background-color: white;
+  background-color: #0aa699;
   color: #ffffff;
 }
 .label-inverse,

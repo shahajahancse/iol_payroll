@@ -73,6 +73,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 /* Stat theme variations */
 .stat-blue .stat-icon-wrapper { background: #e0f2fe; color: #0284c7; }
@@ -148,6 +149,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     vertical-align: middle;
     border-top: 1px solid #f1f5f9;
     color: #334155;
+    white-space: nowrap;
 }
 .modern-table tbody tr:hover {
     background-color: #f8fafc;
@@ -345,42 +347,37 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             <p>Create and submit employee leaves, monitor live approval workflows, and check balance entitlements.</p>
         </div>
         <div>
-            <button class="btn btn-primary" onclick="openNewLeaveModal()" style="font-weight: 600; padding: 8px 16px; border-radius: 6px; box-shadow: 0 2px 6px rgba(52,152,219,0.3);">
+            <a href="<?= base_url('entry_system_con/leave_transation') ?>" class="btn btn-success" style="font-weight: 600; padding: 8px 16px; border-radius: 6px; box-shadow: 0 2px 6px rgba(46, 204, 113, 0.3);">
                 <i class="fa fa-plus-circle"></i> New Leave Entry
-            </button>
-            <?php if (!empty($is_admin)): ?>
-            <a href="<?= base_url('leave_con/admin_dashboard') ?>" class="btn btn-default" style="font-weight: 600; padding: 8px 16px; border-radius: 6px; margin-left: 8px;">
-                <i class="fa fa-shield text-danger"></i> Admin Approval Dashboard
             </a>
-            <?php endif; ?>
         </div>
     </div>
 
     <!-- Statistics Summary Cards -->
-    <div class="row">
-        <div class="col-md-2 col-sm-4 col-xs-6">
+    <div style="display: flex; gap: 14px; margin-bottom: 22px; flex-wrap: wrap;">
+        <div style="flex: 1 1 180px; min-width: 140px;">
             <div class="stat-card stat-blue" onclick="filterByCardStatus('')">
                 <div class="stat-icon-wrapper">
                     <i class="fa fa-folder-open"></i>
                 </div>
                 <div class="stat-info">
                     <h3 id="stat_total">0</h3>
-                    <span>Total Entries</span>
+                    <span>Total</span>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-4 col-xs-6">
+        <div style="flex: 1 1 180px; min-width: 140px;">
             <div class="stat-card stat-amber" onclick="filterByCardStatus('pending')">
                 <div class="stat-icon-wrapper">
                     <i class="fa fa-hourglass-half"></i>
                 </div>
                 <div class="stat-info">
                     <h3 id="stat_pending">0</h3>
-                    <span>Pending Approval</span>
+                    <span>Pending</span>
                 </div>
             </div>
         </div>
-        <div class="col-md-2 col-sm-4 col-xs-6">
+        <div style="flex: 1 1 180px; min-width: 140px;">
             <div class="stat-card stat-green" onclick="filterByCardStatus('approved')">
                 <div class="stat-icon-wrapper">
                     <i class="fa fa-check-circle"></i>
@@ -391,7 +388,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 </div>
             </div>
         </div>
-        <div class="col-md-2 col-sm-4 col-xs-6">
+        <div style="flex: 1 1 180px; min-width: 140px;">
             <div class="stat-card stat-red" onclick="filterByCardStatus('rejected')">
                 <div class="stat-icon-wrapper">
                     <i class="fa fa-times-circle"></i>
@@ -402,14 +399,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-8 col-xs-12">
+        <div style="flex: 1 1 180px; min-width: 140px;">
             <div class="stat-card stat-purple" onclick="filterByCardStatus('returned')">
                 <div class="stat-icon-wrapper">
                     <i class="fa fa-reply"></i>
                 </div>
                 <div class="stat-info">
                     <h3 id="stat_returned">0</h3>
-                    <span>Returned For Modification</span>
+                    <span>Returned</span>
                 </div>
             </div>
         </div>
@@ -480,7 +477,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-12 text-right">
+                    <div class="col-sm-6 text-left" style="margin-bottom: 6px;">
+                        <button type="button" class="btn btn-success btn-sm" onclick="exportHrLeave('excel')" style="font-weight: 600; margin-right: 6px;">
+                            <i class="fa fa-file-excel-o"></i> Export Excel
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="exportHrLeave('pdf')" style="font-weight: 600;">
+                            <i class="fa fa-file-pdf-o"></i> Export PDF / Print
+                        </button>
+                    </div>
+                    <div class="col-sm-6 text-right" style="margin-bottom: 6px;">
                         <button type="button" class="btn btn-default btn-sm" onclick="resetFilters()">
                             <i class="fa fa-refresh"></i> Reset Filters
                         </button>
@@ -537,8 +542,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 <div class="modal fade" id="newLeaveModal" tabindex="-1" role="dialog" aria-labelledby="newLeaveModalLabel">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background: #2563eb; color: #ffffff; padding: 16px 22px;">
-                <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.8;">&times;</button>
+            <div class="modal-header" style="background: #006ba3; color: #ffffff; padding: 16px 22px;">
+                <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.9; text-shadow: none;">&times;</button>
                 <h4 class="modal-title" style="font-weight: 600;"><i class="fa fa-plus-circle"></i> Create & Submit Leave Request</h4>
             </div>
             <div class="modal-body" style="padding: 22px;">
@@ -693,8 +698,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 <div class="modal fade" id="viewDetailsModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content" style="border-radius: 8px; overflow: hidden;">
-            <div class="modal-header" style="background: #0f172a; color: #ffffff; padding: 16px 22px;">
-                <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.8;">&times;</button>
+            <div class="modal-header" style="background: #006ba3; color: #ffffff; padding: 16px 22px;">
+                <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.9; text-shadow: none;">&times;</button>
                 <h4 class="modal-title" style="font-weight: 600;"><i class="fa fa-file-text-o"></i> Leave Request Details & Audit Trail</h4>
             </div>
             <div class="modal-body" style="padding: 22px;" id="viewDetailsBody">
@@ -819,6 +824,30 @@ function resetFilters() {
     $('#f_status').val('all');
     $('.stat-card').removeClass('active-stat');
     loadLeaveData(1);
+}
+
+function exportHrLeave(format) {
+    let emp_id = $('#f_emp_id').val() || '';
+    let dept_id = $('#f_dept_id').val() || '';
+    let leave_type = $('#f_leave_type').val() || '';
+    let status = $('#f_status').val() || '';
+    let from_date = $('#f_from_date').val() || '';
+    let to_date = $('#f_to_date').val() || '';
+
+    let params = new URLSearchParams({
+        emp_id: emp_id,
+        dept_id: dept_id,
+        leave_type: leave_type,
+        status: status,
+        from_date: from_date,
+        to_date: to_date
+    });
+
+    if (format === 'excel') {
+        window.location.href = "<?= base_url('entry_system_con/export_leave_excel') ?>?" + params.toString();
+    } else if (format === 'pdf') {
+        window.open("<?= base_url('entry_system_con/export_leave_pdf') ?>?" + params.toString(), '_blank');
+    }
 }
 
 function loadHRStats() {
@@ -955,12 +984,9 @@ function renderTable(rows, page, limit, total) {
             <tr>
                 <td>${sl}</td>
                 <td>
-                    <div class="emp-meta-box">
-                        <div class="emp-avatar">${avatarHtml}</div>
-                        <div class="emp-details">
-                            <div class="emp-name">${escapeHtml(empName)}</div>
-                            <div class="emp-id-badge">ID: ${row.emp_id}</div>
-                        </div>
+                    <div class="emp-details">
+                        <div class="emp-name">${escapeHtml(empName)}</div>
+                        <div class="emp-id-badge">ID: ${row.emp_id}</div>
                     </div>
                 </td>
                 <td>
@@ -1250,12 +1276,12 @@ function renderDetailsModal(leave, balances, history) {
     timelineHtml += '</div>';
 
     let html = `
-        <div style="display: flex; gap: 16px; align-items: center; background: #f8fafc; padding: 14px; border-radius: 8px; margin-bottom: 18px;">
-            <div class="emp-avatar" style="width: 50px; height: 50px; font-size: 18px;">${initial}</div>
+        <div style="display: flex; gap: 16px; align-items: center; background: #f8fafc; padding: 14px 18px; border-radius: 8px; margin-bottom: 18px; border-left: 4px solid #006ba3;">
             <div style="flex-grow: 1;">
                 <div style="font-size: 16px; font-weight: 700; color: #1e293b;">${escapeHtml(empName)}</div>
-                <div style="font-size: 12px; color: #64748b;">
-                    ID: <strong>${leave.emp_id}</strong> | Dept: <strong>${escapeHtml(leave.dept_name || '-')}</strong> | Desig: <strong>${escapeHtml(leave.desig_name || '-')}</strong>
+                <div style="font-size: 12px; color: #64748b; margin-top: 3px;">
+                    <span style="background: #e0f2fe; color: #006ba3; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-right: 6px;">ID: ${leave.emp_id}</span>
+                    Dept: <strong>${escapeHtml(leave.dept_name || '-')}</strong> | Desig: <strong>${escapeHtml(leave.desig_name || '-')}</strong>
                 </div>
             </div>
             <div>${statusBadge}</div>

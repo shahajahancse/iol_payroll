@@ -373,29 +373,16 @@
           </div>
        <?php } ?>   
 	     <?php } ?>	  
-		    <div class="document">
-            <a class="header" href="<?php echo base_url();?>leave_con/hr_dashboard" title="HR Leave Dashboard" target="right" id="dp13098" onClick="MakeColoredBack('13098');">HR Leave Dashboard</a>
-          </div>
         <?php 
           $u_data = $this->session->userdata('data');
-          if ($u_data && (strtolower($u_data->id_number) === 'admin' || strtolower($u_data->id_number) === 'msa' || $u_data->level === 'All')) { 
+          $u_username = $u_data ? strtolower(trim($u_data->id_number)) : '';
+          if ($u_data && ($u_username === 'admin' || $u_username === 'msa' || $u_data->level === 'All')) { 
         ?>
-		    <div class="document">
-            <a class="header" href="<?php echo base_url();?>leave_con/admin_dashboard" title="Admin Leave Approval" target="right" id="dp13099" onClick="MakeColoredBack('13099');">Admin Leave Approval</a>
-          </div>
 		    <div class="document">
             <a class="header" href="<?php echo base_url();?>ot_approval_con/admin_dashboard" title="Daily OT Approval" target="right" id="dp13100" onClick="MakeColoredBack('13100');">Daily OT Approval</a>
           </div>
         <?php } ?>
-		    <div class="document">
-            <a class="header" href="<?php echo base_url();?>entry_system_con/leave_transation" title="Leave Transaction" target="right" id="dp13002" onClick="MakeColoredBack('13002');">Leave Transaction</a>
-          </div>
         <?php if(!in_array($user_id,$usr_arr_2)){  ?>
-		    <div class="document">
-            
-           
-            <a class="header" href="<?php echo base_url();?>entry_system_con/leave_delete" title="Leave Delete" target="right" id="dp13017" onClick="MakeColoredBack('13017');">Leave Delete</a>
-          </div>
 		  <div class="document">
             
            
@@ -434,6 +421,37 @@
            
             <a class="header" href="<?php echo base_url();?>entry_system_con/proximity_card_edit" title="Proximity Card Edit" target="right" id="dp13015" onClick="MakeColoredBack('13015');">Proximity Card Edit</a>
           </div>
+        </div>
+		  <div class="nodeheader">
+          <b id="name350" name="Leave"></b>
+          <span onMouseOver="this.border='1';" onMouseOut="this.border='0';" id="image350" onClick="SetNode('350');">
+          <span id="nodeimage350" onDblClick="SetNode('350');">Leave</div>
+        <div class="nodedocuments" id="documents350" style="display: none; Margin-left: 16;">
+          <?php if ($u_username === 'payroll') { ?>
+		    <div class="document">
+              <a class="header" href="<?php echo base_url();?>leave_con/hr_dashboard" title="Leave Dashboard" target="right" id="dp13098" onClick="MakeColoredBack('13098');">Leave Dashboard</a>
+            </div>
+		    <div class="document">
+              <a class="header" href="<?php echo base_url();?>entry_system_con/leave_transation" title="Leave Entry" target="right" id="dp13002" onClick="MakeColoredBack('13002');">Leave Entry</a>
+            </div>
+		    <div class="document">
+              <a class="header" href="<?php echo base_url();?>entry_system_con/leave_list" title="Leave List" target="right" id="dp13097" onClick="MakeColoredBack('13097');">Leave List</a>
+            </div>
+            <?php if(!in_array($user_id,$usr_arr_2)){ ?>
+		    <div class="document">
+              <a class="header" href="<?php echo base_url();?>entry_system_con/leave_delete" title="Leave Delete" target="right" id="dp13017" onClick="MakeColoredBack('13017');">Leave Delete</a>
+            </div>
+            <?php } ?>
+          <?php } ?>
+
+          <?php if ($u_username === 'admin') { ?>
+		    <div class="document">
+              <a class="header" href="<?php echo base_url();?>leave_con/admin_dashboard" title="Leave Approval" target="right" id="dp13099" onClick="MakeColoredBack('13099');">Leave Approval</a>
+            </div>
+		    <div class="document">
+              <a class="header" href="<?php echo base_url();?>entry_system_con/leave_list" title="Leave List" target="right" id="dp13097" onClick="MakeColoredBack('13097');">Leave List</a>
+            </div>
+          <?php } ?>
         </div>
 		  <div class="nodeheader">
           <b id="name400" name="Process">

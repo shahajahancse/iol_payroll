@@ -24,16 +24,50 @@ class Leave_con extends CI_Controller
     }
 
     /**
-     * Determine if current user has Admin privileges
+     * Get sanitized current username (lowercase, trimmed)
+     */
+    public function get_current_username()
+    {
+        $user = isset($this->data['user_data']) ? $this->data['user_data'] : null;
+        if ($user && !empty($user->id_number)) {
+            return strtolower(trim($user->id_number));
+        }
+        $session_username = $this->session->userdata('username');
+        if (!empty($session_username)) {
+            return strtolower(trim($session_username));
+        }
+        return '';
+    }
+
+    /**
+     * Determine if current user has Admin privileges ("Admin" or "admin")
      */
     public function is_admin()
     {
-        $user = $this->data['user_data'];
-        if (!$user) {
-            return false;
+        return ($this->get_current_username() === 'admin');
+    }
+
+    /**
+     * Determine if current user has HR privileges ("Payroll" or "payroll")
+     */
+    public function is_hr()
+    {
+        return ($this->get_current_username() === 'payroll');
+    }
+
+    /**
+     * Route user directly to their respective leave view
+     */
+    public function index()
+    {
+        if ($this->is_admin()) {
+            redirect('leave_con/admin_dashboard');
+        } elseif ($this->is_hr()) {
+            redirect('leave_con/hr_dashboard');
+        } else {
+            $this->session->set_flashdata('error', 'Access Denied: You do not have permission to access Leave Dashboard.');
+            redirect('payroll_con');
         }
-        $username = strtolower(trim($user->id_number));
-        return ($username === 'admin' || $username === 'msa' || $user->level === 'All');
     }
 
     /**
@@ -49,14 +83,26 @@ class Leave_con extends CI_Controller
     }
 
     // =========================================================================
-    // 1. HR DASHBOARD
+    // 1. HR DASHBOARD (Restricted to "Payroll" / "payroll")
     // =========================================================================
     public function hr_dashboard()
     {
+        // Enforce HR role check: Admin must NOT see HR view!
+        if (!$this->is_hr()) {
+            if ($this->is_admin()) {
+                redirect('leave_con/admin_dashboard');
+                return;
+            }
+            $this->session->set_flashdata('error', 'Access Denied: Only HR (Payroll) can access the HR Leave Management Dashboard.');
+            redirect('payroll_con');
+            return;
+        }
+
         $unit_id = $this->get_scoped_unit_id();
         $this->data['title'] = 'HR Leave Management Dashboard';
         $this->data['username'] = $this->data['user_data']->id_number;
-        $this->data['is_admin'] = $this->is_admin();
+        $this->data['is_admin'] = false;
+        $this->data['is_hr'] = true;
 
         // Departments
         $this->db->select('dept_id, dept_name');
@@ -92,6 +138,11 @@ class Leave_con extends CI_Controller
      */
     public function hr_stats_ajax()
     {
+        if (!$this->is_hr()) {
+            echo json_encode(array('status' => 'error', 'message' => 'Access Denied: Only HR (Payroll) can access this resource.'));
+            return;
+        }
+
         $unit_id = $this->get_scoped_unit_id();
 
         $this->db->from('pr_leave_trans');
@@ -145,6 +196,11 @@ class Leave_con extends CI_Controller
      */
     public function hr_leave_list_ajax()
     {
+        if (!$this->is_hr()) {
+            echo json_encode(array('status' => 'error', 'message' => 'Access Denied: Only HR (Payroll) can access this resource.'));
+            return;
+        }
+
         $unit_id    = $this->get_scoped_unit_id();
         $page       = max(1, (int)$this->input->post('page'));
         $limit      = max(5, min(100, (int)$this->input->post('limit', 15)));
@@ -177,14 +233,18 @@ class Leave_con extends CI_Controller
     }
 
     // =========================================================================
-    // 2. ADMIN DASHBOARD
+    // 2. ADMIN DASHBOARD (Restricted to "Admin" / "admin")
     // =========================================================================
     public function admin_dashboard()
     {
-        // Enforce role check
+        // Enforce Admin role check: HR must NOT see Admin view!
         if (!$this->is_admin()) {
+            if ($this->is_hr()) {
+                redirect('leave_con/hr_dashboard');
+                return;
+            }
             $this->session->set_flashdata('error', 'Access Denied: Only Administrator can access the Leave Approval Dashboard.');
-            redirect('leave_con/hr_dashboard');
+            redirect('payroll_con');
             return;
         }
 
@@ -192,6 +252,7 @@ class Leave_con extends CI_Controller
         $this->data['title'] = 'Admin Leave Approval Dashboard';
         $this->data['username'] = $this->data['user_data']->id_number;
         $this->data['is_admin'] = true;
+        $this->data['is_hr'] = false;
 
         // Departments
         $this->db->select('dept_id, dept_name');
@@ -217,7 +278,7 @@ class Leave_con extends CI_Controller
     public function admin_stats_ajax()
     {
         if (!$this->is_admin()) {
-            echo json_encode(array('status' => 'error', 'message' => 'Unauthorized'));
+            echo json_encode(array('status' => 'error', 'message' => 'Access Denied: Only Administrator can access this resource.'));
             return;
         }
 
@@ -285,7 +346,7 @@ class Leave_con extends CI_Controller
     public function admin_leave_list_ajax()
     {
         if (!$this->is_admin()) {
-            echo json_encode(array('status' => 'error', 'message' => 'Unauthorized'));
+            echo json_encode(array('status' => 'error', 'message' => 'Access Denied: Only Administrator can access this resource.'));
             return;
         }
 
@@ -386,6 +447,11 @@ class Leave_con extends CI_Controller
     // =========================================================================
     public function get_leave_details_ajax($id = null)
     {
+        if (!$this->is_admin() && !$this->is_hr()) {
+            echo json_encode(array('status' => 'error', 'message' => 'Access Denied.'));
+            return;
+        }
+
         $id = (int)$id;
         if (empty($id)) {
             $id = (int)$this->input->post('id');
@@ -448,6 +514,11 @@ class Leave_con extends CI_Controller
      */
     public function get_emp_info_balance_ajax()
     {
+        if (!$this->is_admin() && !$this->is_hr()) {
+            echo json_encode(array('status' => 'error', 'message' => 'Access Denied.'));
+            return;
+        }
+
         $emp_id = trim($this->input->post('emp_id'));
         $year   = $this->input->post('year') ? trim($this->input->post('year')) : date('Y');
 
@@ -573,6 +644,11 @@ class Leave_con extends CI_Controller
     // =========================================================================
     public function hr_submit_leave()
     {
+        if (!$this->is_hr()) {
+            echo json_encode(array('status' => 'error', 'message' => 'Access Denied: Only HR (Payroll) can submit leave requests.'));
+            return;
+        }
+
         $emp_id          = trim($this->input->post('emp_id'));
         $leave_type      = trim($this->input->post('leave_type'));
         $apply_date      = trim($this->input->post('apply_date', date('Y-m-d')));
@@ -710,6 +786,11 @@ class Leave_con extends CI_Controller
      */
     public function hr_resubmit_leave()
     {
+        if (!$this->is_hr()) {
+            echo json_encode(array('status' => 'error', 'message' => 'Access Denied: Only HR (Payroll) can resubmit leave requests.'));
+            return;
+        }
+
         $leave_id        = (int)$this->input->post('leave_id');
         $leave_type      = trim($this->input->post('leave_type'));
         $from_date       = trim($this->input->post('from_date'));
@@ -1109,5 +1190,23 @@ class Leave_con extends CI_Controller
         } else {
             echo json_encode(array('status' => 'success', 'message' => $msg));
         }
+    }
+
+    /**
+     * Export Leave List to Excel (proxies to Entry_system_con)
+     */
+    public function export_leave_excel()
+    {
+        $qs = !empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '';
+        redirect('entry_system_con/export_leave_excel' . $qs);
+    }
+
+    /**
+     * Export Leave List to PDF (proxies to Entry_system_con)
+     */
+    public function export_leave_pdf()
+    {
+        $qs = !empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '';
+        redirect('entry_system_con/export_leave_pdf' . $qs);
     }
 }

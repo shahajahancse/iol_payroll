@@ -89,8 +89,6 @@
 							<th>Shift</th>
 							<th>Attn.Status</th>
 							<th>OT Hour</th>
-							<th>Extra OT Hour</th>
-							<th>Total OT Hour</th>
 							<th>Remarks</th>
 						</tr>";
                         foreach ($emp_data['emp_data'] as $key => $row) {
@@ -213,20 +211,11 @@
                                 } else{
                                     $remark = "";
                                 }
-                                echo "<td>&nbsp;";
-                                echo $row->ot;
-                                echo "&nbsp;</td>";
-
-                                $eot = $row->eot;
-                                $total_ot = $total_ot + $row->ot;
-                                $total_ot_hour = $total_ot_hour + $row->ot + $eot;
+                                $daily_total_ot = $row->ot + $row->eot;
+                                $total_ot_hour = $total_ot_hour + $daily_total_ot;
 
                                 echo "<td>&nbsp;";
-                                echo $eot;
-                                echo "&nbsp;</td>";
-
-                                echo "<td>&nbsp;";
-                                echo $eot + $row->ot;
+                                echo $daily_total_ot;
                                 echo "&nbsp;</td>";
 
                                 echo "<td>&nbsp;";
@@ -238,14 +227,6 @@
                         echo "<tr>";
                             echo "<td colspan='6'>";
                             echo 'Total';
-                            echo "</td>";
-
-                            echo "<td>";
-                            echo $total_ot;
-                            echo "</td>";
-
-                            echo "<td>";
-                            echo $total_ot_hour - $total_ot;
                             echo "</td>";
 
                             echo "<td>";

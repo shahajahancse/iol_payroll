@@ -52,33 +52,18 @@
 
       <!-- Enty System -->
       <?php if(in_array(2,$acl)) { ?>
-      <li class="start <?= activate_class(array('entry_system_con', 'leave_con', 'ot_approval_con')) ?>"> <a href="javascript:;"> <i class="fa fa-pencil-square-o"></i>
-        <span class="title">Entry System</span> <span class="selected"></span> <span class="arrow <?= arrow_open(array('entry_system_con', 'leave_con', 'ot_approval_con')) ?>"></span> </a>
+      <?php 
+        $u_data = $this->session->userdata('data');
+        $u_username = $u_data ? strtolower(trim($u_data->id_number)) : '';
+        $ci = get_instance();
+        $curr_class = $ci->router->fetch_class();
+        $curr_method = $ci->router->fetch_method();
+        $is_leave_active = ($curr_class === 'leave_con' || ($curr_class === 'entry_system_con' && in_array($curr_method, array('leave_transation', 'leave_list'))));
+        $is_entry_active = ($curr_class === 'entry_system_con' && !in_array($curr_method, array('leave_transation', 'leave_list')));
+      ?>
+      <li class="start <?= $is_entry_active ? 'active open' : '' ?>"> <a href="javascript:;"> <i class="fa fa-pencil-square-o"></i>
+        <span class="title">Entry System</span> <span class="selected"></span> <span class="arrow <?= $is_entry_active ? 'open' : '' ?>"></span> </a>
         <ul class="sub-menu">
-          <!-- HR Leave Management Dashboard -->
-          <!-- <li class="<?= (activate_class('leave_con') && activate_method('hr_dashboard')) ? 'active' : '' ?>">
-            <a href="<?= base_url('leave_con/hr_dashboard') ?>" class="anchor_cls">
-              <i class="fa fa-calendar-check-o text-info"></i> HR Leave Dashboard
-            </a>
-          </li> -->
-
-          <?php 
-            $u_data = $this->session->userdata('data');
-            $is_admin_user = ($u_data && (strtolower($u_data->id_number) === 'admin' || strtolower($u_data->id_number) === 'msa' || $u_data->level === 'All'));
-            if ($is_admin_user) { 
-          ?>
-            <!-- Admin Leave Approval Dashboard -->
-            <!-- <li class="<?= (activate_class('leave_con') && activate_method('admin_dashboard')) ? 'active' : '' ?>">
-              <a href="<?= base_url('leave_con/admin_dashboard') ?>" class="anchor_cls">
-                <i class="fa fa-shield text-danger"></i> Admin Leave Approval
-              </a>
-            </li> -->
-            <li class="<?= (activate_class('ot_approval_con') && activate_method('admin_dashboard')) ? 'active' : '' ?>">
-              <!-- <a href="<?= base_url('ot_approval_con/admin_dashboard') ?>" class="anchor_cls">
-                <i class="fa fa-clock-o text-warning"></i> Daily OT Approval
-              </a>
-            </li> -->
-          <?php } ?>
 
           <?php if(in_array(13,$acl)) { ?>
             <li class="<?= activate_method('grid_entry_system') ?>">
@@ -102,55 +87,10 @@
             </a>
           </li>
 
-<!-- 
-          < ?php if(in_array(15,$acl)) { ?>
-            <li class="< ?= activate_method('emp_weekend_add') ?>">
-              <a href="< ?= base_url('entry_system_con/emp_weekend_add')?>" class="anchor_cls">
-                <i class="fa fa-calendar-plus-o"></i> Weekend Add
-              </a>
-            </li>
-          < ?php } ?> -->
-
           <?php if(in_array(16,$acl)) { ?>
             <li class="<?= activate_method('emp_holiday_add') ?>">
               <a href="<?= base_url('entry_system_con/emp_holiday_add')?>" class="anchor_cls">
                 <i class="fa fa-calendar-check-o"></i> Holiday Add
-              </a>
-            </li>
-          <?php } ?>
-
-          <!--
-          <?php if(in_array(17,$acl)) { ?>
-            <li class="<?= activate_method('gov_holiday_list') ?>">
-              <a href="<?= base_url('entry_system_con/gov_holiday_list')?>" class="anchor_cls">
-                <i class="fa fa-flag"></i> Gov. Holiday
-              </a>
-            </li>
-          <?php } ?>
-          -->
-
-          <?php if(in_array(18,$acl)) { ?>
-            <li class="<?= activate_method('leave_transation') ?>">
-              <a href="<?= base_url('entry_system_con/leave_transation')?>" class="anchor_cls">
-                <i class="fa fa-random"></i> Leave Transaction
-              </a>
-            </li>
-          <?php } ?>
-
-          <!--
-          <?php if(in_array(19,$acl)) { ?>
-            <li class="<?= activate_method('maternity_entry') ?>">
-              <a href="<?= base_url('entry_system_con/maternity_entry')?>" class="anchor_cls">
-                <i class="fa fa-female"></i> Maternity Entry
-              </a>
-            </li>
-          <?php } ?>
-          -->
-
-          <?php if(in_array(20,$acl)) { ?>
-            <li class="<?= activate_method('leave_list') ?>">
-              <a href="<?= base_url('entry_system_con/leave_list')?>" class="anchor_cls">
-                <i class="fa fa-list"></i> Leave List
               </a>
             </li>
           <?php } ?>
@@ -216,14 +156,77 @@
       </li>
       <?php } ?>
 
+      <!-- Leave Main Menu -->
+      <?php 
+        if ($u_username === 'payroll' || $u_username === 'admin' || in_array(18, $acl) || in_array(20, $acl)) {
+      ?>
+      <li class="start <?= $is_leave_active ? 'active open' : '' ?>"> 
+        <a href="javascript:;"> 
+          <i class="fa fa-calendar-check-o"></i>
+          <span class="title">Leave</span> 
+          <span class="selected"></span> 
+          <span class="arrow <?= $is_leave_active ? 'open' : '' ?>"></span> 
+        </a>
+        <ul class="sub-menu">
+          <?php if ($u_username === 'payroll') { ?>
+            <li class="<?= ($curr_class === 'leave_con' && $curr_method === 'hr_dashboard') ? 'active' : '' ?>">
+              <a href="<?= base_url('leave_con/hr_dashboard') ?>" class="anchor_cls">
+                <i class="fa fa-dashboard text-info"></i> Leave Dashboard
+              </a>
+            </li>
+            <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_transation') ? 'active' : '' ?>">
+              <a href="<?= base_url('entry_system_con/leave_transation') ?>" class="anchor_cls">
+                <i class="fa fa-plus-circle text-primary"></i> Leave Entry
+              </a>
+            </li>
+            <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_list') ? 'active' : '' ?>">
+              <a href="<?= base_url('entry_system_con/leave_list') ?>" class="anchor_cls">
+                <i class="fa fa-list text-success"></i> Leave List
+              </a>
+            </li>
+          <?php } ?>
+
+          <?php if ($u_username === 'admin') { ?>
+            <li class="<?= ($curr_class === 'leave_con' && $curr_method === 'admin_dashboard') ? 'active' : '' ?>">
+              <a href="<?= base_url('leave_con/admin_dashboard') ?>" class="anchor_cls">
+                <i class="fa fa-shield text-danger"></i> Leave Approval
+              </a>
+            </li>
+            <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_list') ? 'active' : '' ?>">
+              <a href="<?= base_url('entry_system_con/leave_list') ?>" class="anchor_cls">
+                <i class="fa fa-list text-success"></i> Leave List
+              </a>
+            </li>
+          <?php } ?>
+
+          <?php if ($u_username !== 'payroll' && $u_username !== 'admin') { ?>
+            <?php if (in_array(18, $acl)) { ?>
+              <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_transation') ? 'active' : '' ?>">
+                <a href="<?= base_url('entry_system_con/leave_transation') ?>" class="anchor_cls">
+                  <i class="fa fa-plus-circle text-primary"></i> Leave Entry
+                </a>
+              </li>
+            <?php } ?>
+            <?php if (in_array(20, $acl)) { ?>
+              <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_list') ? 'active' : '' ?>">
+                <a href="<?= base_url('entry_system_con/leave_list') ?>" class="anchor_cls">
+                  <i class="fa fa-list text-success"></i> Leave List
+                </a>
+              </li>
+            <?php } ?>
+          <?php } ?>
+        </ul>
+      </li>
+      <?php } ?>
+
       <!-- Attendance -->
-      <?php if(in_array(3,$acl)) { ?>
-      <li class="start <?= activate_class(array('attn_process_con', 'iclock')) ?>">
+      <?php if(in_array(3,$acl) || $u_username === 'admin') { ?>
+      <li class="start <?= activate_class(array('attn_process_con', 'iclock', 'ot_approval_con')) ?>">
         <a href="javascript:;">
           <i class="fa fa-clock-o"></i>
           <span class="title">Attendance</span>
           <span class="selected"></span>
-          <span class="arrow <?= arrow_open(array('attn_process_con', 'iclock')) ?>"></span>
+          <span class="arrow <?= arrow_open(array('attn_process_con', 'iclock', 'ot_approval_con')) ?>"></span>
         </a>
 
         <ul class="sub-menu">
@@ -266,6 +269,13 @@
             <li class="<?= activate_method('grid_window') ?>">
               <a href="<?=base_url('attn_process_con/grid_window')?>" class="anchor_cls">
                 <i class="fa fa-bar-chart"></i> Reports
+              </a>
+            </li>
+          <?php } ?>
+          <?php if ($u_username === 'admin') { ?>
+            <li class="<?= ($curr_class === 'ot_approval_con' && $curr_method === 'admin_dashboard') ? 'active' : '' ?>">
+              <a href="<?= base_url('ot_approval_con/admin_dashboard') ?>" class="anchor_cls">
+                <i class="fa fa-clock-o"></i> Daily OT Approval
               </a>
             </li>
           <?php } ?>

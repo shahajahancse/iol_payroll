@@ -562,6 +562,10 @@ class Ot_approval_model extends CI_Model
         );
 
         $this->db->where('id', $id)->update('pr_daily_ot_approval', $update_data);
+
+        // Synchronize approved OT directly to pr_emp_shift_log so Actual Job Card shows approved OT in OT column
+        $this->sync_approved_ot_to_shift_log($record->emp_id, $record->ot_date, $approved_hours, 'approved');
+
         return array('status' => true, 'message' => 'OT successfully approved for Employee ' . $record->emp_id . '.');
     }
 
@@ -620,6 +624,10 @@ class Ot_approval_model extends CI_Model
         );
 
         $this->db->where('id', $id)->update('pr_daily_ot_approval', $update_data);
+
+        // Synchronize modified approved OT directly to pr_emp_shift_log
+        $this->sync_approved_ot_to_shift_log($record->emp_id, $record->ot_date, $approved_hours, 'approved');
+
         return array('status' => true, 'message' => 'OT hours modified and approved successfully for Employee ' . $record->emp_id . '.');
     }
 
@@ -667,6 +675,10 @@ class Ot_approval_model extends CI_Model
         );
 
         $this->db->where('id', $id)->update('pr_daily_ot_approval', $update_data);
+
+        // Synchronize rejected OT directly to pr_emp_shift_log (zeros out OT)
+        $this->sync_approved_ot_to_shift_log($record->emp_id, $record->ot_date, 0, 'rejected');
+
         return array('status' => true, 'message' => 'OT record rejected successfully for Employee ' . $record->emp_id . '.');
     }
 
@@ -724,6 +736,8 @@ class Ot_approval_model extends CI_Model
                 'audit_history'            => json_encode($audit_trail),
                 'updated_at'               => $now_dt
             ));
+
+            $this->sync_approved_ot_to_shift_log($record->emp_id, $record->ot_date, (float)$record->actual_ot_hours, 'approved');
             $approved_count++;
         }
 
@@ -738,6 +752,54 @@ class Ot_approval_model extends CI_Model
             'message' => "Successfully approved {$approved_count} pending OT records.",
             'count'   => $approved_count
         );
+    }
+
+    /**
+     * Synchronize approved OT hours directly to pr_emp_shift_log so that
+     * Actual Job Card (grid_eot_actual) and attendance logs show the approved OT in the OT column.
+     */
+    public function sync_approved_ot_to_shift_log($emp_id, $ot_date, $approved_hours, $status = 'approved')
+    {
+        $approved_hours = round((float)$approved_hours, 2);
+        if ($status === 'rejected') {
+            $approved_hours = 0;
+        }
+
+        $update = array(
+            'ot'  => $approved_hours,
+            'eot' => 0,
+            'tot' => $approved_hours
+        );
+
+        if ($status === 'approved') {
+            $approval = $this->db->where('emp_id', $emp_id)
+                                 ->where('ot_date', $ot_date)
+                                 ->get('pr_daily_ot_approval')
+                                 ->row();
+
+            if (!empty($approval)) {
+                $cur_shift = $this->db->where('emp_id', $emp_id)
+                                      ->where('shift_log_date', $ot_date)
+                                      ->get('pr_emp_shift_log')
+                                      ->row();
+
+                if (!empty($cur_shift)) {
+                    if (($cur_shift->in_time == '00:00:00' || empty($cur_shift->in_time)) && !empty($approval->in_time) && $approval->in_time != '00:00:00') {
+                        $update['in_time'] = $approval->in_time;
+                    }
+                    if (($cur_shift->out_time == '00:00:00' || empty($cur_shift->out_time)) && !empty($approval->out_time) && $approval->out_time != '00:00:00') {
+                        $update['out_time'] = $approval->out_time;
+                    }
+                    if (strtoupper(trim($cur_shift->present_status)) == 'A' || empty($cur_shift->present_status)) {
+                        $update['present_status'] = 'P';
+                    }
+                }
+            }
+        }
+
+        $this->db->where('emp_id', $emp_id)
+                 ->where('shift_log_date', $ot_date)
+                 ->update('pr_emp_shift_log', $update);
     }
 
     /**

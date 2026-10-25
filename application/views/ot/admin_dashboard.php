@@ -5,146 +5,289 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-/* Modern Admin OT Dashboard Styles */
+/* ========================================================================= */
+/* ADMIN DAILY OT APPROVAL DASHBOARD - MODERN EXECUTIVE THEME                 */
+/* ========================================================================= */
 .page-content .content.ot-dashboard-wrapper {
     padding-top: 85px !important;
-    padding-left: 15px !important;
-    padding-right: 15px !important;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
     padding-bottom: 40px;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: #1e293b;
     background-color: transparent;
     min-height: calc(100vh - 100px);
 }
-.ot-header-box {
+
+/* Header Card */
+.admin-header-card {
     background: #ffffff;
-    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
     padding: 18px 24px;
-    margin-top: 0;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-left: 4px solid #0284c7;
+    flex-wrap: wrap;
+    gap: 16px;
 }
-.ot-header-box h2 {
-    margin: 0 0 5px 0;
+.admin-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.admin-header-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #006ba3 0%, #004d77 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 22px;
+    box-shadow: 0 4px 12px rgba(0, 107, 163, 0.25);
+    flex-shrink: 0;
+}
+.admin-header-text h2 {
+    margin: 0 0 4px 0;
+    font-size: 20px;
     font-weight: 700;
     color: #0f172a;
+    letter-spacing: -0.3px;
 }
-.ot-header-box p {
+.admin-header-text p {
     margin: 0;
     color: #64748b;
     font-size: 13px;
 }
-.ot-badge-admin {
-    background: #0284c7;
-    color: #ffffff;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: inline-block;
+.admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.admin-pill-badge {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-header-refresh {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-header-refresh:hover {
+    background: #f8fafc;
+    border-color: #006ba3;
+    color: #006ba3;
 }
 
 /* Stat Cards */
 .ot-stat-card {
     background: #ffffff;
-    border-radius: 8px;
-    padding: 16px 18px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 14px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
     display: flex;
     align-items: center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    gap: 12px;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
-    border: 2px solid transparent;
+    position: relative;
     user-select: none;
 }
 .ot-stat-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 22px rgba(0,0,0,0.09);
-    border-color: #cbd5e1;
-}
-.ot-stat-card:active {
-    transform: scale(0.98);
-}
-.ot-stat-card.active-filter {
-    border: 2px solid #0284c7 !important;
-    background: #f0f9ff !important;
-    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.18) !important;
-}
-#card_total_eligible.active-filter {
-    border-color: #2563eb !important;
-    background: #eff6ff !important;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.2) !important;
-}
-#card_actual_ot.active-filter {
-    border-color: #0284c7 !important;
-    background: #e0f2fe !important;
-    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.2) !important;
-}
-#card_pending.active-filter {
-    border-color: #d97706 !important;
-    background: #fef3c7 !important;
-    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.2) !important;
-}
-#card_approved.active-filter, #card_approved_hours.active-filter {
-    border-color: #16a34a !important;
-    background: #dcfce7 !important;
-    box-shadow: 0 4px 14px rgba(22, 163, 74, 0.2) !important;
-}
-#card_rejected.active-filter {
-    border-color: #dc2626 !important;
-    background: #fee2e2 !important;
-    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.2) !important;
+    box-shadow: 0 10px 22px -5px rgba(0, 0, 0, 0.08);
 }
 .ot-stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
-    margin-right: 15px;
+    font-size: 19px;
     flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+.ot-stat-card:hover .ot-stat-icon {
+    transform: scale(1.08);
+}
+.ot-stat-info {
+    flex-grow: 1;
+    min-width: 0;
 }
 .ot-stat-info h3 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 700;
-    color: #0f172a;
+    margin: 0 0 2px 0;
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
 }
-.ot-stat-info p {
+.ot-stat-info span, .ot-stat-info p {
     margin: 0;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11px;
     color: #64748b;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Colors */
-.icon-eligible { background: #eff6ff; color: #2563eb; }
-.icon-actual   { background: #e0f2fe; color: #0284c7; }
-.icon-pending  { background: #fef3c7; color: #d97706; }
-.icon-approved { background: #dcfce7; color: #16a34a; }
-.icon-rejected { background: #fee2e2; color: #dc2626; }
-.icon-hours    { background: #f3e8ff; color: #9333ea; }
+/* Stat Card Colors */
+.stat-navy .ot-stat-icon { background: #e0f2fe; color: #006ba3; }
+.stat-navy h3 { color: #0f172a; }
+.stat-navy:hover { border-color: #006ba3; }
 
-/* Filter & Action Panel */
+.stat-actual .ot-stat-icon { background: #eff6ff; color: #0284c7; }
+.stat-actual h3 { color: #006ba3; }
+.stat-actual:hover { border-color: #38bdf8; }
+
+.stat-warning .ot-stat-icon { background: #fef3c7; color: #d97706; }
+.stat-warning h3 { color: #d97706; }
+.stat-warning:hover { border-color: #f59e0b; }
+
+.stat-success .ot-stat-icon { background: #dcfce7; color: #16a34a; }
+.stat-success h3 { color: #16a34a; }
+.stat-success:hover { border-color: #22c55e; }
+
+.stat-danger .ot-stat-icon { background: #fee2e2; color: #dc2626; }
+.stat-danger h3 { color: #dc2626; }
+.stat-danger:hover { border-color: #ef4444; }
+
+.stat-purple .ot-stat-icon { background: #f3e8ff; color: #9333ea; }
+.stat-purple h3 { color: #9333ea; }
+.stat-purple:hover { border-color: #a855f7; }
+
+/* Active Filter States */
+.ot-stat-card.active-filter {
+    border-color: #006ba3 !important;
+    background: #f0f7fb !important;
+    box-shadow: 0 0 0 2px rgba(0, 107, 163, 0.2), 0 8px 18px rgba(0, 107, 163, 0.1) !important;
+}
+#card_total_eligible.active-filter {
+    border-color: #006ba3 !important;
+    background: #f0f7fb !important;
+    box-shadow: 0 0 0 2px rgba(0, 107, 163, 0.25), 0 8px 18px rgba(0, 107, 163, 0.12) !important;
+}
+#card_actual_ot.active-filter {
+    border-color: #006ba3 !important;
+    background: #e0f2fe !important;
+    box-shadow: 0 0 0 2px rgba(0, 107, 163, 0.25), 0 8px 18px rgba(0, 107, 163, 0.12) !important;
+}
+#card_pending.active-filter {
+    border-color: #d97706 !important;
+    background: #fefce8 !important;
+    box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25), 0 8px 18px rgba(217, 119, 6, 0.12) !important;
+}
+#card_approved.active-filter {
+    border-color: #16a34a !important;
+    background: #f0fdf4 !important;
+    box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25), 0 8px 18px rgba(22, 163, 74, 0.12) !important;
+}
+#card_rejected.active-filter {
+    border-color: #dc2626 !important;
+    background: #fef2f2 !important;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25), 0 8px 18px rgba(220, 38, 38, 0.12) !important;
+}
+#card_approved_hours.active-filter {
+    border-color: #9333ea !important;
+    background: #faf5ff !important;
+    box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.25), 0 8px 18px rgba(147, 51, 234, 0.12) !important;
+}
+
+/* Unified Filter & Toolbar Box */
 .ot-filter-box {
     background: #ffffff;
-    border-radius: 8px;
-    padding: 18px 20px;
+    border-radius: 12px;
+    padding: 16px 20px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
     border: 1px solid #e2e8f0;
+}
+.ot-date-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.ot-date-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.ot-date-label {
+    margin: 0;
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ot-date-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ot-date-inputs input[type="date"] {
+    height: 34px;
+    width: 140px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    padding: 4px 8px;
+    box-shadow: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ot-date-inputs input[type="date"]:focus {
+    border-color: #006ba3;
+    box-shadow: 0 0 0 3px rgba(0, 107, 163, 0.15);
+}
+.ot-date-to {
+    font-weight: 700;
+    color: #94a3b8;
+    font-size: 12px;
+    text-transform: lowercase;
+}
+.ot-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.ot-filter-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 14px 0;
 }
 .ot-filter-row {
     display: flex;
@@ -154,7 +297,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 }
 .ot-filter-item {
     flex: 1;
-    min-width: 140px;
+    min-width: 130px;
+}
+.ot-filter-search {
+    flex: 1.6;
+    min-width: 170px;
 }
 .ot-filter-item label {
     display: block;
@@ -162,70 +309,94 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     font-weight: 700;
     text-transform: uppercase;
     color: #475569;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
     letter-spacing: 0.3px;
 }
 .ot-filter-item .form-control {
-    height: 36px;
+    height: 35px;
     font-size: 13px;
     border-radius: 6px;
     border: 1px solid #cbd5e1;
     box-shadow: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
 }
 .ot-filter-item .form-control:focus {
-    border-color: #0284c7;
-    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+    border-color: #006ba3;
+    box-shadow: 0 0 0 3px rgba(0, 107, 163, 0.15);
+}
+.ot-filter-reset {
+    flex: 0 0 auto;
+}
+.btn-filter-reset {
+    height: 35px;
+    padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 /* Control Buttons */
 .btn-ot-primary {
-    background: #0284c7;
+    background: #006ba3;
     color: #ffffff;
-    border: none;
+    border: 1px solid #006ba3;
     font-weight: 600;
     font-size: 13px;
-    padding: 8px 16px;
+    padding: 7px 16px;
     border-radius: 6px;
     transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 107, 163, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 .btn-ot-primary:hover {
-    background: #0369a1;
+    background: #005582;
+    border-color: #005582;
     color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 107, 163, 0.35);
 }
 .btn-ot-success {
     background: #16a34a;
     color: #ffffff;
-    border: none;
+    border: 1px solid #16a34a;
     font-weight: 600;
     font-size: 13px;
-    padding: 8px 16px;
+    padding: 7px 16px;
     border-radius: 6px;
     transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 .btn-ot-success:hover {
     background: #15803d;
+    border-color: #15803d;
     color: #ffffff;
+    box-shadow: 0 4px 10px rgba(22, 163, 74, 0.35);
 }
 .btn-ot-default {
-    background: #f1f5f9;
+    background: #ffffff;
     color: #475569;
     border: 1px solid #cbd5e1;
     font-weight: 600;
-    font-size: 13px;
-    padding: 8px 14px;
+    font-size: 12px;
+    padding: 6px 12px;
     border-radius: 6px;
     transition: all 0.2s;
 }
 .btn-ot-default:hover {
-    background: #e2e8f0;
-    color: #1e293b;
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
 }
 
 /* Table Card */
 .ot-table-box {
     background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
     border: 1px solid #e2e8f0;
     overflow: hidden;
     margin-bottom: 25px;
@@ -236,11 +407,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #fafbfc;
+    background: #ffffff;
+}
+.table-header-indicator {
+    width: 4px;
+    height: 18px;
+    border-radius: 2px;
+    background: #006ba3;
 }
 .ot-table-header h4 {
     margin: 0;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #0f172a;
 }
@@ -274,14 +451,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     user-select: none;
 }
 .ot-table th.sortable:hover {
-    color: #0284c7;
+    color: #006ba3;
 }
 .ot-table td {
-    padding: 11px 10px;
+    padding: 11px 12px;
     vertical-align: middle;
     font-size: 13px;
     border-bottom: 1px solid #f1f5f9;
     color: #334155;
+    white-space: nowrap;
 }
 .ot-table tbody tr:hover {
     background-color: #f8fafc;
@@ -292,13 +470,21 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 /* Status Badges */
 .badge-status {
-    padding: 4px 8px;
+    padding: 4px 10px;
     border-radius: 4px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
     letter-spacing: 0.3px;
+    line-height: 1.2;
+}
+.badge-status i {
+    font-size: 10px;
+    margin: 0;
 }
 .badge-pending {
     background: #fef3c7;
@@ -319,11 +505,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     background: #fef3c7;
     color: #b45309;
     font-size: 10px;
-    padding: 2px 5px;
+    padding: 2px 6px;
     border-radius: 3px;
     font-weight: 700;
     margin-left: 4px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+    line-height: 1.2;
 }
 
 /* Action Buttons inside Table */
@@ -331,7 +521,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     width: 28px;
     height: 28px;
     padding: 0;
-    border-radius: 4px;
+    border-radius: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -351,11 +541,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 }
 .btn-action-modify {
     background: #e0f2fe;
-    color: #0284c7;
+    color: #006ba3;
     border-color: #bae6fd;
 }
 .btn-action-modify:hover {
-    background: #0284c7;
+    background: #006ba3;
     color: #ffffff;
 }
 .btn-action-reject {
@@ -395,9 +585,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #0284c7;
+    background: #006ba3;
     border: 2px solid #ffffff;
-    box-shadow: 0 0 0 2px #0284c7;
+    box-shadow: 0 0 0 2px #006ba3;
 }
 .timeline-content {
     background: #f8fafc;
@@ -420,143 +610,148 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 </style>
 
 <div class="content ot-dashboard-wrapper">
-    <!-- Top Header -->
-    <div class="ot-header-box">
-        <div>
-            <h2><i class="fa fa-clock-o text-primary"></i> Daily Overtime (OT) Approval & Admin Management</h2>
-            <p>Database-driven OT verification, duration modification, and approval workflow for authorized Administrators.</p>
+    <!-- Top Executive Header Card -->
+    <div class="admin-header-card">
+        <div class="admin-header-left">
+            <div class="admin-header-icon">
+                <i class="fa fa-clock-o"></i>
+            </div>
+            <div class="admin-header-text">
+                <h2 style="margin: 0;">Daily Overtime (OT) Approval</h2>
+            </div>
         </div>
-        <div>
-            <span class="ot-badge-admin"><i class="fa fa-shield"></i> Admin Access Exclusively</span>
+        <div class="admin-header-actions">
+            <button type="button" class="btn-header-refresh" onclick="loadDashboardStats(); loadOtList(0);" title="Refresh live statistics">
+                <i class="fa fa-refresh"></i> Refresh
+            </button>
         </div>
     </div>
 
-    <!-- Summary Statistics Cards -->
+    <!-- 6 Real-Time Database Summary Cards -->
     <div class="row">
         <!-- Card 1: Total OT Eligible -->
         <div class="col-md-2 col-sm-4 col-xs-6">
-            <div class="ot-stat-card" id="card_total_eligible" onclick="filterByCard('total_eligible')" title="Click to view all OT Eligible records">
-                <div class="ot-stat-icon icon-eligible">
+            <div class="ot-stat-card stat-navy" id="card_total_eligible" onclick="filterByCard('total_eligible')" title="Total OT Eligible Employees">
+                <div class="ot-stat-icon">
                     <i class="fa fa-users"></i>
                 </div>
                 <div class="ot-stat-info">
                     <h3 id="stat_total_eligible">0</h3>
-                    <p>Total Eligible</p>
+                    <span>Eligible</span>
                 </div>
             </div>
         </div>
 
         <!-- Card 2: Employees with Actual OT -->
         <div class="col-md-2 col-sm-4 col-xs-6">
-            <div class="ot-stat-card" id="card_actual_ot" onclick="filterByCard('actual_ot')" title="Click to view employees with actual OT">
-                <div class="ot-stat-icon icon-actual">
+            <div class="ot-stat-card stat-actual" id="card_actual_ot" onclick="filterByCard('actual_ot')" title="Employees with Actual OT Worked">
+                <div class="ot-stat-icon">
                     <i class="fa fa-clock-o"></i>
                 </div>
                 <div class="ot-stat-info">
                     <h3 id="stat_with_actual_ot">0</h3>
-                    <p>Actual OT Emp</p>
+                    <span>Actual OT</span>
                 </div>
             </div>
         </div>
 
         <!-- Card 3: Pending Approvals -->
         <div class="col-md-2 col-sm-4 col-xs-6">
-            <div class="ot-stat-card" id="card_pending" onclick="filterByCard('pending')" title="Click to filter Pending records">
-                <div class="ot-stat-icon icon-pending">
+            <div class="ot-stat-card stat-warning" id="card_pending" onclick="filterByCard('pending')" title="Pending Approvals">
+                <div class="ot-stat-icon">
                     <i class="fa fa-hourglass-half"></i>
                 </div>
                 <div class="ot-stat-info">
                     <h3 id="stat_pending_count">0</h3>
-                    <p>Pending Approvals</p>
+                    <span>Pending</span>
                 </div>
             </div>
         </div>
 
         <!-- Card 4: Approved OT -->
         <div class="col-md-2 col-sm-4 col-xs-6">
-            <div class="ot-stat-card" id="card_approved" onclick="filterByCard('approved')" title="Click to filter Approved records">
-                <div class="ot-stat-icon icon-approved">
+            <div class="ot-stat-card stat-success" id="card_approved" onclick="filterByCard('approved')" title="Approved Overtime Records">
+                <div class="ot-stat-icon">
                     <i class="fa fa-check-circle"></i>
                 </div>
                 <div class="ot-stat-info">
                     <h3 id="stat_approved_count">0</h3>
-                    <p>Approved Count</p>
+                    <span>Approved</span>
                 </div>
             </div>
         </div>
 
         <!-- Card 5: Rejected OT -->
         <div class="col-md-2 col-sm-4 col-xs-6">
-            <div class="ot-stat-card" id="card_rejected" onclick="filterByCard('rejected')" title="Click to filter Rejected records">
-                <div class="ot-stat-icon icon-rejected">
+            <div class="ot-stat-card stat-danger" id="card_rejected" onclick="filterByCard('rejected')" title="Rejected Overtime Records">
+                <div class="ot-stat-icon">
                     <i class="fa fa-times-circle"></i>
                 </div>
                 <div class="ot-stat-info">
                     <h3 id="stat_rejected_count">0</h3>
-                    <p>Rejected Count</p>
+                    <span>Rejected</span>
                 </div>
             </div>
         </div>
 
         <!-- Card 6: Total Approved OT Hours -->
         <div class="col-md-2 col-sm-4 col-xs-6">
-            <div class="ot-stat-card" id="card_approved_hours" onclick="filterByCard('approved_hours')" title="Click to filter Approved records">
-                <div class="ot-stat-icon icon-hours">
-                    <i class="fa fa-hourglass"></i>
+            <div class="ot-stat-card stat-purple" id="card_approved_hours" onclick="filterByCard('approved_hours')" title="Total Approved OT Hours">
+                <div class="ot-stat-icon">
+                    <i class="fa fa-history"></i>
                 </div>
                 <div class="ot-stat-info">
                     <h3 id="stat_approved_hours">0.00</h3>
-                    <p>Approved Hours</p>
+                    <span>OT Hours</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Date Navigation & Action Bar -->
-    <div class="ot-filter-box" style="margin-bottom: 12px; background: #ffffff;">
-        <div class="row" style="align-items: center;">
-            <div class="col-md-7 col-sm-12">
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                    <label style="margin: 0; font-weight: 700; font-size: 13px; white-space: nowrap; color: #0f172a;">
-                        <i class="fa fa-calendar text-primary"></i> Date Between:
-                    </label>
-                    <div style="display: flex; align-items: center; gap: 5px;">
-                        <input type="date" id="filter_start_date" class="form-control input-sm" style="width: 140px; font-weight: 600;" value="<?= htmlspecialchars($default_date) ?>" onchange="onDateChanged()" title="From Date">
-                        <span style="font-weight: 700; color: #64748b; font-size: 12px;">to</span>
-                        <input type="date" id="filter_end_date" class="form-control input-sm" style="width: 140px; font-weight: 600;" value="<?= htmlspecialchars($default_date) ?>" onchange="onDateChanged()" title="To Date">
-                    </div>
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-ot-default" onclick="changeDateOffset(-1)" title="Previous Day"><i class="fa fa-chevron-left"></i></button>
-                        <button type="button" class="btn btn-ot-default" onclick="changeDateToday()" title="Today">Today</button>
-                        <button type="button" class="btn btn-ot-default" onclick="changeDateOffset(1)" title="Next Day"><i class="fa fa-chevron-right"></i></button>
-                    </div>
-                    <div class="btn-group btn-group-sm" style="margin-left: 2px;">
-                        <button type="button" class="btn btn-ot-default" onclick="setDatePreset('last7')" title="Last 7 Days">7 Days</button>
-                        <button type="button" class="btn btn-ot-default" onclick="setDatePreset('this_month')" title="This Month">This Month</button>
-                    </div>
+    <!-- Unified Date Navigation & Filter Panel -->
+    <div class="ot-filter-box">
+        <!-- Date Navigation & Action Bar -->
+        <div class="ot-date-toolbar">
+            <div class="ot-date-group">
+                <label class="ot-date-label">
+                    <i class="fa fa-calendar" style="color: #006ba3;"></i> Date Range:
+                </label>
+                <div class="ot-date-inputs">
+                    <input type="date" id="filter_start_date" class="form-control" value="<?= htmlspecialchars($default_date) ?>" onchange="onDateChanged()" title="From Date">
+                    <span class="ot-date-to">to</span>
+                    <input type="date" id="filter_end_date" class="form-control" value="<?= htmlspecialchars($default_date) ?>" onchange="onDateChanged()" title="To Date">
+                </div>
+                <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-ot-default" onclick="changeDateOffset(-1)" title="Previous Day"><i class="fa fa-chevron-left"></i></button>
+                    <button type="button" class="btn btn-ot-default" onclick="changeDateToday()" title="Today">Today</button>
+                    <button type="button" class="btn btn-ot-default" onclick="changeDateOffset(1)" title="Next Day"><i class="fa fa-chevron-right"></i></button>
+                </div>
+                <div class="btn-group btn-group-sm" style="margin-left: 2px;">
+                    <button type="button" class="btn btn-ot-default" onclick="setDatePreset('last7')" title="Last 7 Days">7 Days</button>
+                    <button type="button" class="btn btn-ot-default" onclick="setDatePreset('this_month')" title="This Month">This Month</button>
                 </div>
             </div>
-            <div class="col-md-5 col-sm-12 text-right">
+            <div class="ot-action-buttons">
                 <button type="button" class="btn btn-ot-primary" id="btn_generate_ot" onclick="generateDailyOt()">
                     <i class="fa fa-refresh" id="refresh_icon"></i> Generate / Refresh Daily OT List
                 </button>
-                <button type="button" class="btn btn-ot-success" id="btn_bulk_approve" onclick="openBulkApproveModal()" style="display: none; margin-left: 6px;">
+                <button type="button" class="btn btn-ot-success" id="btn_bulk_approve" onclick="openBulkApproveModal()" style="display: none;">
                     <i class="fa fa-check-square-o"></i> Bulk Approve Selected (<span id="bulk_count">0</span>)
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- Multi-criteria Filter Bar -->
-    <div class="ot-filter-box">
+        <div class="ot-filter-divider"></div>
+
+        <!-- Multi-criteria Filter Bar -->
         <div class="ot-filter-row">
-            <div class="ot-filter-item" style="flex: 1.5; min-width: 180px;">
-                <label>Search Employee</label>
-                <input type="text" id="filter_search" class="form-control" placeholder="ID or Name..." onkeyup="debounceSearch()">
+            <div class="ot-filter-item ot-filter-search">
+                <label><i class="fa fa-search" style="color: #64748b;"></i> Search Employee</label>
+                <input type="text" id="filter_search" class="form-control" placeholder="Search by ID or Name..." onkeyup="debounceSearch()">
             </div>
             <div class="ot-filter-item">
                 <label>Department</label>
-                <select id="filter_dept" class="form-control" onchange="loadOtList()">
+                <select id="filter_dept" class="form-control" onchange="loadOtList(0)">
                     <option value="">All Departments</option>
                     <?php foreach ($departments as $d): ?>
                         <option value="<?= $d->dept_id ?>"><?= htmlspecialchars($d->dept_name) ?></option>
@@ -565,7 +760,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
             <div class="ot-filter-item">
                 <label>Section</label>
-                <select id="filter_sec" class="form-control" onchange="loadOtList()">
+                <select id="filter_sec" class="form-control" onchange="loadOtList(0)">
                     <option value="">All Sections</option>
                     <?php foreach ($sections as $s): ?>
                         <option value="<?= $s->id ?>"><?= htmlspecialchars($s->sec_name_en) ?></option>
@@ -574,7 +769,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
             <div class="ot-filter-item">
                 <label>Designation</label>
-                <select id="filter_desig" class="form-control" onchange="loadOtList()">
+                <select id="filter_desig" class="form-control" onchange="loadOtList(0)">
                     <option value="">All Designations</option>
                     <?php foreach ($designations as $dg): ?>
                         <option value="<?= $dg->id ?>"><?= htmlspecialchars($dg->desig_name) ?></option>
@@ -583,7 +778,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
             <div class="ot-filter-item">
                 <label>Shift</label>
-                <select id="filter_shift" class="form-control" onchange="loadOtList()">
+                <select id="filter_shift" class="form-control" onchange="loadOtList(0)">
                     <option value="">All Shifts</option>
                     <?php foreach ($shifts as $sh): ?>
                         <option value="<?= $sh->id ?>"><?= htmlspecialchars($sh->shift_name) ?></option>
@@ -600,8 +795,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                     <option value="actual_ot">With Actual OT (>0)</option>
                 </select>
             </div>
-            <div style="flex: 0 0 auto;">
-                <button type="button" class="btn btn-ot-default" onclick="resetFilters()" title="Reset all filters">
+            <div class="ot-filter-reset">
+                <button type="button" class="btn btn-ot-default btn-filter-reset" onclick="resetFilters()" title="Reset all filters">
                     <i class="fa fa-undo"></i> Reset
                 </button>
             </div>
@@ -647,7 +842,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                         <th class="sortable" onclick="sortTable('actual_ot_hours')" title="Calculated actual OT">Actual OT</th>
                         <th title="Calculated OT Duration">Calc. OT</th>
                         <th class="sortable" onclick="sortTable('approved_ot_hours')" title="Admin approved duration">Approved OT</th>
-                        <th class="sortable" onclick="sortTable('status')">OT Status <i class="fa fa-sort"></i></th>
+                        <th class="sortable" onclick="sortTable('status')" style="white-space: nowrap; text-align: center;">OT Status <i class="fa fa-sort"></i></th>
                         <th>Admin Remarks</th>
                         <th style="text-align: center; width: 120px;">Action</th>
                     </tr>
@@ -749,9 +944,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label style="font-size: 12px; font-weight: 700; color: #0284c7;">Adjusted Approved OT <span class="text-danger">*</span></label>
+                            <label style="font-size: 12px; font-weight: 700; color: #006ba3;">Adjusted Approved OT <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input type="number" step="0.5" min="0" id="mod_approved_hours" class="form-control" style="font-weight: 700; font-size: 15px; color: #0284c7;">
+                                <input type="number" step="0.5" min="0" id="mod_approved_hours" class="form-control" style="font-weight: 700; font-size: 15px; color: #006ba3;">
                                 <span class="input-group-addon">Hrs</span>
                             </div>
                             <small class="text-muted">Must be ≤ Actual OT</small>
@@ -848,7 +1043,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                                 <tr><td style="color: #64748b; padding: 3px 0;">Punch In Time:</td><td id="det_in_time">-</td></tr>
                                 <tr><td style="color: #64748b; padding: 3px 0;">Punch Out Time:</td><td id="det_out_time">-</td></tr>
                                 <tr><td style="color: #64748b; padding: 3px 0;">Regular Hours:</td><td id="det_reg_hours">-</td></tr>
-                                <tr><td style="color: #64748b; padding: 3px 0;">Actual OT Hours:</td><td style="font-weight: 700; color: #0284c7;" id="det_actual_ot">-</td></tr>
+                                <tr><td style="color: #64748b; padding: 3px 0;">Actual OT Hours:</td><td style="font-weight: 700; color: #006ba3;" id="det_actual_ot">-</td></tr>
                                 <tr><td style="color: #64748b; padding: 3px 0;">Approved OT Hours:</td><td style="font-weight: 700; color: #16a34a;" id="det_approved_ot">-</td></tr>
                                 <tr><td style="color: #64748b; padding: 3px 0;">Status:</td><td id="det_status_badge">-</td></tr>
                             </table>
@@ -1119,17 +1314,6 @@ function loadOtList(offset) {
             sort_col: currentSortCol,
             sort_dir: currentSortDir
         },
-            search: search,
-            dept_id: dept,
-            sec_id: sec,
-            desig_id: desig,
-            shift_id: shift,
-            status: status,
-            limit: limit,
-            offset: offset,
-            sort_col: currentSortCol,
-            sort_dir: currentSortDir
-        },
         dataType: "json",
         success: function(res) {
             $('#total_records_badge').text(res.total_rows);
@@ -1191,19 +1375,19 @@ function renderTableRows(records) {
 
         html += '<tr class="' + rowClass + '">';
         html += '<td style="text-align: center;">' + chkBox + '</td>';
-        html += '<td><strong style="color: #0284c7;">' + escapeHtml(row.emp_id) + '</strong></td>';
-        html += '<td><strong>' + escapeHtml(row.emp_name || '-') + '</strong></td>';
-        html += '<td>' + escapeHtml(row.dept_name || '-') + '</td>';
+        html += '<td><strong style="color: #006ba3;">' + escapeHtml(row.emp_id) + '</strong></td>';
+        html += '<td style="white-space: nowrap;"><strong>' + escapeHtml(row.emp_name || '-') + '</strong></td>';
+        html += '<td style="white-space: nowrap;">' + escapeHtml(row.dept_name || '-') + '</td>';
         html += '<td>' + escapeHtml(row.desig_name || '-') + '</td>';
         html += '<td>' + escapeHtml(row.shift_name || '-') + '</td>';
         html += '<td>' + row.ot_date + '</td>';
         html += '<td><span class="label label-default" style="font-size: 11px;">' + (row.in_time || '-') + '</span></td>';
         html += '<td><span class="label label-default" style="font-size: 11px;">' + (row.out_time || '-') + '</span></td>';
         html += '<td>' + parseFloat(row.regular_hours || 8).toFixed(1) + 'h</td>';
-        html += '<td><strong style="color: #0284c7;">' + parseFloat(row.actual_ot_hours || 0).toFixed(1) + 'h</strong></td>';
+        html += '<td><strong style="color: #006ba3;">' + parseFloat(row.actual_ot_hours || 0).toFixed(1) + 'h</strong></td>';
         html += '<td>' + parseFloat(row.calculated_ot_hours || row.actual_ot_hours || 0).toFixed(1) + 'h</td>';
         html += '<td><strong style="color: #16a34a; font-size: 14px;">' + parseFloat(row.approved_ot_hours || 0).toFixed(1) + 'h</strong></td>';
-        html += '<td>' + statusBadge + '</td>';
+        html += '<td style="white-space: nowrap; text-align: center;">' + statusBadge + '</td>';
         html += '<td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="' + escapeHtml(row.admin_remarks || '') + '">' + escapeHtml(row.admin_remarks || '-') + '</td>';
         html += '<td style="text-align: center;">' + actions + '</td>';
         html += '</tr>';
