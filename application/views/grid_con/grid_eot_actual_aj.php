@@ -124,10 +124,15 @@
                                 $att_status = "P";
                                 $att_status_count = "P";
                             }
-                            elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
-                                // Single punch: show P instead of P(Error)
+                            elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('single', 'single punch', 'single_punch', 'single-punch')) && ($row->in_time !='00:00:00' or $row->out_time !='00:00:00')){
+                                // Single punch shift only: show P instead of P(Error)
                                 $att_status = "P";
                                 $att_status_count = "P";
+                            }
+                            elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
+                                // Other shifts: show P(Error) as normal
+                                $att_status = "P(Error)";
+                                $att_status_count = "P(Error)";
                             }
                             elseif($row->present_status == 'P'){
                                 $att_status = "P";

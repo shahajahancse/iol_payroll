@@ -2916,7 +2916,8 @@ class Grid_model extends CI_Model{
 				$data["in_time"][] 		= $rows->in_time;
 				$out_time = $rows->out_time;
 				if($out_time == "00:00:00"){
-					$out_time = "";
+					$is_single_or_nopunch = isset($rows->shift_name) && in_array(strtolower(trim($rows->shift_name)), array('single', 'single punch', 'single_punch', 'no punch', 'nopunch', 'no_punch'));
+					$out_time = $is_single_or_nopunch ? "" : "P(Error)";
 				}
 				$data["out_time"][] 	= $out_time;
 			}
@@ -5544,10 +5545,15 @@ class Grid_model extends CI_Model{
 						$att_status = "P";
 						$att_status_count = "P";
 					}
-					elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
-						// Single punch: show P instead of P(Error)
+					elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('single', 'single punch', 'single_punch', 'single-punch')) && ($row->in_time !='00:00:00' or $row->out_time !='00:00:00')){
+						// Single punch shift only: show P instead of P(Error)
 						$att_status = "P";
 						$att_status_count = "P";
+					}
+					elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
+						// Other shifts: show P(Error) as normal
+						$att_status = "P(Error)";
+						$att_status_count = "P(Error)";
 					}
 					elseif($row->present_status == 'P'){
 						$att_status = "P";
@@ -6076,10 +6082,15 @@ class Grid_model extends CI_Model{
 						$att_status = "P";
 						$att_status_count = "P";
 					}
-					elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
-						// Single punch: show P instead of P(Error)
+					elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('single', 'single punch', 'single_punch', 'single-punch')) && ($row->in_time !='00:00:00' or $row->out_time !='00:00:00')){
+						// Single punch shift only: show P instead of P(Error)
 						$att_status = "P";
 						$att_status_count = "P";
+					}
+					elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
+						// Other shifts: show P(Error) as normal
+						$att_status = "P(Error)";
+						$att_status_count = "P(Error)";
 					}
 					elseif($row->present_status == 'P'){
 						$att_status = "P";
@@ -6359,11 +6370,17 @@ class Grid_model extends CI_Model{
 						$att_status = "P";
 						$att_status_count = "P";
 					}
-					elseif($row3->in_time !='00:00:00' or $row3->out_time !='00:00:00')
+					elseif(isset($row3->shift_name) && in_array(strtolower(trim($row3->shift_name)), array('single', 'single punch', 'single_punch', 'single-punch')) && ($row3->in_time !='00:00:00' or $row3->out_time !='00:00:00'))
 					{
-						// Single punch: show P instead of P(Error)
+						// Single punch shift only: show P instead of P(Error)
 						$att_status = "P";
 						$att_status_count = "P";
+					}
+					elseif($row3->in_time !='00:00:00' or $row3->out_time !='00:00:00')
+					{
+						// Other shifts: show P(Error) as normal
+						$att_status = "P(Error)";
+						$att_status_count = "P(Error)";
 					}
 					else
 					{

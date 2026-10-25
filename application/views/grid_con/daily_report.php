@@ -175,18 +175,28 @@
 					</td>
                 <?php }?>
 
-                <?php if($daily_status==1 || $daily_status== 5 || $daily_status==6 || $daily_status==7 || $daily_status==8){?>
+                <?php if($daily_status==1 || $daily_status== 5 || $daily_status==6 || $daily_status==7 || $daily_status==8){
+					$is_single_or_nopunch = isset($employee['shift_name']) && in_array(strtolower(trim($employee['shift_name'])), array('single', 'single punch', 'single_punch', 'no punch', 'nopunch', 'no_punch'));
+				?>
 					<td style="text-align:center; padding:0 4px">
-						<?php echo (!empty($employee['in_time']) && $employee['in_time'] !='00:00:00') ? date('h:i:s A',strtotime($employee['in_time'])) : ""?>
+						<?php 
+						if (!empty($employee['in_time']) && $employee['in_time'] !='00:00:00') {
+							echo date('h:i:s A',strtotime($employee['in_time']));
+						} else {
+							echo $is_single_or_nopunch ? "" : "P(ERROR)";
+						}
+						?>
 					</td>
 					<td style="text-align:center; padding:0 4px">
 					<?php
-					//dd($daily_status);
-					if ($daily_status==5 &&  $employee['ot']>=2) {
-						//dd($employee['ot']);
-						$text= (!empty($employee['out_time']) && $employee['out_time'] !='00:00:00')? date('7:i:s A',strtotime($employee['out_time'])) : "";
-					}else{
-						$text= (!empty($employee['out_time']) && $employee['out_time'] !='00:00:00')? date('h:i:s A',strtotime($employee['out_time'])) : "";
+					if (!empty($employee['out_time']) && $employee['out_time'] !='00:00:00') {
+						if ($daily_status==5 && $employee['ot']>=2) {
+							$text = date('7:i:s A',strtotime($employee['out_time']));
+						} else {
+							$text = date('h:i:s A',strtotime($employee['out_time']));
+						}
+					} else {
+						$text = $is_single_or_nopunch ? "" : "P(ERROR)";
 					}
 					?>
 

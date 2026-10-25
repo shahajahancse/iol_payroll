@@ -261,7 +261,7 @@ for($i = 0 ; $i < $emp_id_count; $i++)
 		}
 		elseif($values[$emp_id]["att_status"][$k] == "P(Error)")
 		{
-			$present_count++;
+			$perror_count++;
 		}
 		elseif($values[$emp_id]["att_status"][$k] == "Work Off")
 		{

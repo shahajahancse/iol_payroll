@@ -162,7 +162,7 @@ for($i = 0; $i<$count;$i++){
 			$leave_count++;
 		}
 		elseif($values[$emp_id]["att_status"][$k] == "P(Error)"){
-			$present_count++;
+			$perror_count++;
 		}
 		elseif($values[$emp_id]["att_status"][$k] == "Weekend"){
 			$wk_off_count++;
