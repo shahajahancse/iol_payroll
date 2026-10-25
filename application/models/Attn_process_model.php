@@ -1104,7 +1104,7 @@ class Attn_process_model extends CI_Model{
 
     function leave_chech($process_date, $emp_id)
     {
-        $this->db->where("((leave_start <= '$process_date' AND leave_end >= '$process_date') OR start_date = '$process_date')");
+        $this->db->where("(leave_start <= '$process_date' AND leave_end >= '$process_date')");
         $this->db->where("emp_id", $emp_id);
         $this->db->where("(status = 'approved' OR status IS NULL)");
         $query = $this->db->get("pr_leave_trans");
