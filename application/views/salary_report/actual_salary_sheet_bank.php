@@ -88,6 +88,7 @@
 	$grand_total_tax_deduct		    = 0;
 	$grand_total_wages_with_stamp	= 0;
 	$grand_total_sum				= 0;
+	$grand_total_arrear_amount		= 0;
 
 	for ($counter = 1; $counter <= $page; $counter++) { ?>
 		<table align="center" height="auto" class="sal" border="1" cellspacing="0" cellpadding="0" style="font-size:12px; width:auto;">
@@ -199,6 +200,7 @@
 			$total_wages_with_stamp	 = 0;
 			$total_sum				 = 0;
 			$in_total_sum			 = 0;
+			$total_arrear_amount	 = 0;
 
 			for ($p = 0; $p <= $per_page_row; $p++) {
 				echo "<tr height='80' style='text-align:center;' >";
@@ -344,8 +346,11 @@
 				echo $att_bonus;
 				echo "</td>";
 
+				$arrear_amount 				= isset($value[$k]->arrear_amount) ? (float)$value[$k]->arrear_amount : 0;
+				$total_arrear_amount 		= $total_arrear_amount + $arrear_amount;
+				$grand_total_arrear_amount 	= $grand_total_arrear_amount + $arrear_amount;
 				echo "<td>";
-				echo '0';
+				echo $arrear_amount;
 				echo "</td>";
 
 				$net_pay 				= $value[$k]->net_pay;
@@ -420,7 +425,7 @@
 				<td align="center" colspan="1"></td>
 				<td align="center" style="font-size:11px;"><strong><?php echo $english_format_number = number_format($total_ot_eot_amount); ?></strong></td>
 				<td align="center" style="font-size:11px;"><strong><?php echo $english_format_number = number_format($total_att_bonus); ?></strong></td>
-				<td align="center" style="font-size:11px;">0</td>
+				<td align="center" style="font-size:11px;"><strong><?php echo $english_format_number = number_format($total_arrear_amount); ?></strong></td>
 				<td align="center" style="font-size:11px;"><strong><?php echo $english_format_number = number_format($total_salary); ?></strong></td>
 				<td align="center" style="font-size:11px;"><strong><?php echo $english_format_number = number_format($total_payable_salary); ?></strong></td>
 				<td align="center" style="font-size:11px;"><strong><?php echo $english_format_number = number_format($total_transport_deduct); ?></strong></td>
@@ -444,7 +449,7 @@
 					<td align="center" colspan="1"></td>
 					<td align="center" style="font-size:10px;"><strong><?php echo $english_format_number = number_format($grand_total_ot_eot_amount); ?></strong></td>
 					<td align="center" style="font-size:10px;"><strong><?php echo $english_format_number = number_format($grand_total_att_bonus); ?></strong></td>
-					<td align="center" colspan="1">0</td>
+					<td align="center" style="font-size:10px;"><strong><?php echo $english_format_number = number_format($grand_total_arrear_amount); ?></strong></td>
 					<td align="center" style="font-size:10px;"><strong><?php echo $english_format_number = number_format($grand_total_salary); ?></strong></td>
 					<td align="center" style="font-size:10px;"><strong><?php echo $english_format_number = number_format($grand_total_payable_salary); ?></strong></td>
 					<td align="center" style="font-size:10px;"><strong><?php echo $english_format_number = number_format($grand_total_transport_deduct); ?></strong></td>

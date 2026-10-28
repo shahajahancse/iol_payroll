@@ -97,13 +97,20 @@ for($i=0; $i<$count; $i++ )
 	echo "</td>";
 		
 	echo "<td width='80' align='center'>";
-	echo $values["in_time"][$i];
+	if($values["in_time"][$i] == '00:00:00' || $values["status"][$i] == 'OD')
+	{
+		echo "";
+	}
+	else
+	{
+		echo $values["in_time"][$i];
+	}
 	echo "</td>";
 		
 	echo "<td width='80' align='center'>";
-	if($values["out_time"][$i]=='')
+	if($values["out_time"][$i] == '' || $values["out_time"][$i] == '00:00:00' || $values["status"][$i] == 'OD')
 	{
-		echo "";//"P(Error)";
+		echo "";
 	}
 	else
 	{

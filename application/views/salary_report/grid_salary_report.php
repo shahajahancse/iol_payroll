@@ -173,29 +173,29 @@
                             */ ?>
 
                             <?php if(in_array(184,$acl)) { ?>
-                            <button class="btn input-sm sbtn" onclick="actual_salary_sheet()">Actual Salary Sheet</button>
+                            <button class="btn input-sm sbtn" onclick="actual_salary_sheet()">Salary Sheet</button>
                             <?php } ?>
                             <?php if(in_array(185,$acl)) { ?>
-                            <button class="btn input-sm sbtn" onclick="actual_pay_slip()">Actual Pay Slip </button>
+                            <button class="btn input-sm sbtn" onclick="actual_pay_slip()">Pay Slip</button>
                             <?php } ?>
                             <?php if(in_array(186,$acl)) { ?>
-                            <button class="btn input-sm sbtn" onclick="actual_salary_summary()">Actual Salary Summary</button>
+                            <button class="btn input-sm sbtn" onclick="actual_salary_summary()">Salary Summary</button>
                             <?php } ?>
                             <?php if(in_array(187,$acl)) { ?>
-                            <button class="btn input-sm sbtn" onclick="actual_sec_sal_summary()">Actual Sec Salary Summary</button>
+                            <button class="btn input-sm sbtn" onclick="actual_sec_sal_summary()">Sec Salary Summary</button>
                             <?php } ?>
 
                             <?php if(in_array(188,$acl)) { ?>
-                            <button class="btn input-sm sbtn" onclick="actual_salary_sheet_bank()">Actual Salary Bank</button>
+                            <button class="btn input-sm sbtn" onclick="actual_salary_sheet_bank()">Salary Bank</button>
                             <?php } ?>
                             <?php if(in_array(189,$acl)) { ?>
-                            <button class="btn input-sm sbtn" onclick="actual_eot_sheet()">Actual EOT Sheet</button>
+                            <button class="btn input-sm sbtn" onclick="actual_eot_sheet()">EOT Sheet</button>
                             <?php } ?>
                             <?php if(in_array(190,$acl)) { ?>
-                            <button class="btn input-sm sbtn" onclick="actual_eot_summary()">Actual EOT Summary</button>
+                            <button class="btn input-sm sbtn" onclick="actual_eot_summary()">EOT Summary</button>
                             <?php } ?>
                             <?php if(in_array(191,$acl)) { ?>
-                            <button class="btn input-sm sbtn" onclick="actual_eot_sheet_bank()">Actual EOT Bank</button>
+                            <button class="btn input-sm sbtn" onclick="actual_eot_sheet_bank()">EOT Bank</button>
                             <?php } ?>
 
                             <?php /*

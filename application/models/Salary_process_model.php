@@ -42,10 +42,10 @@ class Salary_process_model extends CI_Model{
 
 		$prev_month = date("Y-m-d",strtotime("-1 month",strtotime($start_date)));
 		$pvm = $this->db->where('block_month',$prev_month)->where('unit_id',$unit_id)->get('pay_salary_block')->num_rows();
-		if($pvm < 1  && $unit_id != 4)
-		{
-			return "Please Finally Processed Previous Month..";
-		}
+		// if($pvm < 1  && $unit_id != 4)
+		// {
+		// 	return "Please Finally Processed Previous Month..";
+		// }
 
 		$dddd=implode(',', $grid_emp_id);
 		$query = $this->get_emp_info($dddd, $unit_id);
@@ -621,9 +621,25 @@ class Salary_process_model extends CI_Model{
 					$data_com["festival_bonus"] = 0;
 					//***************************End of Festival bonus***********************//
 
+					// Arrear Salary Integration
+					$arrear_amount = 0;
+					if ($this->db->table_exists('employee_arrear_salaries')) {
+						$arr_q = $this->db->select_sum('amount')
+							->where('emp_id', $rows->emp_id)
+							->where("(payment_month = '$salary_month' OR payment_month = '" . substr($salary_month, 0, 7) . "')")
+							->where('status', 'Approved')
+							->get('employee_arrear_salaries')
+							->row();
+						if ($arr_q && !empty($arr_q->amount)) {
+							$arrear_amount = round((float)$arr_q->amount, 2);
+						}
+					}
+					$data["arrear_amount"]     = $arrear_amount;
+					$data_com["arrear_amount"] = $arrear_amount;
+
 					// net_pay NON COMPLIENCE and COMPLIENCE
-					$data["net_pay"]  = $gross_sal + $att_bouns + $ot_amount - $total_deduction;
-					$data_com["net_pay"] = $gross_sal_com + $att_bouns + $ot_amount - $total_deduction_com ;//Zuel 140420
+					$data["net_pay"]     = $gross_sal + $att_bouns + $ot_amount + $arrear_amount - $total_deduction;
+					$data_com["net_pay"] = $gross_sal_com + $att_bouns + $ot_amount + $arrear_amount - $total_deduction_com ;//Zuel 140420
 
 
 					// dd($data_com);

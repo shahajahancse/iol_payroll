@@ -310,11 +310,19 @@ class Job_card_model extends CI_Model{
 			$end_date = $grid_seconddate;
 		}
 
-		$this->db->select();
-		$this->db->where("emp_id",$emp_id);
-		$this->db->where("shift_log_date BETWEEN '$start_date' AND '$end_date' ");
-		$this->db->order_by("shift_log_date");
-		$query = $this->db->get("pr_emp_shift_log")->result();
+		$this->db->select('
+						pr_emp_shift_log.*,
+						COALESCE(NULLIF(pr_emp_shift_log.remarks, ""), CONCAT_WS(": ", reg.reason_type, NULLIF(reg.remarks, ""))) as remarks,
+						GREATEST(COALESCE(pr_emp_shift_log.is_waived, 0), COALESCE(reg.waive_deduction, 0)) as is_waived,
+						reg.reason_type as reg_reason,
+						reg.remarks as reg_remarks
+					');
+		$this->db->from('pr_emp_shift_log');
+		$this->db->join('pr_attn_regularization reg', 'reg.emp_id = pr_emp_shift_log.emp_id AND reg.att_date = pr_emp_shift_log.shift_log_date', 'left');
+		$this->db->where("pr_emp_shift_log.emp_id", $emp_id);
+		$this->db->where("pr_emp_shift_log.shift_log_date BETWEEN '$start_date' AND '$end_date' ");
+		$this->db->order_by("pr_emp_shift_log.shift_log_date");
+		$query = $this->db->get()->result();
 
 		$leaves = $this->leave_per_emp($start_date, $end_date, $emp_id);
 		$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
@@ -347,6 +355,7 @@ class Job_card_model extends CI_Model{
 		}
 
 		// Synchronize Approved Outside Duty (OD)
+		$od_map = array();
 		if ($this->db->table_exists('pr_emp_od_dates')) {
 			$od_rows = $this->db->select('od_date')
 				->where('emp_id', $emp_id)
@@ -356,18 +365,24 @@ class Job_card_model extends CI_Model{
 				->get('pr_emp_od_dates')
 				->result();
 			if (!empty($od_rows)) {
-				$od_map = array();
 				foreach ($od_rows as $odr) {
 					$od_map[$odr->od_date] = true;
 				}
-				foreach ($query as $row) {
-					if (isset($od_map[$row->shift_log_date])) {
-						if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
-							$row->present_status = 'OD';
-							$row->late_status    = 0;
-							$row->deduction_hour = 0;
-						}
-					}
+			}
+		}
+
+		foreach ($query as $row) {
+			if (isset($od_map[$row->shift_log_date]) || $row->present_status == 'OD') {
+				if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+					$row->present_status = 'OD';
+					$row->in_time        = '00:00:00';
+					$row->out_time       = '00:00:00';
+					$row->ot             = 0;
+					$row->com_ot         = 0;
+					$row->eot            = 0;
+					$row->com_eot        = 0;
+					$row->late_status    = 0;
+					$row->deduction_hour = 0;
 				}
 			}
 		}
@@ -517,15 +532,17 @@ class Job_card_model extends CI_Model{
 						pr_emp_shift_log.present_status,
 						pr_emp_shift_log.deduction_hour,
 						pr_emp_shift_log.modify_eot,
-						pr_emp_shift_log.remarks,
-						pr_emp_shift_log.is_waived,
+						COALESCE(NULLIF(pr_emp_shift_log.remarks, ""), CONCAT_WS(": ", reg.reason_type, NULLIF(reg.remarks, ""))) as remarks,
+						GREATEST(COALESCE(pr_emp_shift_log.is_waived, 0), COALESCE(reg.waive_deduction, 0)) as is_waived,
+						reg.reason_type as reg_reason,
+						reg.remarks as reg_remarks,
 						pr_emp_shift_schedule.sh_type as shift_name
 					');
 
 		$this->db->from('pr_emp_shift_log');
-		$this->db->from('pr_emp_shift_schedule');
+		$this->db->join('pr_emp_shift_schedule', 'pr_emp_shift_schedule.id = pr_emp_shift_log.schedule_id', 'left');
+		$this->db->join('pr_attn_regularization reg', 'reg.emp_id = pr_emp_shift_log.emp_id AND reg.att_date = pr_emp_shift_log.shift_log_date', 'left');
 		$this->db->where('pr_emp_shift_log.emp_id', $emp_id);
-		$this->db->where('pr_emp_shift_schedule.id = pr_emp_shift_log.schedule_id');
 		$this->db->where("pr_emp_shift_log.shift_log_date >=", $start_date);
 		$this->db->where("pr_emp_shift_log.shift_log_date <=", $end_date);
 		$this->db->order_by("pr_emp_shift_log.shift_log_date");
@@ -564,6 +581,7 @@ class Job_card_model extends CI_Model{
 		}
 
 		// Synchronize Approved Outside Duty (OD)
+		$od_map = array();
 		if ($this->db->table_exists('pr_emp_od_dates')) {
 			$od_rows = $this->db->select('od_date')
 				->where('emp_id', $emp_id)
@@ -573,18 +591,24 @@ class Job_card_model extends CI_Model{
 				->get('pr_emp_od_dates')
 				->result();
 			if (!empty($od_rows)) {
-				$od_map = array();
 				foreach ($od_rows as $odr) {
 					$od_map[$odr->od_date] = true;
 				}
-				foreach ($query as $row) {
-					if (isset($od_map[$row->shift_log_date])) {
-						if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
-							$row->present_status = 'OD';
-							$row->late_status    = 0;
-							$row->deduction_hour = 0;
-						}
-					}
+			}
+		}
+
+		foreach ($query as $row) {
+			if (isset($od_map[$row->shift_log_date]) || $row->present_status == 'OD') {
+				if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+					$row->present_status = 'OD';
+					$row->in_time        = '00:00:00';
+					$row->out_time       = '00:00:00';
+					$row->ot             = 0;
+					$row->com_ot         = 0;
+					$row->eot            = 0;
+					$row->com_eot        = 0;
+					$row->late_status    = 0;
+					$row->deduction_hour = 0;
 				}
 			}
 		}

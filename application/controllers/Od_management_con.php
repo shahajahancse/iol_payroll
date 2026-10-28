@@ -36,11 +36,11 @@ class Od_management_con extends CI_Controller
     {
         $user = isset($this->data['user_data']) ? $this->data['user_data'] : null;
         if ($user && !empty($user->id_number)) {
-            return strtolower(trim($user->id_number));
+            return strtolower(trim((string)$user->id_number));
         }
         $session_username = $this->session->userdata('username');
         if (!empty($session_username)) {
-            return strtolower(trim($session_username));
+            return strtolower(trim((string)$session_username));
         }
         return '';
     }
@@ -52,10 +52,27 @@ class Od_management_con extends CI_Controller
     {
         $uname = $this->get_current_username();
         $user  = isset($this->data['user_data']) ? $this->data['user_data'] : null;
-        if ($uname === 'admin' || ($user && strtolower(trim($user->level)) === 'all')) {
+        if ($uname === 'admin' || ($user && !empty($user->level) && strtolower(trim((string)$user->level)) === 'all')) {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Determine if current user is HR (payroll)
+     */
+    public function is_hr()
+    {
+        $uname = $this->get_current_username();
+        return ($uname === 'payroll');
+    }
+
+    /**
+     * Determine if current user is HR or Admin
+     */
+    public function is_hr_or_admin()
+    {
+        return ($this->is_admin() || $this->is_hr());
     }
 
     /**
@@ -71,28 +88,59 @@ class Od_management_con extends CI_Controller
     }
 
     /**
-     * Default Index
+     * Single Page Outside Duty (OD) Management Hub
      */
-    public function index()
+    public function index($tab = 'list')
     {
-        redirect('od_management_con/dashboard');
+        $this->manage($tab);
     }
 
     /**
-     * OD Executive Dashboard
+     * Unified OD Management Portal
      */
-    public function dashboard()
+    public function manage($tab = 'list')
     {
         $unit_id = $this->get_scoped_unit_id();
-        $this->data['title'] = 'Outside Duty (OD) Management Dashboard';
+        $this->data['title'] = 'Outside Duty (OD) Management';
         $this->data['unit_id'] = $unit_id;
         $this->data['is_admin'] = $this->is_admin();
         $this->data['units'] = $this->Od_management_model->get_units();
         $this->data['departments'] = $this->Od_management_model->get_departments();
+        $this->data['sections'] = $this->Od_management_model->get_sections();
+        $this->data['designations'] = $this->Od_management_model->get_designations();
+        $this->data['od_purposes'] = $this->get_od_purposes();
         $this->data['stats'] = $this->Od_management_model->get_dashboard_stats($unit_id);
 
-        $this->data['subview'] = 'od/dashboard';
+        $active_tab = $this->input->get('tab');
+        if (empty($active_tab)) {
+            $active_tab = $tab;
+        }
+        $this->data['active_tab'] = $active_tab;
+        $this->data['is_edit']    = false;
+        $this->data['od']         = null;
+        $this->data['employee']   = null;
+
+        $edit_id = (int)$this->input->get('edit_id');
+        if ($edit_id > 0) {
+            $od = $this->Od_management_model->get_od_by_id($edit_id);
+            if ($od) {
+                $this->data['is_edit']    = true;
+                $this->data['od']         = $od;
+                $this->data['employee']   = $this->Od_management_model->get_employee_info($od->emp_id);
+                $this->data['active_tab'] = 'assign';
+            }
+        }
+
+        $this->data['subview'] = 'od/manage';
         $this->load->view('layout/template', $this->data);
+    }
+
+    /**
+     * OD Executive Dashboard (Redirects to single page hub)
+     */
+    public function dashboard()
+    {
+        redirect('od');
     }
 
     /**
@@ -114,24 +162,12 @@ class Od_management_con extends CI_Controller
      */
     public function create()
     {
-        $unit_id = $this->get_scoped_unit_id();
-
         if ($this->input->method() === 'post') {
             $this->save_assignment(0);
             return;
         }
 
-        $this->data['title'] = 'Assign Outside Duty (OD)';
-        $this->data['unit_id'] = $unit_id;
-        $this->data['is_admin'] = $this->is_admin();
-        $this->data['units'] = $this->Od_management_model->get_units();
-        $this->data['departments'] = $this->Od_management_model->get_departments();
-        $this->data['sections'] = $this->Od_management_model->get_sections();
-        $this->data['designations'] = $this->Od_management_model->get_designations();
-        $this->data['od_purposes'] = $this->get_od_purposes();
-
-        $this->data['subview'] = 'od/assignment_form';
-        $this->load->view('layout/template', $this->data);
+        $this->manage('assign');
     }
 
     /**
@@ -140,14 +176,7 @@ class Od_management_con extends CI_Controller
     public function edit($id = null)
     {
         if (empty($id)) {
-            redirect('od_management_con/list');
-            return;
-        }
-
-        $od = $this->Od_management_model->get_od_by_id($id);
-        if (!$od) {
-            $this->session->set_flashdata('error', 'OD Assignment not found.');
-            redirect('od_management_con/list');
+            redirect('od');
             return;
         }
 
@@ -156,19 +185,30 @@ class Od_management_con extends CI_Controller
             return;
         }
 
+        $od = $this->Od_management_model->get_od_by_id($id);
+        if (!$od) {
+            $this->session->set_flashdata('error', 'OD Assignment not found.');
+            redirect('od');
+            return;
+        }
+
         $unit_id = $this->get_scoped_unit_id();
-        $this->data['title'] = 'Edit Outside Duty (OD) Assignment #' . $id;
+        $this->data['title'] = 'Edit Outside Duty (OD) #' . $id;
         $this->data['unit_id'] = $unit_id;
         $this->data['is_admin'] = $this->is_admin();
-        $this->data['od'] = $od;
-        $this->data['employee'] = $this->Od_management_model->get_employee_info($od->emp_id);
         $this->data['units'] = $this->Od_management_model->get_units();
         $this->data['departments'] = $this->Od_management_model->get_departments();
         $this->data['sections'] = $this->Od_management_model->get_sections();
         $this->data['designations'] = $this->Od_management_model->get_designations();
         $this->data['od_purposes'] = $this->get_od_purposes();
+        $this->data['stats'] = $this->Od_management_model->get_dashboard_stats($unit_id);
 
-        $this->data['subview'] = 'od/assignment_form';
+        $this->data['active_tab'] = 'assign';
+        $this->data['is_edit']    = true;
+        $this->data['od']         = $od;
+        $this->data['employee']   = $this->Od_management_model->get_employee_info($od->emp_id);
+
+        $this->data['subview'] = 'od/manage';
         $this->load->view('layout/template', $this->data);
     }
 
@@ -177,18 +217,15 @@ class Od_management_con extends CI_Controller
      */
     private function save_assignment($id = 0)
     {
-        $emp_id          = trim($this->input->post('emp_id'));
-        $assignment_mode = trim($this->input->post('assignment_mode')); // 'range' or 'individual'
-        $start_date      = trim($this->input->post('start_date'));
-        $end_date        = trim($this->input->post('end_date'));
-        $custom_dates    = $this->input->post('custom_dates'); // array or comma-separated
-        $purpose         = trim($this->input->post('purpose'));
-        $location        = trim($this->input->post('location'));
-        $work_desc       = trim($this->input->post('work_description'));
-        $departure_time  = trim($this->input->post('departure_time'));
-        $return_time     = trim($this->input->post('return_time'));
-        $remarks         = trim($this->input->post('remarks'));
-        $approval_status = trim($this->input->post('status')); // 'pending' or 'approved'
+        $emp_id          = trim((string)$this->input->post('emp_id'));
+        $assignment_mode = trim((string)($this->input->post('assignment_mode') ?: 'range'));
+        $start_date      = trim((string)$this->input->post('start_date'));
+        $end_date        = trim((string)$this->input->post('end_date'));
+        $custom_dates    = $this->input->post('custom_dates');
+        $purpose         = trim((string)$this->input->post('purpose'));
+        $remarks         = trim((string)$this->input->post('remarks'));
+        $location        = trim((string)$this->input->post('location'));
+        $work_desc       = trim((string)$this->input->post('work_description'));
 
         if (empty($emp_id)) {
             $this->send_json_response(false, 'Please select an employee.');
@@ -196,17 +233,7 @@ class Od_management_con extends CI_Controller
         }
 
         if (empty($purpose)) {
-            $this->send_json_response(false, 'Please select or enter the OD purpose.');
-            return;
-        }
-
-        if (empty($location)) {
-            $this->send_json_response(false, 'Please enter outside duty location.');
-            return;
-        }
-
-        if (empty($work_desc)) {
-            $this->send_json_response(false, 'Please enter official work description.');
+            $this->send_json_response(false, 'Please enter the OD purpose.');
             return;
         }
 
@@ -276,12 +303,9 @@ class Od_management_con extends CI_Controller
             return;
         }
 
-        // Determine initial status:
-        // Admin or authorized user can directly create as 'approved' if chosen, otherwise 'pending'
-        $status = 'pending';
-        if ($this->is_admin() && $approval_status === 'approved') {
-            $status = 'approved';
-        }
+        // No approval process needed for OD:
+        // Entry from HR (user = "payroll" || "Payroll") or Admin immediately sets OD status as approved
+        $status = 'approved';
 
         $username = $this->get_current_username();
         $user_id  = isset($this->data['user_data']->id) ? $this->data['user_data']->id : 1;
@@ -293,11 +317,13 @@ class Od_management_con extends CI_Controller
             'start_date'       => $start_date,
             'end_date'         => $end_date,
             'purpose'          => $purpose,
-            'location'         => $location,
-            'work_description' => $work_desc,
-            'departure_time'   => !empty($departure_time) ? $departure_time : null,
-            'return_time'      => !empty($return_time) ? $return_time : null,
+            'location'         => !empty($location) ? $location : null,
+            'work_description' => !empty($work_desc) ? $work_desc : null,
+            'departure_time'   => null,
+            'return_time'      => null,
             'status'           => $status,
+            'approved_by'      => $username,
+            'approved_at'      => date('Y-m-d H:i:s'),
             'remarks'          => $remarks
         );
 
@@ -305,7 +331,7 @@ class Od_management_con extends CI_Controller
             $updated = $this->Od_management_model->update_assignment($id, $payload, $dates_array, $username);
             if ($updated) {
                 log_activity('OD Assignment Updated', "Updated OD #{$id} for emp {$emp_id}", $user_id);
-                $this->send_json_response(true, 'OD Assignment updated successfully.', array('id' => $id));
+                $this->send_json_response(true, 'OD Assignment updated successfully and attendance synced.', array('id' => $id));
             } else {
                 $this->send_json_response(false, 'Failed to update OD assignment. Please try again.');
             }
@@ -313,7 +339,7 @@ class Od_management_con extends CI_Controller
             $od_id = $this->Od_management_model->create_assignment($payload, $dates_array, $username);
             if ($od_id) {
                 log_activity('OD Assignment Created', "Created OD #{$od_id} for emp {$emp_id}", $user_id);
-                $msg = ($status === 'approved') ? 'OD Assignment created and approved successfully!' : 'OD Assignment submitted successfully (Pending Approval).';
+                $msg = 'OD Assignment saved successfully! Status is set to OD and counted as Present.';
                 $this->send_json_response(true, $msg, array('id' => $od_id));
             } else {
                 $this->send_json_response(false, 'Failed to create OD assignment. Please try again.');
@@ -326,16 +352,7 @@ class Od_management_con extends CI_Controller
      */
     public function list()
     {
-        $unit_id = $this->get_scoped_unit_id();
-        $this->data['title'] = 'Outside Duty (OD) Assignments List';
-        $this->data['unit_id'] = $unit_id;
-        $this->data['is_admin'] = $this->is_admin();
-        $this->data['units'] = $this->Od_management_model->get_units();
-        $this->data['departments'] = $this->Od_management_model->get_departments();
-        $this->data['od_purposes'] = $this->get_od_purposes();
-
-        $this->data['subview'] = 'od/od_list';
-        $this->load->view('layout/template', $this->data);
+        $this->manage('list');
     }
 
     /**
@@ -354,11 +371,11 @@ class Od_management_con extends CI_Controller
         $filters = array(
             'unit_id'   => $unit_id,
             'dept_id'   => $this->input->get_post('dept_id'),
-            'emp_id'    => trim($this->input->get_post('emp_id')),
-            'status'    => trim($this->input->get_post('status')),
-            'purpose'   => trim($this->input->get_post('purpose')),
-            'from_date' => trim($this->input->get_post('from_date')),
-            'to_date'   => trim($this->input->get_post('to_date'))
+            'emp_id'    => trim((string)$this->input->get_post('emp_id')),
+            'status'    => trim((string)$this->input->get_post('status')),
+            'purpose'   => trim((string)$this->input->get_post('purpose')),
+            'from_date' => trim((string)$this->input->get_post('from_date')),
+            'to_date'   => trim((string)$this->input->get_post('to_date'))
         );
 
         $result = $this->Od_management_model->get_od_list($filters, $limit, $offset);
@@ -395,7 +412,7 @@ class Od_management_con extends CI_Controller
     public function approve_ajax()
     {
         $id      = (int)$this->input->post('id');
-        $remarks = trim($this->input->post('remarks'));
+        $remarks = trim((string)$this->input->post('remarks'));
 
         if (empty($id)) {
             $this->send_json_response(false, 'Invalid OD assignment ID.');
@@ -446,7 +463,7 @@ class Od_management_con extends CI_Controller
     public function reject_ajax()
     {
         $id     = (int)$this->input->post('id');
-        $reason = trim($this->input->post('reason'));
+        $reason = trim((string)$this->input->post('reason'));
 
         if (empty($id)) {
             $this->send_json_response(false, 'Invalid OD assignment ID.');
@@ -476,7 +493,7 @@ class Od_management_con extends CI_Controller
     public function cancel_ajax()
     {
         $id     = (int)$this->input->post('id');
-        $reason = trim($this->input->post('reason'));
+        $reason = trim((string)$this->input->post('reason'));
 
         if (empty($id)) {
             $this->send_json_response(false, 'Invalid OD assignment ID.');
@@ -524,7 +541,7 @@ class Od_management_con extends CI_Controller
      */
     public function employee_search_ajax()
     {
-        $term    = trim($this->input->get_post('q') ?: $this->input->get_post('term'));
+        $term    = trim((string)($this->input->get_post('q') ?: $this->input->get_post('term')));
         $unit_id = $this->input->get_post('unit_id') ?: $this->get_scoped_unit_id();
         $dept_id = $this->input->get_post('dept_id');
         $sec_id  = $this->input->get_post('sec_id');
@@ -540,7 +557,7 @@ class Od_management_con extends CI_Controller
      */
     public function employee_info_ajax($emp_id = '')
     {
-        $emp_id = trim($emp_id ?: $this->input->get_post('emp_id'));
+        $emp_id = trim((string)($emp_id ?: $this->input->get_post('emp_id')));
         if (empty($emp_id)) {
             $this->send_json_response(false, 'Employee ID required.');
             return;
@@ -560,7 +577,7 @@ class Od_management_con extends CI_Controller
      */
     public function check_conflicts_ajax()
     {
-        $emp_id = trim($this->input->get_post('emp_id'));
+        $emp_id = trim((string)$this->input->get_post('emp_id'));
         $dates  = $this->input->get_post('dates');
         $od_id  = (int)$this->input->get_post('exclude_id');
 
@@ -589,15 +606,7 @@ class Od_management_con extends CI_Controller
      */
     public function reports()
     {
-        $unit_id = $this->get_scoped_unit_id();
-        $this->data['title'] = 'Outside Duty (OD) Reports';
-        $this->data['unit_id'] = $unit_id;
-        $this->data['is_admin'] = $this->is_admin();
-        $this->data['units'] = $this->Od_management_model->get_units();
-        $this->data['departments'] = $this->Od_management_model->get_departments();
-
-        $this->data['subview'] = 'od/reports';
-        $this->load->view('layout/template', $this->data);
+        $this->manage('reports');
     }
 
     /**
@@ -605,14 +614,14 @@ class Od_management_con extends CI_Controller
      */
     public function report_data_ajax()
     {
-        $type = trim($this->input->get_post('report_type') ?: 'daily');
+        $type = trim((string)($this->input->get_post('report_type') ?: 'daily'));
         $filters = array(
-            'date'      => trim($this->input->get_post('date') ?: date('Y-m-d')),
-            'month'     => trim($this->input->get_post('month') ?: date('Y-m')),
-            'emp_id'    => trim($this->input->get_post('emp_id')),
-            'from_date' => trim($this->input->get_post('from_date')),
-            'to_date'   => trim($this->input->get_post('to_date')),
-            'status'    => trim($this->input->get_post('status')),
+            'date'      => trim((string)($this->input->get_post('date') ?: date('Y-m-d'))),
+            'month'     => trim((string)($this->input->get_post('month') ?: date('Y-m'))),
+            'emp_id'    => trim((string)$this->input->get_post('emp_id')),
+            'from_date' => trim((string)$this->input->get_post('from_date')),
+            'to_date'   => trim((string)$this->input->get_post('to_date')),
+            'status'    => trim((string)$this->input->get_post('status')),
             'unit_id'   => $this->input->get_post('unit_id') ?: $this->get_scoped_unit_id(),
             'dept_id'   => $this->input->get_post('dept_id')
         );
@@ -627,17 +636,17 @@ class Od_management_con extends CI_Controller
      */
     public function export_excel()
     {
-        $type = trim($this->input->get('type') ?: 'list');
+        $type = trim((string)($this->input->get('type') ?: 'list'));
         $filters = array(
             'unit_id'   => $this->input->get('unit_id') ?: $this->get_scoped_unit_id(),
             'dept_id'   => $this->input->get('dept_id'),
-            'emp_id'    => trim($this->input->get('emp_id')),
-            'status'    => trim($this->input->get('status')),
-            'purpose'   => trim($this->input->get('purpose')),
-            'from_date' => trim($this->input->get('from_date')),
-            'to_date'   => trim($this->input->get('to_date')),
-            'date'      => trim($this->input->get('date') ?: date('Y-m-d')),
-            'month'     => trim($this->input->get('month') ?: date('Y-m'))
+            'emp_id'    => trim((string)$this->input->get('emp_id')),
+            'status'    => trim((string)$this->input->get('status')),
+            'purpose'   => trim((string)$this->input->get('purpose')),
+            'from_date' => trim((string)$this->input->get('from_date')),
+            'to_date'   => trim((string)$this->input->get('to_date')),
+            'date'      => trim((string)($this->input->get('date') ?: date('Y-m-d'))),
+            'month'     => trim((string)($this->input->get('month') ?: date('Y-m')))
         );
 
         $filename = "OD_Export_" . date('Ymd_His') . ".csv";
@@ -724,17 +733,17 @@ class Od_management_con extends CI_Controller
      */
     public function export_pdf()
     {
-        $type = trim($this->input->get('type') ?: 'list');
+        $type = trim((string)($this->input->get('type') ?: 'list'));
         $filters = array(
             'unit_id'   => $this->input->get('unit_id') ?: $this->get_scoped_unit_id(),
             'dept_id'   => $this->input->get('dept_id'),
-            'emp_id'    => trim($this->input->get('emp_id')),
-            'status'    => trim($this->input->get('status')),
-            'purpose'   => trim($this->input->get('purpose')),
-            'from_date' => trim($this->input->get('from_date')),
-            'to_date'   => trim($this->input->get('to_date')),
-            'date'      => trim($this->input->get('date') ?: date('Y-m-d')),
-            'month'     => trim($this->input->get('month') ?: date('Y-m'))
+            'emp_id'    => trim((string)$this->input->get('emp_id')),
+            'status'    => trim((string)$this->input->get('status')),
+            'purpose'   => trim((string)$this->input->get('purpose')),
+            'from_date' => trim((string)$this->input->get('from_date')),
+            'to_date'   => trim((string)$this->input->get('to_date')),
+            'date'      => trim((string)($this->input->get('date') ?: date('Y-m-d'))),
+            'month'     => trim((string)($this->input->get('month') ?: date('Y-m')))
         );
 
         $this->data['title'] = 'Outside Duty (OD) Report';

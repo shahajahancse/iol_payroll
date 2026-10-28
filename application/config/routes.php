@@ -133,13 +133,27 @@ $route['admin_ot_dashboard'] = 'ot_approval_con/admin_dashboard';
 | Outside Duty (OD) Management Routes
 | -------------------------------------------------------------------------
 */
-$route['od']             = 'od_management_con/dashboard';
-$route['od/dashboard']   = 'od_management_con/dashboard';
+$route['od']             = 'od_management_con/index';
+$route['od/manage']      = 'od_management_con/index';
+$route['od/dashboard']   = 'od_management_con/index';
 $route['od/create']      = 'od_management_con/create';
 $route['od/edit/(:num)'] = 'od_management_con/edit/$1';
 $route['od/list']        = 'od_management_con/list';
 $route['od/approval']    = 'od_management_con/approval';
 $route['od/reports']     = 'od_management_con/reports';
+$route['od/report_data_ajax']       = 'od_management_con/report_data_ajax';
+$route['od/dashboard_stats_ajax']   = 'od_management_con/dashboard_stats_ajax';
+$route['od/list_ajax']              = 'od_management_con/list_ajax';
+$route['od/employee_search_ajax']   = 'od_management_con/employee_search_ajax';
+$route['od/employee_info_ajax']     = 'od_management_con/employee_info_ajax';
+$route['od/check_conflicts_ajax']   = 'od_management_con/check_conflicts_ajax';
+$route['od/details_ajax/(:num)']    = 'od_management_con/details_ajax/$1';
+$route['od/approve_ajax']           = 'od_management_con/approve_ajax';
+$route['od/bulk_approve_ajax']      = 'od_management_con/bulk_approve_ajax';
+$route['od/reject_ajax']            = 'od_management_con/reject_ajax';
+$route['od/cancel_ajax']            = 'od_management_con/cancel_ajax';
+$route['od/export_excel']           = 'od_management_con/export_excel';
+$route['od/export_pdf']             = 'od_management_con/export_pdf';
 
 /*
 | -------------------------------------------------------------------------
@@ -148,13 +162,33 @@ $route['od/reports']     = 'od_management_con/reports';
 */
 $route['attn_regularization']               = 'attn_regularization_con/dashboard';
 $route['attn_regularization/dashboard']     = 'attn_regularization_con/dashboard';
-$route['attn_regularization/create']        = 'attn_regularization_con/create';
+$route['attn_regularization/create']        = 'attn_regularization_con/dashboard';
 $route['attn_regularization/save']          = 'attn_regularization_con/save';
 $route['attn_regularization/list']          = 'attn_regularization_con/list';
 $route['attn_regularization/approval']      = 'attn_regularization_con/approval';
 $route['attn_regularization/action']        = 'attn_regularization_con/action';
 $route['attn_regularization/reports']       = 'attn_regularization_con/reports';
 $route['attn_regularization/delete/(:num)'] = 'attn_regularization_con/delete/$1';
+$route['attn_regularization/get_issues_ajax'] = 'attn_regularization_con/get_issues_ajax';
+$route['attn_regularization/get_issue_detail_ajax'] = 'attn_regularization_con/get_issue_detail_ajax';
+$route['attn_regularization/save_quick_remark_ajax'] = 'attn_regularization_con/save_quick_remark_ajax';
+
+/*
+| -------------------------------------------------------------------------
+| Arrear Salary Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['arrear_salary']                      = 'arrear_salary_con/index';
+$route['arrear_salary/create']               = 'arrear_salary_con/create';
+$route['arrear_salary/edit/(:any)']          = 'arrear_salary_con/edit/$1';
+$route['arrear_salary/save']                 = 'arrear_salary_con/save';
+$route['arrear_salary/delete/(:any)']        = 'arrear_salary_con/delete/$1';
+$route['arrear_salary/approve/(:any)']       = 'arrear_salary_con/approve/$1';
+$route['arrear_salary/cancel/(:any)']        = 'arrear_salary_con/cancel/$1';
+$route['arrear_salary/employee_search_ajax'] = 'arrear_salary_con/employee_search_ajax';
+$route['arrear_salary/get_employee_ajax']    = 'arrear_salary_con/get_employee_ajax';
+$route['arrear_salary/get_arrear_ajax/(:num)'] = 'arrear_salary_con/get_arrear_ajax/$1';
+
 
 
 

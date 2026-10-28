@@ -1,149 +1,140 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-$is_edit = isset($od) && !empty($od);
-$od_id   = $is_edit ? $od->id : 0;
-$sel_emp_id = $is_edit ? $od->emp_id : '';
-$current_dates = ($is_edit && !empty($od->dates_list)) ? $od->dates_list : array();
-$mode = ($is_edit && !empty($od->assignment_mode)) ? $od->assignment_mode : 'range';
+$is_edit     = isset($od) && !empty($od);
+$od_id       = $is_edit ? $od->id : 0;
+$sel_emp_id  = $is_edit ? $od->emp_id : '';
+$start_val   = ($is_edit && !empty($od->start_date)) ? $od->start_date : date('Y-m-d');
+$end_val     = ($is_edit && !empty($od->end_date)) ? $od->end_date : date('Y-m-d');
+$purpose_val = $is_edit ? $od->purpose : '';
+$remarks_val = $is_edit ? $od->remarks : '';
 ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
 /* ========================================================================= */
-/* OUTSIDE DUTY (OD) FORM - EXECUTIVE THEME                                  */
+/* OUTSIDE DUTY (OD) SIMPLIFIED CREATE / EDIT FORM                           */
 /* ========================================================================= */
-.page-content .content.od-form-wrapper {
+.od-simple-wrapper {
     padding-top: 85px !important;
     padding-left: 20px !important;
     padding-right: 20px !important;
-    padding-bottom: 50px !important;
+    padding-bottom: 60px !important;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: #1e293b;
-    background-color: transparent;
     min-height: calc(100vh - 100px);
+    background-color: transparent;
 }
 
-.od-header-card {
+.od-container {
+    max-width: 780px;
+    margin: 0 auto;
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 20px 24px;
-    margin-bottom: 22px;
-    box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.03);
+    overflow: hidden;
+    margin-top: 10px;
+    padding: 10px 20px
+}
+
+/* Header Banner */
+.od-card-header {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0 0 18px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
 }
-.od-header-left {
+.od-header-title-box {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
 }
-.od-header-icon {
-    width: 48px;
-    height: 48px;
+.od-icon-badge {
+    width: 44px;
+    height: 44px;
     border-radius: 12px;
     background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 20px;
     box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
     flex-shrink: 0;
 }
 .od-header-text h2 {
-    margin: 0 0 4px 0;
-    font-size: 20px;
+    margin: 0 0 3px 0;
+    font-size: 19px;
     font-weight: 700;
     color: #0f172a;
-    letter-spacing: -0.3px;
+    letter-spacing: -0.2px;
 }
 .od-header-text p {
     margin: 0;
     color: #64748b;
     font-size: 13px;
 }
-.btn-action-outline {
+
+/* Back Link Button */
+.btn-back-link {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     color: #475569;
-    padding: 7px 16px;
+    padding: 8px 16px;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     transition: all 0.2s;
 }
-.btn-action-outline:hover {
+.btn-back-link:hover {
     background: #f1f5f9;
     color: #0f172a;
     text-decoration: none;
 }
 
-/* Card & Sections */
-.form-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
-    margin-bottom: 22px;
-    overflow: hidden;
-}
-.form-card-header {
-    padding: 16px 22px;
-    border-bottom: 1px solid #f1f5f9;
-    background: #ffffff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.form-card-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: #0f172a;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin: 0;
-}
-.form-card-title i {
-    color: #0284c7;
-    font-size: 16px;
-}
-.form-card-body {
-    padding: 22px;
+/* Form Body Card */
+.od-card-body {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
 }
 
-/* Form Controls */
-.form-group {
-    margin-bottom: 18px;
+.form-group-item {
+    margin-bottom: 22px;
 }
-.form-label {
-    font-size: 13px;
+.form-group-label {
+    font-size: 13.5px;
     font-weight: 600;
     color: #334155;
-    margin-bottom: 6px;
-    display: block;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
-.form-label .required {
+.form-group-label .req {
     color: #ef4444;
     margin-left: 2px;
 }
-.form-control-custom {
+
+/* Custom Controls */
+.input-custom {
     width: 100%;
-    height: 38px;
-    padding: 7px 12px;
+    height: 42px;
+    padding: 8px 14px;
     border-radius: 8px;
     border: 1px solid #cbd5e1;
-    font-size: 13px;
+    font-size: 14px;
     color: #1e293b;
     background: #ffffff;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -151,164 +142,61 @@ $mode = ($is_edit && !empty($od->assignment_mode)) ? $od->assignment_mode : 'ran
     box-shadow: none;
     box-sizing: border-box;
 }
-.form-control-custom:focus {
+.input-custom:focus {
     border-color: #0284c7;
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
-input[type="date"].form-control-custom,
-input[type="time"].form-control-custom {
-    height: 38px;
-    min-height: 38px;
-    line-height: 22px;
-}
-textarea.form-control-custom {
+textarea.input-custom {
     height: auto;
-    min-height: 80px;
+    min-height: 75px;
     resize: vertical;
 }
-.form-hint {
-    font-size: 11px;
-    color: #64748b;
-    margin-top: 4px;
-    display: block;
-}
 
-/* Employee Profile Badge */
-.emp-preview-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 18px;
+/* Employee Search & Selector */
+.emp-search-container {
+    position: relative;
+}
+.emp-search-input-wrap {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 18px;
-    margin-top: 10px;
-    transition: all 0.2s;
-}
-.emp-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    font-weight: 700;
-    flex-shrink: 0;
-    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.25);
-}
-.emp-meta-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 10px 16px;
     width: 100%;
 }
-.emp-meta-item .meta-lbl {
-    font-size: 11px;
-    color: #64748b;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+.emp-search-input-wrap i.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 15px;
+    pointer-events: none;
+    z-index: 2;
 }
-.emp-meta-item .meta-val {
-    font-size: 13px;
-    color: #0f172a;
-    font-weight: 600;
+.emp-search-input-wrap .input-custom,
+#emp_search_input {
+    padding-left: 42px !important;
+    padding-right: 40px !important;
 }
-
-/* Mode Switcher Buttons */
-.mode-toggle-group {
-    display: inline-flex;
-    background: #f1f5f9;
-    border-radius: 10px;
-    padding: 4px;
-    border: 1px solid #e2e8f0;
-    margin-bottom: 16px;
-}
-.mode-btn {
+.emp-search-input-wrap .clear-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
     border: none;
-    background: transparent;
-    padding: 8px 18px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #64748b;
+    color: #94a3b8;
     cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    font-size: 18px;
+    line-height: 1;
+    display: none;
+    z-index: 3;
 }
-.mode-btn.active {
-    background: #0284c7;
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
-}
-.step-badge {
-    background: #e0f2fe;
-    color: #0369a1;
-    font-weight: 700;
-    font-size: 11px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-/* Date Tags Container */
-.dates-tags-wrapper {
-    background: #f8fafc;
-    border: 1px dashed #cbd5e1;
-    border-radius: 10px;
-    padding: 12px 14px;
-    min-height: 52px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    margin-top: 10px;
-}
-.date-tag {
-    background: #e0f2fe;
-    color: #0369a1;
-    border: 1px solid #bae6fd;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-.date-tag .remove-date {
-    cursor: pointer;
-    color: #0284c7;
-    font-weight: bold;
-    font-size: 14px;
-}
-.date-tag .remove-date:hover {
+.emp-search-input-wrap .clear-btn:hover {
     color: #ef4444;
 }
 
-/* Conflict Alert Box */
-.conflict-alert {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #b91c1c;
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-top: 12px;
-    display: none;
-    font-size: 13px;
-}
-.conflict-alert strong {
-    font-weight: 700;
-}
-
-/* Search Dropdown Results */
-.emp-search-results {
+/* Search Dropdown */
+.emp-search-dropdown {
     position: absolute;
     top: 100%;
     left: 0;
@@ -316,55 +204,159 @@ textarea.form-control-custom {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
     z-index: 1050;
-    max-height: 280px;
+    max-height: 260px;
     overflow-y: auto;
     display: none;
+    margin-top: 4px;
 }
-.emp-search-item {
+.emp-dropdown-item {
     padding: 10px 14px;
     border-bottom: 1px solid #f1f5f9;
     cursor: pointer;
-    transition: background 0.15s;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: background 0.15s;
 }
-.emp-search-item:hover {
-    background: #f0fdf4;
+.emp-dropdown-item:hover {
+    background: #f0f9ff;
 }
-.emp-search-item:last-child {
+.emp-dropdown-item:last-child {
     border-bottom: none;
 }
-.search-name {
+.emp-item-name {
     font-weight: 600;
     color: #0f172a;
-    font-size: 13px;
+    font-size: 13.5px;
 }
-.search-sub {
-    font-size: 11px;
+.emp-item-details {
+    font-size: 11.5px;
     color: #64748b;
+    margin-top: 2px;
+}
+.emp-item-unit {
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
 }
 
-/* Submit Footer */
-.form-footer {
+/* Selected Employee Badge */
+.emp-selected-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.emp-selected-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.emp-selected-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.emp-selected-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.emp-selected-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+}
+.btn-change-emp {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.btn-change-emp:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+/* Date Range Grid */
+.date-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+@media (max-width: 600px) {
+    .date-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.days-pill {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0369a1;
+    background: #e0f2fe;
+    padding: 3px 9px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Conflict Alert */
+.conflict-alert {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    display: none;
+    font-size: 12.5px;
+}
+
+
+/* Footer Submit Buttons */
+.form-actions {
     display: flex;
     justify-content: flex-end;
     align-items: center;
     gap: 12px;
-    padding: 16px 22px;
-    background: #f8fafc;
-    border-top: 1px solid #e2e8f0;
-    border-radius: 0 0 14px 14px;
+    margin-top: 18px;
+    padding-top: 0;
+    border: none;
+    background: transparent;
 }
-.btn-submit {
+.btn-save-od {
     background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     color: #ffffff;
     border: none;
     padding: 10px 24px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
@@ -373,645 +365,445 @@ textarea.form-control-custom {
     box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
     transition: all 0.2s;
 }
-.btn-submit:hover {
+.btn-save-od:hover {
     box-shadow: 0 6px 16px rgba(2, 132, 199, 0.35);
     transform: translateY(-1px);
 }
-.btn-cancel {
+.btn-cancel-link {
     background: #ffffff;
     border: 1px solid #cbd5e1;
     color: #475569;
-    padding: 10px 20px;
+    padding: 10px 18px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
     transition: all 0.2s;
 }
-.btn-cancel:hover {
+.btn-cancel-link:hover {
     background: #f1f5f9;
     color: #0f172a;
+    text-decoration: none;
 }
 </style>
 
-<div class="content od-form-wrapper">
+<div class="content od-simple-wrapper ">
+    <div class="od-container">
 
-        <!-- Top Header Card -->
-        <div class="od-header-card">
-            <div class="od-header-left">
-                <div class="od-header-icon">
-                    <i class="fa fa-map-marker"></i>
+        <!-- Header Card -->
+        <div class="od-card-header">
+            <div class="od-header-title-box">
+                <div class="od-icon-badge">
+                    <i class="fa fa-briefcase"></i>
                 </div>
                 <div class="od-header-text">
-                    <h2><?= $is_edit ? 'Edit Outside Duty (OD) Assignment #' . $od_id : 'Create Outside Duty (OD) Assignment' ?></h2>
-                    <p>Assign official off-premises duty dates for employees with automatic attendance status integration</p>
+                    <h2><?= $is_edit ? 'Edit Outside Duty (OD) #' . $od_id : 'Assign Outside Duty (OD)' ?></h2>
+                    <p>Enter employee, date range, purpose, and remarks</p>
                 </div>
             </div>
             <div>
-                <a href="<?= base_url('od_management_con/list') ?>" class="btn-action-outline">
-                    <i class="fa fa-arrow-left"></i> Back to OD List
+                <a href="<?= base_url('od_management_con/list') ?>" class="btn-back-link">
+                    <i class="fa fa-arrow-left"></i> OD List
                 </a>
             </div>
         </div>
 
-        <form id="odAssignmentForm" autocomplete="off">
-            <input type="hidden" name="od_id" id="od_id" value="<?= $od_id ?>">
-            <input type="hidden" name="emp_id" id="emp_id" value="<?= htmlspecialchars($sel_emp_id) ?>">
-            <input type="hidden" name="assignment_mode" id="assignment_mode" value="<?= htmlspecialchars($mode) ?>">
+        <!-- Form Card Body -->
+        <div class="od-card-body">
+            <form id="odSimpleForm" autocomplete="off">
+                <input type="hidden" name="od_id" id="od_id" value="<?= $od_id ?>">
+                <input type="hidden" name="emp_id" id="emp_id" value="<?= htmlspecialchars($sel_emp_id) ?>">
+                <input type="hidden" name="status" value="approved">
 
-            <!-- 1. Employee Selection Section -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h3 class="form-card-title">
-                        <i class="fa fa-user"></i> 1. Select Employee
-                    </h3>
-                    <span class="step-badge">Step 1</span>
-                </div>
-                <div class="form-card-body">
-                    <div class="row">
-                        <!-- Filters for quick narrow down -->
-                        <?php if (empty($unit_id) || $unit_id === 'All'): ?>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label class="form-label">Branch / Unit</label>
-                                <select class="form-control-custom" id="filter_unit">
-                                    <option value="">-- All Units --</option>
-                                    <?php if (!empty($units)): foreach ($units as $u): ?>
-                                        <option value="<?= $u->unit_id ?>" <?= (isset($employee) && $employee->unit_id == $u->unit_id) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($u->unit_name) ?>
-                                        </option>
-                                    <?php endforeach; endif; ?>
-                                </select>
+                <!-- 1. Employee Selection -->
+                <div class="form-group-item">
+                    <label class="form-group-label">
+                        <span>Select Employee <span class="req">*</span></span>
+                    </label>
+
+                    <!-- Search Input Box (Shown when no employee selected) -->
+                    <div class="emp-search-container" id="emp_search_box" style="<?= !empty($employee) ? 'display:none;' : '' ?>">
+                        <div class="emp-search-input-wrap">
+                            <i class="fa fa-search search-icon"></i>
+                            <input type="text" class="input-custom" id="emp_search_input"
+                                   style="padding-left: 42px !important; padding-right: 40px !important;"
+                                   placeholder="Type Employee ID or Name (e.g. 1001, Rahim)..."
+                                   value="" autocomplete="off">
+                            <button type="button" class="clear-btn" id="btn_clear_search">&times;</button>
+                        </div>
+                        <div class="emp-search-dropdown" id="emp_dropdown_results"></div>
+                        <small style="font-size:11.5px; color:#64748b; margin-top:4px; display:block;">
+                            Search by Employee ID or Name, or type exact ID and press Enter
+                        </small>
+                    </div>
+
+                    <!-- Selected Employee Badge (Shown when an employee is chosen) -->
+                    <div class="emp-selected-card" id="emp_selected_badge" style="<?= empty($employee) ? 'display:none;' : '' ?>">
+                        <div class="emp-selected-left">
+                            <div class="emp-selected-avatar" id="prev_avatar">
+                                <?= isset($employee) ? strtoupper(substr($employee->name_en, 0, 2)) : 'EM' ?>
+                            </div>
+                            <div>
+                                <div class="emp-selected-title" id="prev_emp_title">
+                                    <?= isset($employee) ? htmlspecialchars($employee->emp_id . ' - ' . $employee->name_en) : '' ?>
+                                </div>
+                                <div class="emp-selected-sub" id="prev_emp_sub">
+                                    <?= isset($employee) ? htmlspecialchars(($employee->desig_name ?: '-') . ' | ' . ($employee->dept_name ?: '-') . ' (' . ($employee->unit_name ?: '-') . ')') : '' ?>
+                                </div>
                             </div>
                         </div>
+                        <?php if (!$is_edit): ?>
+                        <button type="button" class="btn-change-emp" id="btn_change_employee">
+                            <i class="fa fa-refresh"></i> Change
+                        </button>
                         <?php endif; ?>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label class="form-label">Department</label>
-                                <select class="form-control-custom" id="filter_dept">
-                                    <option value="">-- All Departments --</option>
-                                    <?php if (!empty($departments)): foreach ($departments as $d): ?>
-                                        <option value="<?= $d->dept_id ?>"><?= htmlspecialchars($d->dept_name) ?></option>
-                                    <?php endforeach; endif; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label class="form-label">Designation</label>
-                                <select class="form-control-custom" id="filter_desig">
-                                    <option value="">-- All Designations --</option>
-                                    <?php if (!empty($designations)): foreach ($designations as $ds): ?>
-                                        <option value="<?= $ds->desig_id ?>"><?= htmlspecialchars($ds->desig_name) ?></option>
-                                    <?php endforeach; endif; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Live Search Bar -->
-                        <div class="col-md-<?= (empty($unit_id) || $unit_id === 'All') ? '3' : '6' ?>">
-                            <div class="form-group" style="position:relative;">
-                                <label class="form-label">Search Employee ID or Name <span class="required">*</span></label>
-                                <div style="display:flex; gap:6px;">
-                                    <input type="text" class="form-control-custom" id="emp_search_input" 
-                                           placeholder="Type ID or Name (e.g. 2001 or Rahim)..."
-                                           value="<?= isset($employee) ? htmlspecialchars($employee->emp_id . ' - ' . $employee->name_en) : '' ?>"
-                                           <?= $is_edit ? 'readonly' : '' ?>>
-                                    <?php if (!$is_edit): ?>
-                                    <button type="button" id="btn_search_emp" style="height:38px; min-width:42px; border-radius:8px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; display:inline-flex; align-items:center; justify-content:center; cursor:pointer;" title="Search Employee">
-                                        <i class="fa fa-search"></i>
-                                    </button>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="emp-search-results" id="emp_search_dropdown"></div>
-                                <span class="form-hint">Type at least 2 characters to trigger live search</span>
-                            </div>
-                        </div>
                     </div>
-
-                    <!-- Selected Employee Profile Preview Box -->
-                    <div id="emp_preview_container" style="<?= empty($employee) ? 'display:none;' : '' ?>">
-                        <div class="emp-preview-card">
-                            <div class="emp-avatar" id="prev_avatar">
-                                <?= isset($employee) ? strtoupper(substr($employee->name_en, 0, 2)) : 'EMP' ?>
-                            </div>
-                            <div class="emp-meta-grid">
-                                <div class="emp-meta-item">
-                                    <div class="meta-lbl">Employee ID</div>
-                                    <div class="meta-val" id="prev_emp_id"><?= isset($employee) ? htmlspecialchars($employee->emp_id) : '-' ?></div>
-                                </div>
-                                <div class="emp-meta-item">
-                                    <div class="meta-lbl">Full Name</div>
-                                    <div class="meta-val" id="prev_emp_name"><?= isset($employee) ? htmlspecialchars($employee->name_en) : '-' ?></div>
-                                </div>
-                                <div class="emp-meta-item">
-                                    <div class="meta-lbl">Designation</div>
-                                    <div class="meta-val" id="prev_emp_desig"><?= isset($employee) ? htmlspecialchars($employee->desig_name) : '-' ?></div>
-                                </div>
-                                <div class="emp-meta-item">
-                                    <div class="meta-lbl">Department</div>
-                                    <div class="meta-val" id="prev_emp_dept"><?= isset($employee) ? htmlspecialchars($employee->dept_name) : '-' ?></div>
-                                </div>
-                                <div class="emp-meta-item">
-                                    <div class="meta-lbl">Branch / Unit</div>
-                                    <div class="meta-val" id="prev_emp_unit"><?= isset($employee) ? htmlspecialchars($employee->unit_name) : '-' ?></div>
-                                </div>
-                                <div class="emp-meta-item">
-                                    <div class="meta-lbl">Mobile No</div>
-                                    <div class="meta-val" id="prev_emp_phone"><?= isset($employee) ? htmlspecialchars($employee->personal_mobile ?: '-') : '-' ?></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
-            </div>
 
-            <!-- 2. OD Dates Configuration Section -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h3 class="form-card-title">
-                        <i class="fa fa-calendar-check-o"></i> 2. Outside Duty Dates & Schedule
-                    </h3>
-                    <span class="step-badge">Step 2</span>
-                </div>
-                <div class="form-card-body">
-                    
-                    <!-- Mode Switcher -->
-                    <div>
-                        <label class="form-label" style="margin-bottom:8px;">Assignment Mode</label>
-                        <div class="mode-toggle-group">
-                            <button type="button" class="mode-btn <?= ($mode === 'range') ? 'active' : '' ?>" id="btn_mode_range" onclick="switchMode('range')">
-                                <i class="fa fa-arrows-h"></i> Continuous Date Range
-                            </button>
-                            <button type="button" class="mode-btn <?= ($mode === 'individual') ? 'active' : '' ?>" id="btn_mode_individual" onclick="switchMode('individual')">
-                                <i class="fa fa-calendar-plus-o"></i> Specific Individual Dates
-                            </button>
+                <!-- 2. Date Range: Start Date & End Date -->
+                <div class="form-group-item">
+                    <div class="date-grid">
+                        <div>
+                            <label class="form-group-label">
+                                <span>Start Date <span class="req">*</span></span>
+                            </label>
+                            <input type="date" class="input-custom" name="start_date" id="start_date"
+                                   value="<?= $start_val ?>" required>
+                        </div>
+                        <div>
+                            <label class="form-group-label">
+                                <span>End Date <span class="req">*</span></span>
+                                <span class="days-pill" id="days_badge"><i class="fa fa-calendar-check-o"></i> 1 Day</span>
+                            </label>
+                            <input type="date" class="input-custom" name="end_date" id="end_date"
+                                   value="<?= $end_val ?>" required>
                         </div>
                     </div>
 
-                    <!-- Range Inputs -->
-                    <div id="section_range" style="<?= ($mode === 'range') ? '' : 'display:none;' ?>">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label class="form-label">OD Start Date <span class="required">*</span></label>
-                                    <input type="date" class="form-control-custom" name="start_date" id="start_date" 
-                                           value="<?= ($is_edit && !empty($od->start_date)) ? $od->start_date : date('Y-m-d') ?>">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label class="form-label">OD End Date <span class="required">*</span></label>
-                                    <input type="date" class="form-control-custom" name="end_date" id="end_date"
-                                           value="<?= ($is_edit && !empty($od->end_date)) ? $od->end_date : date('Y-m-d') ?>">
-                                    <span class="form-hint">For a single day OD, keep Start Date and End Date identical.</span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label class="form-label">Total OD Days</label>
-                                    <input type="text" class="form-control-custom" id="range_days_count" readonly 
-                                           value="<?= ($is_edit && !empty($od->total_days)) ? $od->total_days . ' Day(s)' : '1 Day(s)' ?>" 
-                                           style="background:#f1f5f9; font-weight:700; color:#0284c7;">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Individual Multiple Dates Inputs -->
-                    <div id="section_individual" style="<?= ($mode === 'individual') ? '' : 'display:none;' ?>">
-                        <div class="row">
-                            <div class="col-md-5">
-                                <div class="form-group">
-                                    <label class="form-label">Pick a Date to Add</label>
-                                    <div style="display:flex; gap:8px;">
-                                        <input type="date" class="form-control-custom" id="single_date_picker" value="<?= date('Y-m-d') ?>">
-                                        <button type="button" class="btn btn-info" id="btn_add_date" style="border-radius:8px; font-weight:600; padding:8px 16px;">
-                                            <i class="fa fa-plus"></i> Add Date
-                                        </button>
-                                    </div>
-                                    <span class="form-hint">Add individual non-consecutive dates (e.g. 25 Oct and 28 Oct). Intervening dates won't be marked as OD.</span>
-                                </div>
-                            </div>
-                            <div class="col-md-7">
-                                <label class="form-label">Selected OD Dates (<span id="custom_dates_count"><?= count($current_dates) ?></span> dates)</label>
-                                <div class="dates-tags-wrapper" id="dates_tags_container">
-                                    <?php if (!empty($current_dates)): foreach ($current_dates as $cd): ?>
-                                        <span class="date-tag" data-date="<?= $cd ?>">
-                                            <i class="fa fa-calendar-o"></i> <?= date('d M Y', strtotime($cd)) ?>
-                                            <span class="remove-date" onclick="removeDateTag('<?= $cd ?>')">&times;</span>
-                                        </span>
-                                    <?php endforeach; else: ?>
-                                        <span class="text-muted" id="no_dates_msg" style="font-size:12px;">No dates added yet. Pick a date above and click "Add Date".</span>
-                                    <?php endif; ?>
-                                </div>
-                                <input type="hidden" name="custom_dates" id="custom_dates_input" value="<?= implode(',', $current_dates) ?>">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Conflict alert -->
+                    <!-- Schedule Conflict Box -->
                     <div class="conflict-alert" id="conflict_alert_box">
-                        <i class="fa fa-exclamation-triangle"></i> <strong>Schedule Warning:</strong>
-                        <span id="conflict_message_text"></span>
+                        <i class="fa fa-exclamation-triangle"></i> <strong>Schedule Conflict Alert:</strong>
+                        <div id="conflict_message_text" style="margin-top:3px;"></div>
                     </div>
-
-                </div>
-            </div>
-
-            <!-- 3. Assignment Details Section -->
-            <div class="form-card">
-                <div class="form-card-header">
-                    <h3 class="form-card-title">
-                        <i class="fa fa-briefcase"></i> 3. Duty Assignment Details
-                    </h3>
-                    <span class="step-badge">Step 3</span>
-                </div>
-                <div class="form-card-body">
-                    <div class="row">
-                        <!-- Purpose -->
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">OD Type / Purpose <span class="required">*</span></label>
-                                <select class="form-control-custom" name="purpose" id="purpose" required>
-                                    <option value="">-- Select Purpose --</option>
-                                    <?php if (!empty($od_purposes)): foreach ($od_purposes as $pval => $plbl): ?>
-                                        <option value="<?= htmlspecialchars($pval) ?>" <?= ($is_edit && $od->purpose === $pval) ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($plbl) ?>
-                                        </option>
-                                    <?php endforeach; endif; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Outside Duty Location -->
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Outside Duty Location <span class="required">*</span></label>
-                                <input type="text" class="form-control-custom" name="location" id="location" required
-                                       placeholder="e.g. Bangladesh Bank, Motijheel / Chattogram Factory / Customer Site"
-                                       value="<?= $is_edit ? htmlspecialchars($od->location) : '' ?>">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <!-- Work Description -->
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label class="form-label">Official Work Description / Responsibilities <span class="required">*</span></label>
-                                <textarea class="form-control-custom" name="work_description" id="work_description" rows="3" required
-                                          placeholder="Detail the official business activities, tasks, and meetings to be executed outside the office..."><?= $is_edit ? htmlspecialchars($od->work_description) : '' ?></textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <!-- Expected Departure Time -->
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label class="form-label">Expected Departure Time (Optional)</label>
-                                <input type="time" class="form-control-custom" name="departure_time" id="departure_time"
-                                       value="<?= ($is_edit && !empty($od->departure_time)) ? substr($od->departure_time, 0, 5) : '' ?>">
-                            </div>
-                        </div>
-
-                        <!-- Expected Return Time -->
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label class="form-label">Expected Return Time (Optional)</label>
-                                <input type="time" class="form-control-custom" name="return_time" id="return_time"
-                                       value="<?= ($is_edit && !empty($od->return_time)) ? substr($od->return_time, 0, 5) : '' ?>">
-                            </div>
-                        </div>
-
-                        <!-- Remarks -->
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label">Remarks / Special Notes</label>
-                                <input type="text" class="form-control-custom" name="remarks" id="remarks"
-                                       placeholder="Any additional notes or instructions"
-                                       value="<?= $is_edit ? htmlspecialchars($od->remarks) : '' ?>">
-                            </div>
-                        </div>
-                    </div>
-
-                    <?php if ($is_admin): ?>
-                    <div class="row" style="margin-top:10px;">
-                        <div class="col-md-6">
-                            <div class="form-group" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px;">
-                                <label class="form-label" style="margin-bottom:6px;">Approval Action</label>
-                                <div style="display:flex; gap:20px; align-items:center;">
-                                    <label style="font-weight:600; cursor:pointer; font-size:13px; color:#1e293b;">
-                                        <input type="radio" name="status" value="approved" <?= (!$is_edit || $od->status === 'approved') ? 'checked' : '' ?>>
-                                        <span style="color:#059669;"><i class="fa fa-check-circle"></i> Approve Immediately</span>
-                                    </label>
-                                    <label style="font-weight:600; cursor:pointer; font-size:13px; color:#1e293b;">
-                                        <input type="radio" name="status" value="pending" <?= ($is_edit && $od->status === 'pending') ? 'checked' : '' ?>>
-                                        <span style="color:#d97706;"><i class="fa fa-clock-o"></i> Submit as Pending</span>
-                                    </label>
-                                </div>
-                                <span class="form-hint">Approved assignments automatically mark attendance as "OD" without affecting punch records.</span>
-                            </div>
-                        </div>
-                    </div>
-                    <?php else: ?>
-                    <input type="hidden" name="status" value="pending">
-                    <?php endif; ?>
-
                 </div>
 
-                <!-- Form Submit Footer -->
-                <div class="form-footer">
-                    <a href="<?= base_url('od_management_con/list') ?>" class="btn-cancel">
+                <!-- 3. Purpose (Single Text Field) -->
+                <div class="form-group-item">
+                    <label class="form-group-label">
+                        <span>Purpose <span class="req">*</span></span>
+                    </label>
+                    <input type="text" class="input-custom" name="purpose" id="purpose" required
+                           placeholder="Enter OD purpose (e.g. Client Meeting, Bank Work, Field Inspection, Official Tour...)"
+                           value="<?= htmlspecialchars($purpose_val) ?>">
+                </div>
+
+                <!-- 4. Remark -->
+                <div class="form-group-item">
+                    <label class="form-group-label">
+                        <span>Remark / Note <span style="font-weight:normal; color:#64748b; font-size:12px;">(Optional)</span></span>
+                    </label>
+                    <textarea class="input-custom" name="remarks" id="remarks" rows="2"
+                              placeholder="Enter any additional notes or remarks..."><?= htmlspecialchars($remarks_val) ?></textarea>
+                </div>
+
+
+                <!-- Footer Buttons -->
+                <div class="form-actions">
+                    <a href="<?= base_url('od_management_con/list') ?>" class="btn-cancel-link">
                         <i class="fa fa-times"></i> Cancel
                     </a>
-                    <button type="submit" class="btn-submit" id="btn_submit_od">
-                        <i class="fa fa-save"></i> <?= $is_edit ? 'Update OD Assignment' : 'Save & Assign Outside Duty' ?>
+                    <button type="submit" class="btn-save-od" id="btn_submit_od">
+                        <i class="fa fa-check"></i> <?= $is_edit ? 'Update Outside Duty' : 'Save Outside Duty' ?>
                     </button>
                 </div>
-            </div>
 
-        </form>
+            </form>
+        </div>
 
     </div>
+</div>
 
 <script>
-var selectedDates = <?= !empty($current_dates) ? json_encode(array_values($current_dates)) : '[]' ?>;
+$(document).ready(function() {
 
-function switchMode(mode) {
-    $('#assignment_mode').val(mode);
-    $('.mode-btn').removeClass('active');
-    if (mode === 'range') {
-        $('#btn_mode_range').addClass('active');
-        $('#section_range').slideDown(200);
-        $('#section_individual').slideUp(200);
-    } else {
-        $('#btn_mode_individual').addClass('active');
-        $('#section_range').slideUp(200);
-        $('#section_individual').slideDown(200);
-    }
-    triggerConflictCheck();
-}
-
-function calculateRangeDays() {
-    var s = $('#start_date').val();
-    var e = $('#end_date').val();
-    if (s && e) {
+    // 1. Calculate OD Days Pill & Trigger Conflict Check
+    function updateDaysCount() {
+        var s = $('#start_date').val();
+        var e = $('#end_date').val();
+        if (!s) return;
+        if (!e) {
+            $('#end_date').val(s);
+            e = s;
+        }
         var d1 = new Date(s);
         var d2 = new Date(e);
         if (d2 < d1) {
-            $('#range_days_count').val('Invalid (End < Start)');
+            $('#days_badge').html('<span style="color:#ef4444;"><i class="fa fa-exclamation-circle"></i> End < Start</span>');
             return;
         }
-        var diffTime = Math.abs(d2 - d1);
-        var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        $('#range_days_count').val(diffDays + ' Day(s)');
+        var diff = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+        $('#days_badge').html('<i class="fa fa-calendar-check-o"></i> <strong>' + diff + '</strong> Day' + (diff > 1 ? 's' : ''));
+        checkConflicts();
     }
-}
 
-function renderDateTags() {
-    var html = '';
-    selectedDates.sort();
-    if (selectedDates.length === 0) {
-        html = '<span class="text-muted" id="no_dates_msg" style="font-size:12px;">No dates added yet. Pick a date above and click "Add Date".</span>';
-    } else {
-        selectedDates.forEach(function(d) {
-            var parts = d.split('-');
-            var dt = new Date(parts[0], parts[1]-1, parts[2]);
-            var formatted = dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-            html += '<span class="date-tag" data-date="' + d + '"><i class="fa fa-calendar-o"></i> ' + formatted + 
-                    ' <span class="remove-date" onclick="removeDateTag(\'' + d + '\')">&times;</span></span> ';
-        });
-    }
-    $('#dates_tags_container').html(html);
-    $('#custom_dates_count').text(selectedDates.length);
-    $('#custom_dates_input').val(selectedDates.join(','));
-    triggerConflictCheck();
-}
+    // Auto adjust end_date if start_date changes
+    var prevStartDate = $('#start_date').val();
+    $('#start_date').on('change', function() {
+        var newStart = $(this).val();
+        var currentEnd = $('#end_date').val();
+        if (!currentEnd || currentEnd === prevStartDate || currentEnd < newStart) {
+            $('#end_date').val(newStart);
+        }
+        prevStartDate = newStart;
+        updateDaysCount();
+    });
 
-function removeDateTag(dateStr) {
-    selectedDates = selectedDates.filter(function(d) { return d !== dateStr; });
-    renderDateTags();
-}
+    $('#end_date').on('change', function() {
+        updateDaysCount();
+    });
 
-function triggerConflictCheck() {
-    var empId = $('#emp_id').val();
-    if (!empId) return;
+    updateDaysCount();
 
-    var mode = $('#assignment_mode').val();
-    var dates = [];
-    if (mode === 'range') {
+    // 2. Real-time Conflict Check
+    function checkConflicts() {
+        var empId = $('#emp_id').val();
         var s = $('#start_date').val();
         var e = $('#end_date').val() || s;
-        if (!s) return;
+        if (!empId || !s || !e) {
+            $('#conflict_alert_box').hide();
+            return;
+        }
+        var d1 = new Date(s);
+        var d2 = new Date(e);
+        if (d2 < d1) return;
+
+        var dates = [];
         var cur = new Date(s);
-        var last = new Date(e);
-        if (last < cur) return;
-        while (cur <= last) {
+        while (cur <= d2) {
             var y = cur.getFullYear();
             var m = String(cur.getMonth() + 1).padStart(2, '0');
             var d = String(cur.getDate()).padStart(2, '0');
             dates.push(y + '-' + m + '-' + d);
             cur.setDate(cur.getDate() + 1);
         }
-    } else {
-        dates = selectedDates;
-    }
 
-    if (dates.length === 0) {
-        $('#conflict_alert_box').hide();
-        return;
-    }
-
-    $.ajax({
-        url: '<?= base_url("od_management_con/check_conflicts_ajax") ?>',
-        type: 'POST',
-        data: {
-            emp_id: empId,
-            dates: dates,
-            exclude_id: $('#od_id').val()
-        },
-        dataType: 'json',
-        success: function(res) {
-            if (res.status === 'success' && res.has_conflict) {
-                var msgs = [];
-                if (res.conflicts.existing_ods && res.conflicts.existing_ods.length > 0) {
-                    res.conflicts.existing_ods.forEach(function(o) {
-                        msgs.push('Existing OD on ' + o.date + ' (' + o.status + ')');
-                    });
+        $.ajax({
+            url: '<?= base_url("od_management_con/check_conflicts_ajax") ?>',
+            type: 'POST',
+            data: {
+                emp_id: empId,
+                dates: dates,
+                exclude_id: $('#od_id').val()
+            },
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success' && res.has_conflict) {
+                    var msgs = [];
+                    if (res.conflicts.existing_ods && res.conflicts.existing_ods.length > 0) {
+                        res.conflicts.existing_ods.forEach(function(o) {
+                            msgs.push('Existing OD on <strong>' + o.date + '</strong> (' + o.status + ')');
+                        });
+                    }
+                    if (res.conflicts.leaves && res.conflicts.leaves.length > 0) {
+                        res.conflicts.leaves.forEach(function(l) {
+                            msgs.push('Approved Leave on <strong>' + l.date + '</strong> (' + l.leave_type + ')');
+                        });
+                    }
+                    $('#conflict_message_text').html(msgs.join('<br>'));
+                    $('#conflict_alert_box').slideDown(150);
+                } else {
+                    $('#conflict_alert_box').slideUp(150);
                 }
-                if (res.conflicts.leaves && res.conflicts.leaves.length > 0) {
-                    res.conflicts.leaves.forEach(function(l) {
-                        msgs.push('Approved Leave on ' + l.date + ' (' + l.leave_type + ')');
-                    });
-                }
-                $('#conflict_message_text').html(msgs.join('<br>'));
-                $('#conflict_alert_box').slideDown(150);
-            } else {
-                $('#conflict_alert_box').slideUp(150);
             }
-        }
-    });
-}
+        });
+    }
 
-function selectEmployee(emp) {
-    $('#emp_id').val(emp.emp_id);
-    $('#emp_search_input').val(emp.emp_id + ' - ' + emp.name_en);
-    $('#emp_search_dropdown').hide();
-
-    // Populate profile card
-    var initials = emp.name_en ? emp.name_en.substring(0, 2).toUpperCase() : 'EM';
-    $('#prev_avatar').text(initials);
-    $('#prev_emp_id').text(emp.emp_id);
-    $('#prev_emp_name').text(emp.name_en || '-');
-    $('#prev_emp_desig').text(emp.desig_name || '-');
-    $('#prev_emp_dept').text(emp.dept_name || '-');
-    $('#prev_emp_unit').text(emp.unit_name || '-');
-    $('#prev_emp_phone').text(emp.personal_mobile || '-');
-    $('#emp_preview_container').slideDown(200);
-
-    triggerConflictCheck();
-}
-
-$(document).ready(function() {
-    calculateRangeDays();
-
-    $('#start_date, #end_date').on('change', function() {
-        calculateRangeDays();
-        triggerConflictCheck();
-    });
-
-    // Add Date to individual list
-    $('#btn_add_date').on('click', function() {
-        var d = $('#single_date_picker').val();
-        if (!d) {
-            Swal.fire('Error', 'Please pick a date first.', 'warning');
-            return;
-        }
-        if (selectedDates.indexOf(d) !== -1) {
-            Swal.fire('Notice', 'Date ' + d + ' is already added.', 'info');
-            return;
-        }
-        selectedDates.push(d);
-        renderDateTags();
-    });
-
-    // Live search employee
+    // 3. Employee Search & Selection Logic
     var searchTimer = null;
-    $('#emp_search_input').on('keyup', function() {
+    $('#emp_search_input').on('keyup', function(e) {
         var term = $(this).val().trim();
+        if (term.length > 0) {
+            $('#btn_clear_search').show();
+        } else {
+            $('#btn_clear_search').hide();
+        }
+
+        // On Enter, try exact lookup
+        if (e.keyCode === 13) {
+            e.preventDefault();
+            lookupExactEmployee(term);
+            return;
+        }
+
         clearTimeout(searchTimer);
-        if (term.length < 2) {
-            $('#emp_search_dropdown').hide();
+        if (term.length < 1) {
+            $('#emp_dropdown_results').hide();
             return;
         }
 
         searchTimer = setTimeout(function() {
-            var unitId = $('#filter_unit').length ? $('#filter_unit').val() : '';
-            var deptId = $('#filter_dept').val();
-            var desigId = $('#filter_desig').val();
-
             $.ajax({
                 url: '<?= base_url("od_management_con/employee_search_ajax") ?>',
                 type: 'POST',
-                data: {
-                    q: term,
-                    unit_id: unitId,
-                    dept_id: deptId,
-                    desig_id: desigId
-                },
+                data: { q: term },
                 dataType: 'json',
                 success: function(res) {
                     if (res.status === 'success' && res.data.length > 0) {
                         var html = '';
                         res.data.forEach(function(emp) {
-                            html += '<div class="emp-search-item" onclick=\'selectEmployee(' + JSON.stringify(emp) + ')\'>' +
+                            var sub = (emp.desig_name || '-') + ' | ' + (emp.dept_name || '-');
+                            html += '<div class="emp-dropdown-item" data-emp=\'' + JSON.stringify(emp).replace(/'/g, "&apos;") + '\'>' +
                                     '<div>' +
-                                    '<div class="search-name">' + emp.emp_id + ' - ' + emp.name_en + '</div>' +
-                                    '<div class="search-sub">' + (emp.desig_name || '') + ' | ' + (emp.dept_name || '') + '</div>' +
+                                    '<div class="emp-item-name">' + emp.emp_id + ' - ' + emp.name_en + '</div>' +
+                                    '<div class="emp-item-details">' + sub + '</div>' +
                                     '</div>' +
-                                    '<span class="badge" style="background:#e0f2fe; color:#0369a1;">' + (emp.unit_name || '') + '</span>' +
+                                    '<span class="emp-item-unit">' + (emp.unit_name || '') + '</span>' +
                                     '</div>';
                         });
-                        $('#emp_search_dropdown').html(html).show();
+                        $('#emp_dropdown_results').html(html).show();
                     } else {
-                        $('#emp_search_dropdown').html('<div style="padding:10px 14px; color:#64748b; font-size:12px;">No employees found.</div>').show();
+                        $('#emp_dropdown_results').html('<div style="padding:10px 14px; color:#64748b; font-size:12px;">No employees found matching "' + term + '"</div>').show();
                     }
                 }
             });
-        }, 300);
+        }, 250);
     });
 
-    $('#btn_search_emp').on('click', function() {
-        $('#emp_search_input').trigger('keyup');
+    // Clear search input
+    $('#btn_clear_search').on('click', function() {
+        $('#emp_search_input').val('').focus();
+        $(this).hide();
+        $('#emp_dropdown_results').hide();
     });
 
-    // Hide search dropdown on outside click
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('.emp-search-results, #emp_search_input, #btn_search_emp').length) {
-            $('#emp_search_dropdown').hide();
+    // Select employee from dropdown
+    $(document).on('click', '.emp-dropdown-item', function() {
+        var empData = $(this).attr('data-emp');
+        if (empData) {
+            var emp = JSON.parse(empData);
+            setEmployeeSelected(emp);
         }
     });
 
-    // Form Submit Handler
-    $('#odAssignmentForm').on('submit', function(e) {
+    function lookupExactEmployee(empId) {
+        if (!empId) return;
+        $.ajax({
+            url: '<?= base_url("od_management_con/employee_info_ajax") ?>',
+            type: 'POST',
+            data: { emp_id: empId },
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success' && res.data) {
+                    setEmployeeSelected(res.data);
+                }
+            }
+        });
+    }
+
+    function setEmployeeSelected(emp) {
+        $('#emp_id').val(emp.emp_id);
+        var initials = emp.name_en ? emp.name_en.substring(0, 2).toUpperCase() : 'EM';
+        $('#prev_avatar').text(initials);
+        $('#prev_emp_title').text(emp.emp_id + ' - ' + (emp.name_en || ''));
+        var sub = (emp.desig_name || '-') + ' | ' + (emp.dept_name || '-') + ' (' + (emp.unit_name || '-') + ')';
+        $('#prev_emp_sub').text(sub);
+
+        $('#emp_dropdown_results').hide();
+        $('#emp_search_box').hide();
+        $('#emp_selected_badge').slideDown(150);
+
+        checkConflicts();
+    }
+
+    // Change / Clear selected employee
+    $('#btn_change_employee').on('click', function() {
+        $('#emp_id').val('');
+        $('#emp_selected_badge').hide();
+        $('#emp_search_box').slideDown(150);
+        $('#emp_search_input').val('').focus();
+        $('#btn_clear_search').hide();
+        $('#conflict_alert_box').hide();
+    });
+
+    // Hide dropdown on click outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#emp_search_box').length) {
+            $('#emp_dropdown_results').hide();
+        }
+    });
+
+    // 4. Form Submit Handler
+    $('#odSimpleForm').on('submit', function(e) {
         e.preventDefault();
 
         var empId = $('#emp_id').val();
         if (!empId) {
-            Swal.fire('Validation Error', 'Please select an employee first.', 'error');
+            Swal.fire({
+                title: 'Employee Required',
+                text: 'Please search and select an employee first.',
+                icon: 'warning',
+                confirmButtonColor: '#0284c7'
+            });
+            $('#emp_search_input').focus();
             return false;
         }
 
-        var mode = $('#assignment_mode').val();
-        if (mode === 'individual' && selectedDates.length === 0) {
-            Swal.fire('Validation Error', 'Please add at least one OD date.', 'error');
+        var startDate = $('#start_date').val();
+        if (!startDate) {
+            Swal.fire({
+                title: 'Date Required',
+                text: 'Please select start date.',
+                icon: 'warning',
+                confirmButtonColor: '#0284c7'
+            });
             return false;
         }
 
-        var purpose = $('#purpose').val();
+        var endDate = $('#end_date').val() || startDate;
+        if (endDate < startDate) {
+            Swal.fire({
+                title: 'Invalid Date Range',
+                text: 'End date cannot be earlier than start date.',
+                icon: 'warning',
+                confirmButtonColor: '#0284c7'
+            });
+            return false;
+        }
+
+        var purpose = $('#purpose').val().trim();
         if (!purpose) {
-            Swal.fire('Validation Error', 'Please select OD purpose / category.', 'error');
-            return false;
-        }
-
-        var loc = $('#location').val().trim();
-        if (!loc) {
-            Swal.fire('Validation Error', 'Please enter outside duty location.', 'error');
-            return false;
-        }
-
-        var workDesc = $('#work_description').val().trim();
-        if (!workDesc) {
-            Swal.fire('Validation Error', 'Please enter official work description.', 'error');
+            Swal.fire({
+                title: 'Purpose Required',
+                text: 'Please enter the OD purpose.',
+                icon: 'warning',
+                confirmButtonColor: '#0284c7'
+            });
+            $('#purpose').focus();
             return false;
         }
 
         var btn = $('#btn_submit_od');
+        var origHtml = btn.html();
         btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
-
-        var formData = $(this).serialize();
 
         $.ajax({
             url: window.location.href,
             type: 'POST',
-            data: formData,
+            data: $(this).serialize(),
             dataType: 'json',
             success: function(res) {
-                btn.prop('disabled', false).html('<i class="fa fa-save"></i> Save & Assign Outside Duty');
+                btn.prop('disabled', false).html(origHtml);
                 if (res.status === 'success') {
                     Swal.fire({
-                        title: 'Success!',
+                        title: 'OD Saved Successfully!',
                         text: res.message,
                         icon: 'success',
                         confirmButtonText: 'Go to OD List',
                         showCancelButton: true,
-                        cancelButtonText: 'Create Another'
+                        cancelButtonText: 'Add Another OD',
+                        confirmButtonColor: '#0284c7',
+                        cancelButtonColor: '#64748b'
                     }).then(function(result) {
                         if (result.isConfirmed) {
                             window.location.href = '<?= base_url("od_management_con/list") ?>';
@@ -1020,14 +812,25 @@ $(document).ready(function() {
                         }
                     });
                 } else {
-                    Swal.fire('Error', res.message, 'error');
+                    Swal.fire({
+                        title: 'Cannot Save OD',
+                        html: res.message,
+                        icon: 'error',
+                        confirmButtonColor: '#0284c7'
+                    });
                 }
             },
-            error: function(xhr, status, error) {
-                btn.prop('disabled', false).html('<i class="fa fa-save"></i> Save & Assign Outside Duty');
-                Swal.fire('Server Error', 'An unexpected error occurred. Please try again.', 'error');
+            error: function() {
+                btn.prop('disabled', false).html(origHtml);
+                Swal.fire({
+                    title: 'Server Error',
+                    text: 'An unexpected server error occurred. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#0284c7'
+                });
             }
         });
     });
+
 });
 </script>

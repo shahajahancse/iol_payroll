@@ -174,6 +174,10 @@ class Attn_process_model extends CI_Model{
             		// When employee is on leave, no in-time or out-time should be recorded or shown
             		$in_time  = '00:00:00';
             		$out_time = '00:00:00';
+            	} elseif ($is_od) {
+            		// Outside Duty (OD): in time out time thakbe na, status a OD dekhabe
+            		$in_time  = '00:00:00';
+            		$out_time = '00:00:00';
             	} elseif (strtolower(trim($shift_name)) == 'single') {
             		$in_time  = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'ASC', $table);
             		$out_time = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'DESC', $table);
@@ -199,6 +203,11 @@ class Attn_process_model extends CI_Model{
             		$in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
             		$out_time = $this->time_check_in($out_start_time, $out_end_time, $emp_id, 'DESC', $table);
             		if (!empty($in_time) && !empty($out_time) && $in_time == $out_time) {
+            			$out_time = '00:00:00';
+            		}
+            		// If employee did not punch IN on this date and out_date is next day,
+            		// any punch on the next day morning belongs to the next day's shift, not this shift's exit.
+            		if ((empty($in_time) || $in_time == '00:00:00') && $out_date > $process_date) {
             			$out_time = '00:00:00';
             		}
             	}
@@ -284,18 +293,31 @@ class Attn_process_model extends CI_Model{
 					$late_status = 0;
 					$early_exit = 0;
 					$alert_msg = 0;
-				}elseif ($process_date == $holiday || $holiday === true){
-					$attn_status = "H";
-				}elseif ($process_date == $weekend || $weekend === true){
-					$attn_status = "W";
 				}elseif ($is_od){
 					// Outside Duty (OD) Policy:
-					// Employee assigned on official outside duty.
-					// If actual punches exist, they are preserved; otherwise 00:00:00.
+					// in time out time thakbe na, status a OD dekhabe, but present hisabe count hobe
 					$attn_status = "OD";
+					$in_time = '00:00:00';
+					$out_time = '00:00:00';
+					$tot_hour = 0;
+					$ot_hour = 0;
+					$eot_hour = 0;
+					$ot_eot_12am = 0;
+					$ot_eot_4pm = 0;
+					$deduction_hour = 0;
 					$late_status = 0;
 					$early_exit = 0;
 					$alert_msg = 0;
+				}elseif ($process_date == $holiday || $holiday === true){
+					$attn_status = "H";
+					if (empty($in_time) || $in_time == '00:00:00') {
+						$out_time = '00:00:00';
+					}
+				}elseif ($process_date == $weekend || $weekend === true){
+					$attn_status = "W";
+					if (empty($in_time) || $in_time == '00:00:00') {
+						$out_time = '00:00:00';
+					}
 				}elseif (strtolower(trim($shift_name)) == 'single'){
 					// Single Punch Policy: single punch at any time during 24 hrs (00:00:00 to 23:59:59) counted as present, otherwise absent
 					if ($in_time != '' || ($out_time != '' && $out_time != '00:00:00')) {

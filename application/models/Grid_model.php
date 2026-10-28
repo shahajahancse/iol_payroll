@@ -521,7 +521,7 @@ class Grid_model extends CI_Model{
 		$this->db->select("
 					num.id as line_id, num.line_name_en, num.line_name_bn, num.group_one,num.group_two,num.group_three,num.group_four,num.group_five,num.group_six,
 	                SUM( CASE WHEN log.emp_id 		  != '' THEN 1 ELSE 0 END ) AS all_emp,
-	                SUM( CASE WHEN log.present_status = 'P' THEN 1 ELSE 0 END ) AS all_present,
+	                SUM( CASE WHEN log.present_status = 'P' OR log.present_status = 'OD' THEN 1 ELSE 0 END ) AS all_present,
 	                SUM( CASE WHEN log.present_status = 'A' THEN 1 ELSE 0 END ) AS all_absent,
 	                SUM( CASE WHEN log.present_status = 'L' THEN 1 ELSE 0 END ) AS all_leave,
 	                SUM( CASE WHEN log.late_status    = 1 THEN 1 ELSE 0 END ) AS all_late,
@@ -591,7 +591,7 @@ class Grid_model extends CI_Model{
 		$this->db->select("
 					num.id as line_id, num.line_name_en, num.line_name_bn, num.group_one,num.group_two,num.group_three,num.group_four,num.group_five,num.group_six,
 	                SUM( CASE WHEN log.emp_id 		  != '' THEN 1 ELSE 0 END ) AS all_emp,
-	                SUM( CASE WHEN log.present_status = 'P' THEN 1 ELSE 0 END ) AS all_present,
+	                SUM( CASE WHEN log.present_status = 'P' OR log.present_status = 'OD' THEN 1 ELSE 0 END ) AS all_present,
 	                SUM( CASE WHEN log.present_status = 'A' THEN 1 ELSE 0 END ) AS all_absent,
 	                SUM( CASE WHEN log.present_status = 'L' THEN 1 ELSE 0 END ) AS all_leave,
 	                SUM( CASE WHEN log.late_status    = 1 THEN 1 ELSE 0 END ) AS all_late,
@@ -663,7 +663,7 @@ class Grid_model extends CI_Model{
 	function daily_logout_report($date, $unit_id){
 		$this->db->select("
 			num.id as line_id, num.line_name_en, num.line_name_bn,
-			SUM( CASE WHEN log.present_status = 'P' THEN 1 ELSE 0 END ) AS all_present,
+			SUM( CASE WHEN log.present_status = 'P' OR log.present_status = 'OD' THEN 1 ELSE 0 END ) AS all_present,
 			SUM( CASE WHEN (log.in_time != '00:00:00' AND log.out_time = '00:00:00') OR (log.in_time = '00:00:00' AND log.out_time != '00:00:00') THEN 1 ELSE 0 END ) AS present_error,
 			SUM(ot + eot) AS total_ot,
 			SUM( CASE WHEN log.out_time > '11:30:00' AND log.out_time <= '16:00:00' THEN 1 ELSE 0 END ) AS four_pm,
@@ -832,7 +832,7 @@ class Grid_model extends CI_Model{
 		$this->db->where('pr_emp_shift_log.shift_log_date', $date);
 
 		if($type == 1){
-			$this->db->where("(pr_emp_shift_log.present_status = 'P' OR (pr_emp_shift_log.present_status = 'W' AND pr_emp_shift_log.in_time != '00:00:00'))");
+			$this->db->where("(pr_emp_shift_log.present_status = 'P' OR pr_emp_shift_log.present_status = 'OD' OR (pr_emp_shift_log.present_status = 'W' AND pr_emp_shift_log.in_time != '00:00:00'))");
 			$this->db->where_in('pr_emp_com_info.emp_id', $grid_emp_id);
 		}
 
@@ -5527,6 +5527,14 @@ class Grid_model extends CI_Model{
 						$row->in_time = "00:00:00";
 						$row->out_time = "00:00:00";
 					}
+					elseif($row->present_status == 'OD'){
+						// Outside Duty (OD): in time out time thakbe na, status a OD dekhabe, but present hisabe count hobe
+						$att_status = "OD";
+						$att_status_count = "P";
+						$row->in_time = "00:00:00";
+						$row->out_time = "00:00:00";
+						$row->ot_hour = "";
+					}
 					elseif(in_array($row->shift_log_date,$holiday)){
 						$att_status = "Holiday";
 						$att_status_count = "Holiday";
@@ -5564,7 +5572,7 @@ class Grid_model extends CI_Model{
 						$att_status_count = "A";
 					}
 
-					if($att_status !="Leave" and $att_status !="Holiday" and $att_status !="Weekend" and $att_status !="A" ){
+					if($att_status !="Leave" and $att_status !="Holiday" and $att_status !="Weekend" and $att_status !="A" and $att_status !="OD" ){
 						$yera_month  = date('Y_m',strtotime($grid_firstdate));
 						$table = "att_$yera_month";
 						$lunch_out_start = "12:55:00";
@@ -6064,6 +6072,14 @@ class Grid_model extends CI_Model{
 						$row->in_time = "00:00:00";
 						$row->out_time = "00:00:00";
 					}
+					elseif($row->present_status == 'OD'){
+						// Outside Duty (OD): in time out time thakbe na, status a OD dekhabe, but present hisabe count hobe
+						$att_status = "OD";
+						$att_status_count = "P";
+						$row->in_time = "00:00:00";
+						$row->out_time = "00:00:00";
+						$row->ot_hour = "";
+					}
 					elseif(in_array($row->shift_log_date,$holiday)){
 						$att_status = "Holiday";
 						$att_status_count = "Holiday";
@@ -6101,7 +6117,7 @@ class Grid_model extends CI_Model{
 						$att_status_count = "A";
 					}
 
-					if($att_status !="Leave" and $att_status !="Holiday" and $att_status !="Weekend" and $att_status !="A" ){
+					if($att_status !="Leave" and $att_status !="Holiday" and $att_status !="Weekend" and $att_status !="A" and $att_status !="OD" ){
 						$yera_month  = date('Y_m',strtotime($grid_firstdate));
 						$table = "att_$yera_month";
 						$lunch_out_start = "12:55:00";
@@ -6348,6 +6364,15 @@ class Grid_model extends CI_Model{
 						$row->in_time = "00:00:00";
 						$row->out_time = "00:00:00";
 					}
+					elseif($row3->present_status == 'OD')
+					{
+						// Outside Duty (OD): in time out time thakbe na, status a OD dekhabe, but present hisabe count hobe
+						$att_status = "OD";
+						$att_status_count = "P";
+						$row->in_time = "00:00:00";
+						$row->out_time = "00:00:00";
+						$row->ot_hour = "";
+					}
 					elseif(in_array($row3->shift_log_date,$holiday))
 					{
 						$att_status = "Holiday";
@@ -6388,7 +6413,7 @@ class Grid_model extends CI_Model{
 						$att_status_count = "A";
 					}
 
-					if($att_status !="Leave" and $att_status !="Holiday" and $att_status !="Weekend" and $att_status !="A" )
+					if($att_status !="Leave" and $att_status !="Holiday" and $att_status !="Weekend" and $att_status !="A" and $att_status !="OD" )
 					{
 						$table = "temp_$emp_id";
 						$lunch_out_start = "12:55:00";

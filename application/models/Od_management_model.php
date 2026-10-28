@@ -23,13 +23,13 @@ class Od_management_model extends CI_Model
               `start_date` date NOT NULL,
               `end_date` date NOT NULL,
               `total_days` int(11) NOT NULL DEFAULT 1,
-              `purpose` varchar(100) NOT NULL,
-              `location` varchar(255) NOT NULL,
-              `work_description` text NOT NULL,
+              `purpose` varchar(255) NOT NULL,
+              `location` varchar(255) DEFAULT NULL,
+              `work_description` text DEFAULT NULL,
               `departure_time` time DEFAULT NULL,
               `return_time` time DEFAULT NULL,
-              `status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
-              `assigned_by` varchar(64) NOT NULL,
+              `status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'approved',
+              `assigned_by` varchar(64) DEFAULT NULL,
               `approved_by` varchar(64) DEFAULT NULL,
               `approved_at` datetime DEFAULT NULL,
               `rejection_reason` text DEFAULT NULL,
@@ -43,6 +43,13 @@ class Od_management_model extends CI_Model
               KEY `idx_od_dates` (`start_date`,`end_date`),
               KEY `idx_od_status` (`status`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        } else {
+            @$this->db->query("ALTER TABLE `pr_emp_od` MODIFY `location` varchar(255) NULL DEFAULT NULL");
+            @$this->db->query("ALTER TABLE `pr_emp_od` MODIFY `work_description` text NULL DEFAULT NULL");
+            @$this->db->query("ALTER TABLE `pr_emp_od` MODIFY `purpose` varchar(255) NOT NULL");
+            @$this->db->query("ALTER TABLE `pr_emp_od` MODIFY `remarks` text NULL DEFAULT NULL");
+            @$this->db->query("ALTER TABLE `pr_emp_od` MODIFY `status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'approved'");
+            @$this->db->query("ALTER TABLE `pr_emp_od` MODIFY `assigned_by` varchar(64) NULL DEFAULT NULL");
         }
 
         if (!$this->db->table_exists('pr_emp_od_dates')) {
@@ -52,7 +59,7 @@ class Od_management_model extends CI_Model
               `emp_id` varchar(16) NOT NULL,
               `unit_id` int(11) NOT NULL DEFAULT 1,
               `od_date` date NOT NULL,
-              `status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'pending',
+              `status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'approved',
               `created_at` datetime NOT NULL DEFAULT current_timestamp(),
               PRIMARY KEY (`id`),
               KEY `idx_odd_od_id` (`od_id`),
@@ -60,6 +67,8 @@ class Od_management_model extends CI_Model
               KEY `idx_odd_date_status` (`od_date`,`status`),
               KEY `idx_odd_status` (`status`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8;");
+        } else {
+            @$this->db->query("ALTER TABLE `pr_emp_od_dates` MODIFY `status` enum('pending','approved','rejected','cancelled') NOT NULL DEFAULT 'approved'");
         }
     }
 
@@ -261,8 +270,8 @@ class Od_management_model extends CI_Model
             'end_date'         => $data['end_date'],
             'total_days'       => count($dates),
             'purpose'          => $data['purpose'],
-            'location'         => $data['location'],
-            'work_description' => $data['work_description'],
+            'location'         => !empty($data['location']) ? $data['location'] : null,
+            'work_description' => !empty($data['work_description']) ? $data['work_description'] : null,
             'departure_time'   => !empty($data['departure_time']) ? $data['departure_time'] : null,
             'return_time'      => !empty($data['return_time']) ? $data['return_time'] : null,
             'status'           => !empty($data['status']) ? $data['status'] : 'pending',
@@ -326,16 +335,20 @@ class Od_management_model extends CI_Model
             'details'   => 'Assignment modified. Dates: ' . implode(', ', $dates)
         );
 
+        $target_status = !empty($data['status']) ? $data['status'] : 'approved';
         $update_data = array(
             'assignment_mode'  => !empty($data['assignment_mode']) ? $data['assignment_mode'] : $existing->assignment_mode,
             'start_date'       => $data['start_date'],
             'end_date'         => $data['end_date'],
             'total_days'       => count($dates),
             'purpose'          => $data['purpose'],
-            'location'         => $data['location'],
-            'work_description' => $data['work_description'],
+            'location'         => !empty($data['location']) ? $data['location'] : (isset($existing->location) ? $existing->location : null),
+            'work_description' => !empty($data['work_description']) ? $data['work_description'] : (isset($existing->work_description) ? $existing->work_description : null),
             'departure_time'   => !empty($data['departure_time']) ? $data['departure_time'] : null,
             'return_time'      => !empty($data['return_time']) ? $data['return_time'] : null,
+            'status'           => $target_status,
+            'approved_by'      => ($target_status === 'approved' && empty($existing->approved_by)) ? $username : $existing->approved_by,
+            'approved_at'      => ($target_status === 'approved' && empty($existing->approved_at)) ? date('Y-m-d H:i:s') : $existing->approved_at,
             'remarks'          => !empty($data['remarks']) ? $data['remarks'] : null,
             'audit_history'    => json_encode($history),
             'updated_at'       => date('Y-m-d H:i:s')
@@ -355,14 +368,14 @@ class Od_management_model extends CI_Model
                 'emp_id'     => $existing->emp_id,
                 'unit_id'    => $existing->unit_id,
                 'od_date'    => $d,
-                'status'     => $existing->status,
+                'status'     => $target_status,
                 'created_at' => date('Y-m-d H:i:s')
             );
             $this->db->insert('pr_emp_od_dates', $date_row);
         }
 
-        // Re-sync attendance if assignment was already approved
-        if ($existing->status === 'approved') {
+        // Always sync attendance for approved OD
+        if ($target_status === 'approved') {
             $this->sync_attendance_od($existing->emp_id, $dates, $existing->unit_id);
         }
 
@@ -523,8 +536,24 @@ class Od_management_model extends CI_Model
         $shift_id = !empty($emp->emp_shift) ? $emp->emp_shift : 1;
         $unit_id  = !empty($emp->unit_id) ? $emp->unit_id : $unit_id;
 
+        // Load Attn_process_model to process attendance immediately for each OD date
+        $has_attn_model = false;
+        if (file_exists(APPPATH . 'models/Attn_process_model.php')) {
+            $this->load->model('Attn_process_model');
+            $has_attn_model = true;
+        }
+
         foreach ($dates as $date) {
-            // Check if log already exists for this employee and date
+            // Run core attendance process for this date and employee
+            if ($has_attn_model && method_exists($this->Attn_process_model, 'attn_process')) {
+                try {
+                    $this->Attn_process_model->attn_process($date, $unit_id, array($emp_id));
+                } catch (Exception $e) {
+                    log_message('error', 'OD attendance process error: ' . $e->getMessage());
+                }
+            }
+
+            // Ensure pr_emp_shift_log row has present_status = 'OD'
             $existing_log = $this->db->where('emp_id', $emp_id)
                                      ->where('shift_log_date', $date)
                                      ->get('pr_emp_shift_log')
@@ -541,8 +570,16 @@ class Od_management_model extends CI_Model
                     continue; // Preserve leave
                 }
 
-                // Preserve existing in_time and out_time punches!
+                // OD Policy: in time out time thakbe na, status a OD dekhabe, but present hisabe count hobe
                 $update_data = array(
+                    'in_time'        => '00:00:00',
+                    'out_time'       => '00:00:00',
+                    'tot'            => 0,
+                    'ot'             => 0,
+                    'eot'            => 0,
+                    'ot_eot_12am'    => 0,
+                    'ot_eot_4pm'     => 0,
+                    'deduction_hour' => 0,
                     'present_status' => 'OD',
                     'late_status'    => 0,
                     'early_exit'     => 0
@@ -562,6 +599,9 @@ class Od_management_model extends CI_Model
                     'tot'            => 0,
                     'ot'             => 0,
                     'eot'            => 0,
+                    'ot_eot_12am'    => 0,
+                    'ot_eot_4pm'     => 0,
+                    'deduction_hour' => 0,
                     'late_status'    => 0,
                     'early_exit'     => 0,
                     'present_status' => 'OD'
@@ -576,22 +616,28 @@ class Od_management_model extends CI_Model
      */
     public function revert_attendance_od($emp_id, $date)
     {
+        // Re-process attendance for that date so it reverts to natural punch / absent / leave
+        if (file_exists(APPPATH . 'models/Attn_process_model.php')) {
+            $this->load->model('Attn_process_model');
+            $emp = $this->db->select('unit_id')->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+            $unit_id = !empty($emp->unit_id) ? $emp->unit_id : 1;
+            try {
+                $this->Attn_process_model->attn_process($date, $unit_id, array($emp_id));
+                return;
+            } catch (Exception $e) {
+                // fallback
+            }
+        }
+
         $log = $this->db->where('emp_id', $emp_id)
                         ->where('shift_log_date', $date)
                         ->get('pr_emp_shift_log')
                         ->row();
 
         if ($log && $log->present_status === 'OD') {
-            // Check if there are actual biometric punches
             $has_in  = (!empty($log->in_time) && $log->in_time != '00:00:00');
             $has_out = (!empty($log->out_time) && $log->out_time != '00:00:00');
-
-            if ($has_in || $has_out) {
-                $new_status = 'P';
-            } else {
-                $new_status = 'A';
-            }
-
+            $new_status = ($has_in || $has_out) ? 'P' : 'A';
             $this->db->where('id', $log->id);
             $this->db->update('pr_emp_shift_log', array('present_status' => $new_status));
         }
@@ -957,6 +1003,7 @@ class Od_management_model extends CI_Model
                     dep.dept_id,
                     IFNULL(dep.dept_name, "Unassigned") as dept_name,
                     COUNT(DISTINCT d.emp_id) as total_employees,
+                    COUNT(DISTINCT d.emp_id) as emp_count,
                     COUNT(d.id) as total_od_days
                 ');
                 $this->db->from('pr_emp_od_dates d');
@@ -979,6 +1026,7 @@ class Od_management_model extends CI_Model
                     u.unit_id,
                     IFNULL(u.unit_name, "Head Office") as unit_name,
                     COUNT(DISTINCT d.emp_id) as total_employees,
+                    COUNT(DISTINCT d.emp_id) as emp_count,
                     COUNT(d.id) as total_od_days
                 ');
                 $this->db->from('pr_emp_od_dates d');

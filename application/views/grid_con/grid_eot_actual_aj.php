@@ -115,10 +115,16 @@
                             elseif(in_array($row->shift_log_date,$emp_data['holiday'])){
                                 $att_status = "Holiday";
                                 $att_status_count = "Holiday";
+                                if ($row->in_time == '00:00:00' || empty($row->in_time)) {
+                                    $row->out_time = "00:00:00";
+                                }
                             }
                             elseif($row->present_status == 'W') {
                                 $att_status = "Work Off";
                                 $att_status_count = "Work Off";
+                                if ($row->in_time == '00:00:00' || empty($row->in_time)) {
+                                    $row->out_time = "00:00:00";
+                                }
                             }
                             elseif($row->in_time !='00:00:00' and $row->out_time !='00:00:00'){
                                 $att_status = "P";
@@ -220,9 +226,19 @@
                                 elseif($att_status == "Holiday"){
                                     $holiday_count++;
                                 }
-                                if($row->late_status == 1){
-                                    $remark = "Late";
-                                    $late_count++;
+                                if($att_status_count != "Leave" && !in_array($att_status, $leave_codes) && $row->late_status == 1){
+                                    if (!empty($row->is_waived)) {
+                                        $base_remark = !empty($row->remarks) ? $row->remarks : "Late";
+                                        $remark = (stripos($base_remark, 'waived') !== false) ? $base_remark : $base_remark . ' (Waived)';
+                                    } else {
+                                        $remark = !empty($row->remarks) ? $row->remarks : "Late";
+                                        $late_count++;
+                                    }
+                                } elseif (!empty($row->remarks)) {
+                                    $remark = $row->remarks;
+                                    if (!empty($row->is_waived) && stripos($remark, 'waived') === false) {
+                                        $remark .= ' (Waived)';
+                                    }
                                 } else{
                                     $remark = "";
                                 }

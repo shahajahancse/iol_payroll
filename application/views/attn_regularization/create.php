@@ -2,6 +2,8 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 ?>
 <style>
+.reg-wrapper,
+.page-content .reg-wrapper,
 .page-content .content.reg-wrapper {
     padding-top: 85px !important;
     padding-left: 20px !important;
@@ -99,12 +101,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 }
 </style>
 
-<div class="reg-wrapper">
+<div class="content reg-wrapper">
     <div class="reg-card" style="max-width: 900px; margin: 0 auto;">
         <div class="reg-card-header">
             <h3><i class="fa fa-pencil-square-o text-primary"></i> Add Attendance Regularization & Remark</h3>
-            <a href="<?= base_url('attn_regularization/list') ?>" class="btn btn-default btn-sm" style="font-weight:600;">
-                <i class="fa fa-arrow-left"></i> Back to List
+            <a href="<?= base_url('attn_regularization/dashboard') ?>" class="btn btn-default btn-sm" style="font-weight:600;">
+                <i class="fa fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
         <div class="reg-card-body">

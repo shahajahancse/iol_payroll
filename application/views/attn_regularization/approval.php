@@ -2,6 +2,8 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 ?>
 <style>
+.reg-wrapper,
+.page-content .reg-wrapper,
 .page-content .content.reg-wrapper {
     padding-top: 85px !important;
     padding-left: 20px !important;
@@ -46,7 +48,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 .badge-waived { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; font-weight: 700; }
 </style>
 
-<div class="reg-wrapper">
+<div class="content reg-wrapper">
     <div class="reg-header-card">
         <div style="display:flex; align-items:center; gap:16px;">
             <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 4px 12px rgba(245,158,11,0.25);">
@@ -58,8 +60,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
         </div>
         <div>
-            <a href="<?= base_url('attn_regularization/list') ?>" class="btn btn-default" style="font-weight:600;">
-                <i class="fa fa-arrow-left"></i> Back to List
+            <a href="<?= base_url('attn_regularization/dashboard') ?>" class="btn btn-default" style="font-weight:600;">
+                <i class="fa fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
     </div>

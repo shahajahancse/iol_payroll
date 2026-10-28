@@ -345,6 +345,15 @@
                                             </span>
                                         </td>
                                     </tr>
+                                    <?php if (!empty($rows->arrear_amount) && $rows->arrear_amount > 0) { ?>
+                                    <tr>
+                                        <td colspan="3" style="font-weight: bold; padding-left: 5px;">(ঙ) বকেয়া বেতন :
+                                            <span style="font-family: SutonnyMJ; font-size: 12px;">
+                                                <?php echo $rows->arrear_amount; ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
                                 </table>
                             </div>
                             <div>
@@ -352,7 +361,7 @@
                                     <tr>
                                         <td width="215"><span
                                                 style="position:relative; left:5px; font-weight:bold;">সর্বমোট প্রদেয়
-                                                বেতন ( ক - খ + গ + ঘ ) </span>
+                                                বেতন ( ক - খ + গ + ঘ<?= (!empty($rows->arrear_amount) && $rows->arrear_amount > 0) ? ' + ঙ' : '' ?> ) </span>
                                         <td>:</td>
                                         <td width="78" style="padding-right: 9px;" align="right">
                                             <font style="font-family: SutonnyMJ; font-size:12px;">
@@ -651,6 +660,15 @@
                                             </span>
                                         </td>
                                     </tr>
+                                    <?php if (!empty($rows->arrear_amount) && $rows->arrear_amount > 0) { ?>
+                                    <tr>
+                                        <td colspan="3" style="font-weight: bold; padding-left: 5px;">(ঙ) বকেয়া বেতন :
+                                            <span style="font-family: SutonnyMJ; font-size: 12px;">
+                                                <?php echo $rows->arrear_amount; ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
                                 </table>
                             </div>
                             <div>
@@ -658,7 +676,7 @@
                                     <tr>
                                         <td width="215"><span
                                                 style="position:relative; left:5px; font-weight:bold;">সর্বমোট প্রদেয়
-                                                বেতন ( ক - খ + গ + ঘ ) </span>
+                                                বেতন ( ক - খ + গ + ঘ<?= (!empty($rows->arrear_amount) && $rows->arrear_amount > 0) ? ' + ঙ' : '' ?> ) </span>
                                         <td>:</td>
                                         <td width="78" style="padding-right: 9px;" align="right">
                                             <font style="font-family: SutonnyMJ; font-size:12px;">

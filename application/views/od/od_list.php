@@ -714,13 +714,21 @@ function renderTable(records, total) {
                 actions += '<button type="button" class="btn-sm-action btn-reject" title="Reject OD" onclick="openRejectModal(' + row.id + ')"><i class="fa fa-times"></i></button>';
             }
             actions += '<a href="<?= base_url("od_management_con/edit/") ?>' + row.id + '" class="btn-sm-action" title="Edit Assignment"><i class="fa fa-pencil"></i></a>';
-        }
-
-        if (row.status === 'approved' && isAdmin) {
-            actions += '<button type="button" class="btn-sm-action" title="Cancel OD" style="color:#d97706;" onclick="openCancelModal(' + row.id + ')"><i class="fa fa-ban"></i></button>';
+        } else if (row.status === 'approved') {
+            actions += '<a href="<?= base_url("od_management_con/edit/") ?>' + row.id + '" class="btn-sm-action" title="Edit Assignment"><i class="fa fa-pencil"></i></a>';
+            if (isAdmin) {
+                actions += '<button type="button" class="btn-sm-action" title="Cancel OD" style="color:#d97706;" onclick="openCancelModal(' + row.id + ')"><i class="fa fa-ban"></i></button>';
+            }
         }
 
         actions += '</div>';
+
+        var subInfo = '';
+        if (row.remarks) {
+            subInfo = '<div style="font-size:11px; color:#64748b;"><i class="fa fa-comment-o"></i> ' + row.remarks + '</div>';
+        } else if (row.location) {
+            subInfo = '<div style="font-size:11px; color:#64748b;"><i class="fa fa-map-marker"></i> ' + row.location + '</div>';
+        }
 
         html += '<tr>' +
                 '<td>' + (sl++) + '</td>' +
@@ -734,7 +742,7 @@ function renderTable(records, total) {
                 '<td style="text-align:center;"><span class="badge" style="background:#f1f5f9; color:#334155; font-weight:700;">' + row.total_days + 'd</span></td>' +
                 '<td>' +
                     '<div style="font-weight:600; color:#0f172a;">' + row.purpose + '</div>' +
-                    '<div style="font-size:11px; color:#64748b;"><i class="fa fa-map-marker"></i> ' + row.location + '</div>' +
+                    subInfo +
                 '</td>' +
                 '<td><span style="font-size:12px; color:#475569;">' + (row.assigned_by || '-') + '</span></td>' +
                 '<td style="text-align:center;"><span class="status-pill ' + row.status + '">' + row.status + '</span></td>' +

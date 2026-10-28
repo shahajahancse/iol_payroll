@@ -139,6 +139,17 @@
 							$row->out_time = "00:00:00";
 							$row->late_status = 0;
 						}
+						elseif($row->present_status == 'OD') {
+							// Outside Duty (OD): in time out time thakbe na, status a OD dekhabe, but present hisabe count hobe
+							$att_status = "OD";
+							$att_status_count = "P";
+							$row->in_time = "00:00:00";
+							$row->out_time = "00:00:00";
+							$row->ot = 0;
+							$row->com_ot = 0;
+							$extra_ot_hour = 0;
+							$row->late_status = 0;
+						}
 						elseif(in_array($row->shift_log_date,$emp_data['holiday'])){
 							$att_status = "Holiday";
 							$att_status_count = "Holiday";
@@ -254,7 +265,7 @@
 							echo $att_status;
 							echo "&nbsp;</td>";
 
-							if($att_status == "P"){
+							if($att_status == "P" || $att_status == "OD"){
 								$present_count++;
 							}
 							elseif($att_status == "A"){
@@ -274,13 +285,17 @@
 							}
 							if($att_status_count != "Leave" && !in_array($att_status, $leave_codes) && $row->late_status == 1){
 								if (!empty($row->is_waived)) {
-									$remark = !empty($row->remarks) ? $row->remarks : "Late (Waived)";
+									$base_remark = !empty($row->remarks) ? $row->remarks : "Late";
+									$remark = (stripos($base_remark, 'waived') !== false) ? $base_remark : $base_remark . ' (Waived)';
 								} else {
 									$remark = !empty($row->remarks) ? $row->remarks : "Late";
 									$late_count++;
 								}
 							} elseif (!empty($row->remarks)) {
 								$remark = $row->remarks;
+								if (!empty($row->is_waived) && stripos($remark, 'waived') === false) {
+									$remark .= ' (Waived)';
+								}
 							} else{
 								$remark = "";
 							}

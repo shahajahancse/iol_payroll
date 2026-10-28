@@ -2,6 +2,8 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 ?>
 <style>
+.reg-wrapper,
+.page-content .reg-wrapper,
 .page-content .content.reg-wrapper {
     padding-top: 85px !important;
     padding-left: 20px !important;
@@ -64,7 +66,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 }
 </style>
 
-<div class="reg-wrapper">
+<div class="content reg-wrapper">
     <div class="reg-header-card no-print">
         <div style="display:flex; align-items:center; gap:16px;">
             <div style="width:48px; height:48px; border-radius:12px; background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:0 4px 12px rgba(239,68,68,0.25);">
@@ -79,8 +81,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             <button onclick="window.print()" class="btn btn-primary" style="font-weight:600; padding:8px 18px; border-radius:6px;">
                 <i class="fa fa-print"></i> Print Report
             </button>
-            <a href="<?= base_url('attn_regularization/list') ?>" class="btn btn-default" style="font-weight:600; padding:8px 18px; border-radius:6px;">
-                <i class="fa fa-arrow-left"></i> Back to List
+            <a href="<?= base_url('attn_regularization/dashboard') ?>" class="btn btn-default" style="font-weight:600; padding:8px 18px; border-radius:6px;">
+                <i class="fa fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
     </div>

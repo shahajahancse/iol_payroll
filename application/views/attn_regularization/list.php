@@ -2,6 +2,8 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 ?>
 <style>
+.reg-wrapper,
+.page-content .reg-wrapper,
 .page-content .content.reg-wrapper {
     padding-top: 85px !important;
     padding-left: 20px !important;
@@ -52,7 +54,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 .badge-not-waived { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
 </style>
 
-<div class="reg-wrapper">
+<div class="content reg-wrapper">
     <!-- Header -->
     <div class="reg-header-card">
         <div style="display:flex; align-items:center; gap:16px;">
@@ -65,8 +67,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
         </div>
         <div style="display:flex; gap:10px;">
-            <a href="<?= base_url('attn_regularization/create') ?>" class="btn btn-primary" style="font-weight:600; padding:8px 18px; border-radius:6px;">
-                <i class="fa fa-plus-circle"></i> Add Regularization
+            <a href="<?= base_url('attn_regularization/dashboard') ?>" class="btn btn-primary" style="font-weight:600; padding:8px 18px; border-radius:6px;">
+                <i class="fa fa-tachometer"></i> Dashboard
             </a>
             <a href="<?= base_url('attn_regularization/reports') ?>" class="btn btn-default" style="font-weight:600; padding:8px 18px; border-radius:6px;">
                 <i class="fa fa-file-text-o"></i> View Reports

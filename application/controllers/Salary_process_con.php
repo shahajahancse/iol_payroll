@@ -92,6 +92,41 @@ class Salary_process_con extends CI_Controller {
 		} else if ($check->num_rows() == 0) {
 			$this->db->insert('pay_salary_block', $d);
 			$this->Log_model->log_salary_process($d['block_month']);
+
+			// Finalize Arrears for this payment month:
+			// Mark all Approved arrear records for this payment month as Paid and associate payroll record
+			if ($this->db->table_exists('employee_arrear_salaries')) {
+				$b_month = $d['block_month'];
+				$b_short = substr($b_month, 0, 7);
+
+				// Find payroll sheet records for this month
+				$sheets = $this->db->select('id, emp_id')
+					->where('salary_month', $b_month)
+					->where('unit_id', $unit_id)
+					->get('pay_salary_sheet')
+					->result();
+				$sheet_map = array();
+				foreach ($sheets as $sh) {
+					$sheet_map[$sh->emp_id] = $sh->id;
+				}
+
+				$arr_records = $this->db->where("(payment_month = '$b_month' OR payment_month = '$b_short')")
+					->where('status', 'Approved')
+					->where('unit_id', $unit_id)
+					->get('employee_arrear_salaries')
+					->result();
+
+				foreach ($arr_records as $ar) {
+					$p_id = isset($sheet_map[$ar->emp_id]) ? $sheet_map[$ar->emp_id] : null;
+					$this->db->where('id', $ar->id)->update('employee_arrear_salaries', array(
+						'status'     => 'Paid',
+						'payroll_id' => $p_id,
+						'paid_at'    => date('Y-m-d H:i:s'),
+						'updated_by' => $this->data['user_data']->id_number,
+					));
+				}
+			}
+
 			echo "Process completed successfully";
 		}
 		else
@@ -110,6 +145,20 @@ class Salary_process_con extends CI_Controller {
 		$this->db->where('unit_id', $unit_id)->where('block_month',"$salary_month-01");
 		if($this->db->delete('pay_salary_block'))
 		{
+			// Reopen Arrear records if block is deleted
+			if ($this->db->table_exists('employee_arrear_salaries')) {
+				$b_month = "$salary_month-01";
+				$b_short = substr($b_month, 0, 7);
+				$this->db->where("(payment_month = '$b_month' OR payment_month = '$b_short')")
+					->where('status', 'Paid')
+					->where('unit_id', $unit_id)
+					->update('employee_arrear_salaries', array(
+						'status'     => 'Approved',
+						'payroll_id' => null,
+						'paid_at'    => null,
+						'updated_by' => $this->data['user_data']->id_number,
+					));
+			}
 			echo "Successfully Deleted Done";
 		}
 		else

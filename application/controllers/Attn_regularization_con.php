@@ -43,42 +43,189 @@ class Attn_regularization_con extends CI_Controller
     }
 
     /**
-     * Dashboard Overview
+     * Dashboard Overview - Daily Attendance Issues & Quick Regularization
      */
     public function dashboard()
     {
-        $unit_id = $this->input->get('unit_id');
-        $month   = $this->input->get('month');
-        if (empty($month)) {
-            $month = date('Y-m');
+        $latest_date = $this->Attn_regularization_model->get_latest_shift_date();
+
+        // 1. If form submitted via POST, save filters in session and redirect (PRG Pattern)
+        // This eliminates the browser "Confirm Form Resubmission" warning completely on reload!
+        if ($this->input->method() === 'post') {
+            $post_filters = array(
+                'start_date' => trim((string)$this->input->post('start_date')),
+                'end_date'   => trim((string)$this->input->post('end_date')),
+                'unit_id'    => trim((string)$this->input->post('unit_id')),
+                'dept_id'    => trim((string)$this->input->post('dept_id')),
+                'issue_type' => trim((string)$this->input->post('issue_type')),
+                'emp_id'     => trim((string)$this->input->post('search')),
+            );
+            $this->session->set_userdata('attn_reg_dashboard_filters', $post_filters);
+            redirect('attn_regularization/dashboard');
+            return;
         }
 
-        $this->data['selected_unit']  = $unit_id;
-        $this->data['selected_month'] = $month;
-        $this->data['units']          = $this->db->get('pr_units')->result();
-        $this->data['stats']          = $this->Attn_regularization_model->get_statistics($unit_id, $month);
+        // 2. If reset requested, clear session filters
+        if ($this->input->get('reset')) {
+            $this->session->unset_userdata('attn_reg_dashboard_filters');
+            redirect('attn_regularization/dashboard');
+            return;
+        }
 
-        $recent_filters = array();
-        if (!empty($unit_id)) $recent_filters['unit_id'] = $unit_id;
-        if (!empty($month)) $recent_filters['month'] = $month;
-        $this->data['recent_list']    = $this->Attn_regularization_model->get_regularizations($recent_filters, 10, 0);
+        // 3. Retrieve filters from session if set, otherwise from GET or defaults
+        $saved = $this->session->userdata('attn_reg_dashboard_filters');
+        if (!is_array($saved)) {
+            $saved = array();
+        }
 
-        $this->data['title'] = 'Attendance Regularization & Remark Dashboard';
+        $start_date = isset($saved['start_date']) && $saved['start_date'] !== '' ? $saved['start_date'] : trim((string)$this->input->get('start_date'));
+        $end_date   = isset($saved['end_date']) && $saved['end_date'] !== '' ? $saved['end_date'] : trim((string)$this->input->get('end_date'));
+        $unit_id    = isset($saved['unit_id']) ? $saved['unit_id'] : trim((string)$this->input->get('unit_id'));
+        $dept_id    = isset($saved['dept_id']) ? $saved['dept_id'] : trim((string)$this->input->get('dept_id'));
+        $issue_type = isset($saved['issue_type']) && $saved['issue_type'] !== '' ? $saved['issue_type'] : trim((string)$this->input->get('issue_type'));
+        $search     = isset($saved['emp_id']) ? $saved['emp_id'] : trim((string)$this->input->get('search'));
+
+        // Default to latest processed date if no dates supplied
+        if (empty($start_date)) {
+            $start_date = $latest_date;
+        }
+        if (empty($end_date)) {
+            $end_date = $latest_date;
+        }
+        if ($end_date < $start_date) {
+            $end_date = $start_date;
+        }
+
+        $filters = array(
+            'start_date' => $start_date,
+            'end_date'   => $end_date,
+            'unit_id'    => $unit_id,
+            'dept_id'    => $dept_id,
+            'issue_type' => !empty($issue_type) ? $issue_type : 'all',
+            'emp_id'     => $search,
+        );
+
+        $this->data['filters']       = $filters;
+        $this->data['latest_date']   = $latest_date;
+        $this->data['units']         = $this->db->get('pr_units')->result();
+        $this->data['departments']   = $this->db->get('emp_depertment')->result();
+        $this->data['stats']         = $this->Attn_regularization_model->get_attendance_issues_summary($filters);
+        $this->data['issues_list']   = $this->Attn_regularization_model->get_attendance_issues($filters);
+
+        $this->data['title'] = 'Attendance Regularization & Daily Exception Dashboard';
         $this->data['subview'] = 'attn_regularization/dashboard';
         $this->load->view('layout/template', $this->data);
     }
 
     /**
-     * Add Regularization / Remark Entry Form
+     * AJAX endpoint to fetch filtered attendance issues
+     */
+    public function get_issues_ajax()
+    {
+        $latest = $this->Attn_regularization_model->get_latest_shift_date();
+        $start_date = trim((string)$this->input->get('start_date'));
+        $end_date   = trim((string)$this->input->get('end_date'));
+
+        if (empty($start_date)) $start_date = $latest;
+        if (empty($end_date)) $end_date = $latest;
+
+        $filters = array(
+            'start_date' => $start_date,
+            'end_date'   => $end_date,
+            'unit_id'    => trim((string)$this->input->get('unit_id')),
+            'dept_id'    => trim((string)$this->input->get('dept_id')),
+            'issue_type' => trim((string)$this->input->get('issue_type')),
+            'emp_id'     => trim((string)$this->input->get('search')),
+        );
+
+        $list = $this->Attn_regularization_model->get_attendance_issues($filters);
+        $stats = $this->Attn_regularization_model->get_attendance_issues_summary($filters);
+
+        return $this->output->set_content_type('application/json')
+                     ->set_output(json_encode(array(
+                         'status'  => 'success',
+                         'data'    => $list,
+                         'stats'   => $stats,
+                         'filters' => $filters,
+                     )));
+    }
+
+    /**
+     * AJAX endpoint to fetch single employee issue detail and biometric punches
+     */
+    public function get_issue_detail_ajax()
+    {
+        $emp_id = trim((string)$this->input->get('emp_id'));
+        $date   = trim((string)$this->input->get('date'));
+
+        if (empty($emp_id) || empty($date)) {
+            return $this->output->set_content_type('application/json')
+                         ->set_output(json_encode(array('status' => 'error', 'message' => 'Employee ID and Date are required.')));
+        }
+
+        $date = date('Y-m-d', strtotime($date));
+        $res = $this->Attn_regularization_model->get_issue_detail($emp_id, $date);
+
+        return $this->output->set_content_type('application/json')
+                     ->set_output(json_encode(array('status' => 'success', 'data' => $res)));
+    }
+
+    /**
+     * AJAX endpoint to save quick remark and waiver
+     */
+    public function save_quick_remark_ajax()
+    {
+        $emp_id          = trim((string)$this->input->post('emp_id'));
+        $att_date        = trim((string)$this->input->post('att_date'));
+        $unit_id         = (int)$this->input->post('unit_id');
+        $issue_type      = trim((string)$this->input->post('issue_type'));
+        $reason_type     = trim((string)$this->input->post('reason_type'));
+        $remarks         = trim((string)$this->input->post('remarks'));
+        $waive_deduction = $this->input->post('waive_deduction') !== null ? (int)$this->input->post('waive_deduction') : 1;
+        $adj_in          = trim((string)$this->input->post('adjusted_in_time'));
+        $adj_out         = trim((string)$this->input->post('adjusted_out_time'));
+
+        if (empty($emp_id) || empty($att_date)) {
+            return $this->output->set_content_type('application/json')
+                         ->set_output(json_encode(array('status' => 'error', 'message' => 'Employee ID and Date are required.')));
+        }
+
+        // Check if salary month is blocked
+        $month_start = date('Y-m-01', strtotime($att_date));
+        $block_check = $this->db->where('unit_id', $unit_id ?: 1)->where('block_month', $month_start)->get('pay_salary_block');
+        if ($block_check->num_rows() > 0) {
+            return $this->output->set_content_type('application/json')
+                         ->set_output(json_encode(array('status' => 'error', 'message' => 'Salary month is already closed/blocked. Regularization cannot be modified.')));
+        }
+
+        $payload = array(
+            'unit_id'           => $unit_id ?: 1,
+            'issue_type'        => !empty($issue_type) ? $issue_type : 'late',
+            'reason_type'       => !empty($reason_type) ? $reason_type : 'General',
+            'remarks'           => $remarks,
+            'waive_deduction'   => $waive_deduction,
+            'adjusted_in_time'  => !empty($adj_in) ? $adj_in : null,
+            'adjusted_out_time' => !empty($adj_out) ? $adj_out : null,
+        );
+
+        $current_user = !empty($this->data['username']) ? $this->data['username'] : 'admin';
+        $res = $this->Attn_regularization_model->save_quick_remark($emp_id, $att_date, $payload, $current_user);
+
+        return $this->output->set_content_type('application/json')
+                     ->set_output(json_encode(array(
+                         'status'  => 'success',
+                         'message' => 'Remark successfully saved and penalty waived. Job Card & Payroll updated.',
+                         'data'    => $res
+                     )));
+    }
+
+
+    /**
+     * Create action deprecated - redirects to dashboard
      */
     public function create()
     {
-        $this->data['units']        = $this->db->get('pr_units')->result();
-        $this->data['departments']  = $this->db->get('emp_depertment')->result();
-        $this->data['designations'] = $this->db->get('emp_designation')->result();
-        $this->data['title']        = 'New Attendance Regularization & Remark';
-        $this->data['subview']      = 'attn_regularization/create';
-        $this->load->view('layout/template', $this->data);
+        redirect('attn_regularization/dashboard');
     }
 
     /**
@@ -87,7 +234,7 @@ class Attn_regularization_con extends CI_Controller
     public function save()
     {
         if ($this->input->method() !== 'post') {
-            redirect('attn_regularization/create');
+            redirect('attn_regularization/dashboard');
         }
 
         $unit_id          = (int) $this->input->post('unit_id');

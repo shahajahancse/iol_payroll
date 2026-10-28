@@ -363,9 +363,15 @@ function fetchReportData() {
         data: params,
         dataType: 'json',
         success: function(res) {
-            if (res.status === 'success') {
+            if (res && res.status === 'success') {
                 renderReportTable(res.data);
+            } else {
+                $('#reportTableBody').html('<tr><td colspan="10" style="text-align:center; padding:30px; color:#ef4444;"><i class="fa fa-exclamation-circle"></i> ' + (res.message || 'Unable to retrieve report data.') + '</td></tr>');
             }
+        },
+        error: function(xhr, status, err) {
+            console.error("OD Report AJAX Error:", xhr.responseText);
+            $('#reportTableBody').html('<tr><td colspan="10" style="text-align:center; padding:30px; color:#ef4444;"><i class="fa fa-exclamation-triangle"></i> Failed to load report data. Please try again.</td></tr>');
         }
     });
 }
@@ -385,13 +391,13 @@ function renderReportTable(data) {
         data.forEach(function(r) {
             html += '<tr>' +
                     '<td>' + (sl++) + '</td>' +
-                    '<td><strong>' + r.od_date + '</strong></td>' +
-                    '<td><span style="font-weight:700; color:#4f46e5;">' + r.emp_id + '</span></td>' +
+                    '<td><strong>' + (r.od_date || '') + '</strong></td>' +
+                    '<td><span style="font-weight:700; color:#4f46e5;">' + (r.emp_id || '') + '</span></td>' +
                     '<td><span style="font-weight:600;">' + (r.name_en || '-') + '</span></td>' +
                     '<td>' + (r.dept_name || '-') + '</td>' +
                     '<td>' + (r.desig_name || '-') + '</td>' +
-                    '<td>' + r.purpose + '</td>' +
-                    '<td><i class="fa fa-map-marker" style="color:#ef4444;"></i> ' + r.location + '</td>' +
+                    '<td>' + (r.purpose || '-') + '</td>' +
+                    '<td>' + (r.location ? '<i class="fa fa-map-marker" style="color:#ef4444;"></i> ' + r.location : '-') + '</td>' +
                     '<td>' + (r.departure_time ? r.departure_time + ' - ' + (r.return_time || '-') : 'Full Day') + '</td>' +
                     '<td style="text-align:center;"><span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">OD</span></td>' +
                     '</tr>';
@@ -408,11 +414,11 @@ function renderReportTable(data) {
         data.forEach(function(r) {
             html += '<tr>' +
                     '<td>' + (sl++) + '</td>' +
-                    '<td><span style="font-weight:700; color:#4f46e5;">' + r.emp_id + '</span></td>' +
+                    '<td><span style="font-weight:700; color:#4f46e5;">' + (r.emp_id || '') + '</span></td>' +
                     '<td><span style="font-weight:600;">' + (r.name_en || '-') + '</span></td>' +
                     '<td>' + (r.dept_name || '-') + '</td>' +
                     '<td>' + (r.desig_name || '-') + '</td>' +
-                    '<td style="text-align:center;"><span class="badge" style="background:#dcfce7; color:#15803d; font-size:13px; font-weight:700;">' + r.total_od_days + ' Days</span></td>' +
+                    '<td style="text-align:center;"><span class="badge" style="background:#dcfce7; color:#15803d; font-size:13px; font-weight:700;">' + (r.total_od_days || 0) + ' Days</span></td>' +
                     '<td><small style="color:#475569;">' + (r.od_dates || '-') + '</small></td>' +
                     '</tr>';
         });
@@ -428,13 +434,13 @@ function renderReportTable(data) {
         data.forEach(function(r) {
             html += '<tr>' +
                     '<td>' + (sl++) + '</td>' +
-                    '<td><strong>' + r.od_date + '</strong></td>' +
-                    '<td>' + r.emp_id + '</td>' +
+                    '<td><strong>' + (r.od_date || '') + '</strong></td>' +
+                    '<td>' + (r.emp_id || '') + '</td>' +
                     '<td>' + (r.name_en || '-') + '</td>' +
-                    '<td>' + r.purpose + '</td>' +
-                    '<td>' + r.location + '</td>' +
+                    '<td>' + (r.purpose || '-') + '</td>' +
+                    '<td>' + (r.location || '-') + '</td>' +
                     '<td><span class="badge" style="background:#e0f2fe; color:#0369a1;">' + (r.date_status || 'approved') + '</span></td>' +
-                    '<td>' + (r.departure_time || '-') + ' / ' + (r.return_time || '-') + '</td>' +
+                    '<td>' + (r.departure_time ? (r.departure_time + ' / ' + (r.return_time || '-')) : 'Full Day') + '</td>' +
                     '</tr>';
         });
         $('#reportTableBody').html(html);
@@ -450,8 +456,8 @@ function renderReportTable(data) {
             html += '<tr>' +
                     '<td>' + (sl++) + '</td>' +
                     '<td><strong style="color:#0f172a;">' + (r.dept_name || 'Unassigned') + '</strong></td>' +
-                    '<td style="text-align:center;"><span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:12px;">' + r.total_od_days + ' Days</span></td>' +
-                    '<td style="text-align:center;">' + r.emp_count + ' Employees</td>' +
+                    '<td style="text-align:center;"><span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:12px;">' + (r.total_od_days || 0) + ' Days</span></td>' +
+                    '<td style="text-align:center;">' + (r.total_employees || r.emp_count || 0) + ' Employees</td>' +
                     '</tr>';
         });
         $('#reportTableBody').html(html);
@@ -467,8 +473,8 @@ function renderReportTable(data) {
             html += '<tr>' +
                     '<td>' + (sl++) + '</td>' +
                     '<td><strong style="color:#0f172a;">' + (r.unit_name || 'Main Unit') + '</strong></td>' +
-                    '<td style="text-align:center;"><span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:12px;">' + r.total_od_days + ' Days</span></td>' +
-                    '<td style="text-align:center;">' + r.emp_count + ' Employees</td>' +
+                    '<td style="text-align:center;"><span class="badge" style="background:#e0f2fe; color:#0369a1; font-size:12px;">' + (r.total_od_days || 0) + ' Days</span></td>' +
+                    '<td style="text-align:center;">' + (r.total_employees || r.emp_count || 0) + ' Employees</td>' +
                     '</tr>';
         });
         $('#reportTableBody').html(html);

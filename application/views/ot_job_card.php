@@ -247,7 +247,7 @@ for($i = 0 ; $i < $emp_id_count; $i++)
 		</tr>
 		<?php
 		/////////////////////New Add////////
-		if($values[$emp_id]["att_status"][$k] == "P")
+		if($values[$emp_id]["att_status"][$k] == "P" || $values[$emp_id]["att_status"][$k] == "OD")
 		{
 			$present_count++;
 		}
