@@ -339,19 +339,18 @@ class Salary_process_model extends CI_Model{
 
 					//ABSENT DEDUCTION FOR NON-COMPLIENCE
 					if( $start_date < '30-04-2024'){
-						$num_of_day=30;
+						$num_of_day = $num_of_days; // calculation based on actual days of month
 						if($pay_days != 0){
 							$absent = $absent + $wp_leave + $consecutive_late_absent;
+							$before_after_deduct = ($gross_sal / $num_of_days) * $before_after_absent;
 							if($resign_check != false or $left_check != false){
-								$before_after_deduct = ($gross_sal / $num_of_days) * $before_after_absent;
-								$abs_deduction = ($basic_sal / $num_of_day) * $absent;
+								$abs_deduction = ($gross_sal / $num_of_days) * $absent;
 								$abs_deduction = round($abs_deduction + $before_after_deduct);
 							}else if($salary_month == $join_month){
-								$before_after_deduct = ($gross_sal / $num_of_days) * $before_after_absent;
-								$abs_deduction = ($basic_sal / $num_of_day) * $absent;
+								$abs_deduction = ($gross_sal / $num_of_days) * $absent;
 								$abs_deduction = round($abs_deduction + $before_after_deduct);
 							}else{
-								$abs_deduction = ($basic_sal / 30) * $absent;
+								$abs_deduction = ($gross_sal / $num_of_days) * $absent;
 								$abs_deduction = round($abs_deduction);
 							}
 						} else{
@@ -360,21 +359,20 @@ class Salary_process_model extends CI_Model{
 						//ABSENT DEDUCTION FOR COMPLIANCE
 						if($pay_days != 0)
 						{
+							$before_after_deduct_com = ($gross_sal_com / $num_of_days) * $before_after_absent;
 							if($resign_check != false or $left_check != false)
 							{
-								$before_after_deduct = ($gross_sal_com / $num_of_days) * $before_after_absent;
-								$abs_deduction_com = ($basic_sal / $num_of_day) * $absent;
-								$abs_deduction_com = round($abs_deduction_com + $before_after_deduct);
+								$abs_deduction_com = ($gross_sal_com / $num_of_days) * $absent;
+								$abs_deduction_com = round($abs_deduction_com + $before_after_deduct_com);
 							}
 							else if($salary_month == $join_month)
 							{
-								$before_after_deduct = ($gross_sal_com / $num_of_days) * $before_after_absent;
-								$abs_deduction_com = ($ssc['basic_sal'] / $num_of_day) * $absent;
-								$abs_deduction_com = round($abs_deduction_com + $before_after_deduct);
+								$abs_deduction_com = ($gross_sal_com / $num_of_days) * $absent;
+								$abs_deduction_com = round($abs_deduction_com + $before_after_deduct_com);
 							}
 							else
 							{
-								$abs_deduction_com = ($ssc['basic_sal'] / $num_of_day) * $absent;
+								$abs_deduction_com = ($gross_sal_com / $num_of_days) * $absent;
 								$abs_deduction_com = round($abs_deduction_com);
 							}
 						}
@@ -393,13 +391,16 @@ class Salary_process_model extends CI_Model{
 
 					//****** deduct hour & amount **************************************************
 					$deduct_hour = $attendances->deduction_hour;
-					$per_day_salary = $basic_sal / $num_of_days;
+					$per_day_salary = $gross_sal / $num_of_days;
 					$per_hour_salary = $per_day_salary / 8;
 					$deduct_amount = $per_hour_salary * $deduct_hour;
 					if ($deduct_amount > 0) {
 						$abs_deduction = round($abs_deduction + $deduct_amount);
 						if (isset($abs_deduction_com)) {
-							$abs_deduction_com = round($abs_deduction_com + $deduct_amount);
+							$per_day_salary_com = $gross_sal_com / $num_of_days;
+							$per_hour_salary_com = $per_day_salary_com / 8;
+							$deduct_amount_com = $per_hour_salary_com * $deduct_hour;
+							$abs_deduction_com = round($abs_deduction_com + $deduct_amount_com);
 						}
 					}
 					//************************ end deduct *******************************************
