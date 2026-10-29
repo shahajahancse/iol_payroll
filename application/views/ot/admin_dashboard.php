@@ -955,8 +955,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 </div>
 
                 <div class="form-group">
-                    <label style="font-size: 12px; font-weight: 700; color: #b91c1c;">Modification Reason <span class="text-danger">* Mandatory</span></label>
-                    <textarea id="mod_reason" class="form-control" rows="2" placeholder="State why the approved hours differ from calculated actual OT..."></textarea>
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">Modification Reason (Optional)</label>
+                    <textarea id="mod_reason" class="form-control" rows="2" placeholder="Optional: State why the approved hours differ from calculated actual OT..."></textarea>
                 </div>
 
                 <div class="form-group">
@@ -988,8 +988,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 </div>
 
                 <div class="form-group">
-                    <label style="font-size: 12px; font-weight: 700; color: #b91c1c;">Rejection Reason <span class="text-danger">* Mandatory</span></label>
-                    <textarea id="rej_reason" class="form-control" rows="3" placeholder="Provide reason for rejecting OT (e.g. Unscheduled work, unauthorized stay, punch irregularity)..."></textarea>
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">Rejection Reason (Optional)</label>
+                    <textarea id="rej_reason" class="form-control" rows="3" placeholder="Optional: Provide reason for rejecting OT (e.g. Unscheduled work, unauthorized stay, punch irregularity)..."></textarea>
                 </div>
 
                 <div class="form-group">
@@ -1567,10 +1567,6 @@ function submitModifySingle() {
         Swal.fire('Policy Limit', 'Approved OT hours cannot exceed actual calculated OT (' + actualHours + ' hrs).', 'warning');
         return;
     }
-    if (reason === '') {
-        Swal.fire('Reason Required', 'Please provide a modification reason explaining why the approved hours differ from actual OT.', 'warning');
-        return;
-    }
 
     $.ajax({
         url: "<?= base_url('ot_approval_con/admin_modify_single') ?>",
@@ -1616,10 +1612,6 @@ function submitRejectSingle() {
     var reason = $.trim($('#rej_reason').val());
     var remarks = $('#rej_remarks').val();
 
-    if (reason === '') {
-        Swal.fire('Reason Required', 'Please provide a rejection reason.', 'warning');
-        return;
-    }
 
     $.ajax({
         url: "<?= base_url('ot_approval_con/admin_reject_single') ?>",

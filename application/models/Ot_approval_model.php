@@ -570,7 +570,7 @@ class Ot_approval_model extends CI_Model
     }
 
     /**
-     * Modify OT hours (e.g. approve fewer hours with mandatory reason)
+     * Modify OT hours (e.g. approve fewer hours with optional reason)
      */
     public function modify_ot_hours($id, $approved_hours, $modification_reason, $admin_id, $remarks = '')
     {
@@ -579,10 +579,7 @@ class Ot_approval_model extends CI_Model
             return array('status' => false, 'message' => 'Record not found.');
         }
 
-        $modification_reason = trim($modification_reason);
-        if (empty($modification_reason)) {
-            return array('status' => false, 'message' => 'Modification reason is required when adjusting OT hours.');
-        }
+        $modification_reason = !empty($modification_reason) ? trim($modification_reason) : '';
 
         $approved_hours = round((float)$approved_hours, 2);
         if ($approved_hours < 0) {
@@ -632,7 +629,7 @@ class Ot_approval_model extends CI_Model
     }
 
     /**
-     * Reject OT with mandatory rejection reason
+     * Reject OT with optional rejection reason
      */
     public function reject_ot($id, $rejection_reason, $admin_id, $remarks = '')
     {
@@ -641,10 +638,7 @@ class Ot_approval_model extends CI_Model
             return array('status' => false, 'message' => 'Record not found.');
         }
 
-        $rejection_reason = trim($rejection_reason);
-        if (empty($rejection_reason)) {
-            return array('status' => false, 'message' => 'Rejection reason is required.');
-        }
+        $rejection_reason = !empty($rejection_reason) ? trim($rejection_reason) : '';
 
         $now_dt = date('Y-m-d H:i:s');
         $audit_trail = !empty($record->audit_history) ? json_decode($record->audit_history, true) : array();

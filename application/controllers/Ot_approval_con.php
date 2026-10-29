@@ -266,7 +266,7 @@ class Ot_approval_con extends CI_Controller
     }
 
     /**
-     * AJAX endpoint: Modify OT hours (e.g. approve fewer hours with mandatory reason)
+     * AJAX endpoint: Modify OT hours (e.g. approve fewer hours with optional reason)
      */
     public function admin_modify_single()
     {
@@ -284,12 +284,6 @@ class Ot_approval_con extends CI_Controller
             return;
         }
 
-        if (empty(trim($reason))) {
-            $this->output->set_content_type('application/json')
-                         ->set_output(json_encode(array('status' => 'error', 'message' => 'Modification reason is required when adjusting OT hours.')));
-            return;
-        }
-
         if ($approved_hours === null || $approved_hours === '' || !is_numeric($approved_hours)) {
             $this->output->set_content_type('application/json')
                          ->set_output(json_encode(array('status' => 'error', 'message' => 'Please provide valid approved OT hours.')));
@@ -304,7 +298,7 @@ class Ot_approval_con extends CI_Controller
     }
 
     /**
-     * AJAX endpoint: Reject OT record with mandatory reason
+     * AJAX endpoint: Reject OT record with optional reason
      */
     public function admin_reject_single()
     {
@@ -318,12 +312,6 @@ class Ot_approval_con extends CI_Controller
         if (!$id) {
             $this->output->set_content_type('application/json')
                          ->set_output(json_encode(array('status' => 'error', 'message' => 'Invalid record ID.')));
-            return;
-        }
-
-        if (empty(trim($reason))) {
-            $this->output->set_content_type('application/json')
-                         ->set_output(json_encode(array('status' => 'error', 'message' => 'Rejection reason is required.')));
             return;
         }
 

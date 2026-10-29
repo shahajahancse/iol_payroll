@@ -55,7 +55,12 @@ class Leave_model extends CI_Model{
 		$emp_status = $this->find_emp_status($empid_leave);  //collect employee category id
 		//echo $emp_status;
 		
-		if($emp_status == 2 && $leave_type == "ml" || $emp_status == 2 && $leave_type == "pl" || $emp_status == 2 && $leave_type == "cl" || $emp_status == 2 && $leave_type == "el" || $emp_status == 2 && $leave_type == "do" || $emp_status == 2 && $leave_type == "stl")
+		if(in_array(strtolower(trim($leave_type)), array('el', 'ml', 'pl')))
+		{
+			 return "Earn Leave (EL), Maternity Leave (ML), and Paternity Leave (PL) are disabled as per company policy. Only Sick Leave (SL - 14 days) and Casual Leave (CL - 10 days) are available.";
+		}
+		
+		if($emp_status == 2 && ($leave_type == "cl" || $leave_type == "sl" || $leave_type == "do" || $leave_type == "stl"))
 		{
 			 return "New Employee Doesn't Entitle Selected Leave.";
 		}
@@ -250,46 +255,25 @@ class Leave_model extends CI_Model{
 
 	function leave_status_check($emp_status,$leave_type,$empid_leave,$sStartDate,$sEndDate)
 	{
-	    $this->db->select('*');
-		$this->db->where("status_id", $emp_status);
-		$balance_query = $this->db->get('pr_leave');
-		//echo $this->db->last_query();
-		foreach ($balance_query->result() as $row) {
-   		$casual_balance = $row->lv_cl ;
-		$sick_balance = $row->lv_sl ;
-		$maternity_balance = $row->lv_ml ;
-		$paternity_balance = $row->lv_pl ;
-		}
+		$leave_type = strtolower(trim($leave_type));
 		if($leave_type == "cl")
 		{
-			return $casual_balance;
+			return 10; // Casual leave fixed at 10 days per policy
 		}
 		else if($leave_type == "sl")
 		{
-			return $sick_balance;
+			return 14; // Sick leave fixed at 14 days per policy
 		}
-		else if($leave_type == "ml")
+		else if($leave_type == "ml" || $leave_type == "pl" || $leave_type == "el")
 		{
-			return $maternity_balance;
-		}
-		else if($leave_type == "pl")
-		{
-			return $paternity_balance;
-		}
-		else if($leave_type == "el")
-		{
-			$year = substr($sStartDate,1,4);
-			return $total_earn_leave = $this->get_earn_leave($empid_leave, $year);
+			return 0; // Disabled as per policy
 		}
 		else
 		{
-			$this->leave_insert($emp_status,$leave_type,$empid_leave,$sStartDate,$sEndDate);  // for without pay , study leave ectc.
-					echo "Save Successfully";
+			$this->leave_insert($emp_status,$leave_type,$empid_leave,$sStartDate,$sEndDate);  // for without pay (wp), special leave (sp)
+			echo "Save Successfully";
 			exit ();
-		//$this->leave_insert($emp_status,$leave_type,$empid_leave,$sStartDate,$sEndDate);
-			//return "Save successfully";
 		}
-
 	}
 	
 
@@ -392,7 +376,7 @@ class Leave_model extends CI_Model{
 		$data1=array(
 					'casual'    =>$total_casual_leave,
 					'sick'      =>$total_sick_leave,
-					'earn'      =>$earn_leave->el,
+					'earn'      =>isset($earn_leave->el) ? $earn_leave->el : 0,
 					'maternity' =>$total_maternity_leave,
 					'paternity' =>$total_paternity_leave
 					);
@@ -472,17 +456,15 @@ class Leave_model extends CI_Model{
 			$earn_leave_balance = 0;
 		}
 		*/
-		$earn_paid		= $this->Earn_leave_model->get_earn_leave_paid($empid,$year);
-		$yearly_earn	= $this->Earn_leave_model->get_yearly_earn_leave($empid,$table_name);
-		$earn_leave_balance = $yearly_earn - $total_earn_leave - $earn_paid;
+		$earn_leave_balance = 0; // Disabled as per policy
 				
 		$data2=array(
-					'casual_balance'    =>$casual_leave_balance,
-					'sick_balance'      =>$sick_leave_balance,
-					'earn_balance'      =>$earn_leave->earn_leave,
-					'maternity_balance' =>$maternity_leave_balance,
-					'paternity_balance' =>$paternity_leave_balance,
-					'status_name'       =>$status_name
+					'casual_balance'    => 10,
+					'sick_balance'      => 14,
+					'earn_balance'      => 0,
+					'maternity_balance' => 0,
+					'paternity_balance' => 0,
+					'status_name'       => $status_name
 					);
 		$data_leave_com = implode("-*-",$data2);
 		

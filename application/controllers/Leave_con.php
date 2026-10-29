@@ -118,13 +118,10 @@ class Leave_con extends CI_Controller
         }
         $this->data['units'] = $this->db->get('pr_units')->result();
 
-        // Leave types
+        // Leave types (Only CL, SL, WP, SP are enabled as per policy)
         $this->data['leave_types'] = array(
             'cl' => 'Casual Leave (CL)',
             'sl' => 'Sick Leave (SL)',
-            'el' => 'Earn Leave (EL)',
-            'ml' => 'Maternity Leave (ML)',
-            'pl' => 'Paternity Leave (PL)',
             'wp' => 'Without Pay (WP)',
             'sp' => 'Special Leave (SP)'
         );
@@ -593,14 +590,12 @@ class Leave_con extends CI_Controller
 
         $gender = !empty($per_info->gender) ? $per_info->gender : 'Male';
 
-        $ent_cl = !empty($leave_entitle->lv_cl) ? (int)$leave_entitle->lv_cl : 0;
-        $ent_sl = !empty($leave_entitle->lv_sl) ? (int)$leave_entitle->lv_sl : 0;
-        $ent_ml = ($gender === 'Female' && !empty($leave_entitle->lv_ml)) ? (int)$leave_entitle->lv_ml : 0;
-        $ent_pl = ($gender === 'Male' && !empty($leave_entitle->lv_pl)) ? (int)$leave_entitle->lv_pl : 0;
-
-        // Earn leave from pr_earn_leave
-        $earn_row = $this->db->where('emp_id', $emp_id)->order_by('id', 'DESC')->limit(1)->get('pr_earn_leave')->row();
-        $ent_el = !empty($earn_row->earn_leave) ? (float)$earn_row->earn_leave : 0;
+        // Entitlements fixed as per company policy: CL = 10 days, SL = 14 days. EL, ML, PL disabled.
+        $ent_cl = 10;
+        $ent_sl = 14;
+        $ent_ml = 0;
+        $ent_pl = 0;
+        $ent_el = 0;
 
         // 2. Query only approved leaves for taken counts
         $this->db->select("

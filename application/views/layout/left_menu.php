@@ -290,8 +290,8 @@
 
       <!-- Payroll -->
       <?php if(in_array(4,$acl)) { ?>
-      <li class="start <?= activate_class(['salary_process_con', 'arrear_salary_con']) ?>"> <a href="javascript:;"> <i class="fa fa-money"></i>
-        <span class="title">Payroll </span> <span class="selected"></span> <span class="arrow <?= arrow_open(['salary_process_con', 'arrear_salary_con']) ?>"></span> </a>
+      <li class="start <?= activate_class(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con']) ?>"> <a href="javascript:;"> <i class="fa fa-money"></i>
+        <span class="title">Payroll </span> <span class="selected"></span> <span class="arrow <?= arrow_open(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con']) ?>"></span> </a>
         <ul class="sub-menu">
           <?php if(in_array(31,$acl)) { ?>
             <li class="<?= activate_method('salary_process_form') ?>">
@@ -307,15 +307,11 @@
             </a>
           </li>
 
-          <?php if(in_array(32,$acl)) { ?>
-            <?php /*
-            <li class="<?= activate_method('adv_salary_report') ?>">
-              <a href="<?=base_url('salary_process_con/adv_salary_report')?>" class="anchor_cls">
-                <i class="fa fa-hand-o-right"></i> Adv. Salary
-              </a>
-            </li>
-            */ ?>
-          <?php } ?>
+          <li class="<?= ($this->router->fetch_class() == 'advanced_salary_con') ? 'active' : '' ?>">
+            <a href="<?=base_url('advanced_salary')?>" class="anchor_cls">
+              <i class="fa fa-money text-warning"></i> Advanced Salary
+            </a>
+          </li>
 
           <?php if(in_array(33,$acl)) { ?>
             <li class="<?= activate_method('grid_salary_report') ?>">

@@ -189,6 +189,19 @@ $route['arrear_salary/employee_search_ajax'] = 'arrear_salary_con/employee_searc
 $route['arrear_salary/get_employee_ajax']    = 'arrear_salary_con/get_employee_ajax';
 $route['arrear_salary/get_arrear_ajax/(:num)'] = 'arrear_salary_con/get_arrear_ajax/$1';
 
-
-
-
+/*
+| -------------------------------------------------------------------------
+| Advanced Salary Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['advanced_salary']                           = 'advanced_salary_con/index';
+$route['advanced_salary/list_ajax']                 = 'advanced_salary_con/list_ajax';
+$route['advanced_salary/get_details_ajax/(:num)']   = 'advanced_salary_con/get_details_ajax/$1';
+$route['advanced_salary/save']                      = 'advanced_salary_con/save';
+$route['advanced_salary/cancel/(:num)']             = 'advanced_salary_con/cancel/$1';
+$route['advanced_salary/delete/(:num)']             = 'advanced_salary_con/delete/$1';
+$route['advanced_salary/employee_search_ajax']      = 'advanced_salary_con/employee_search_ajax';
+$route['advanced_salary/get_employee_ajax']         = 'advanced_salary_con/get_employee_ajax';
+$route['advanced_salary/report_data_ajax']          = 'advanced_salary_con/report_data_ajax';
+$route['advanced_salary/export_excel']              = 'advanced_salary_con/export_excel';
+$route['advanced_salary/export_csv']                = 'advanced_salary_con/export_csv';

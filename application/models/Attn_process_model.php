@@ -85,6 +85,10 @@ class Attn_process_model extends CI_Model{
 					}
 				}
 
+				$is_billing_shift = (strtolower(trim($shift_name)) == 'billing' || strtolower(trim($sec_name)) == 'billing');
+				$sh_name_trim = strtolower(trim($shift_name));
+				$is_12_shift = in_array($sh_name_trim, array('shift 12 morning', 'shift 12 night', '12 morning', '12 night', 'shift12 morning', 'shift12 night', 'shift 12morning', 'shift 12night')) || strpos($sh_name_trim, '12 morning') !== false || strpos($sh_name_trim, '12 night') !== false;
+
 				$emp_shift = $this->emp_shift_check_process($emp_id, $shift_id, $schedule_id, $process_date);
 				$schedule  = $this->get_emp_schedule($emp_shift->schedule_id);
 
@@ -141,7 +145,10 @@ class Attn_process_model extends CI_Model{
 
             	// OT start time define
             	$is_shift_night_type = in_array(strtolower(trim($shift_name)), array('shift c', 'shiftc', 'shift 7 night', 'shift 7 night(7pm-7am)', 'shift 12 night', '12 night')) || strpos(strtolower(trim($shift_name)), '7 night') !== false;
-            	if ($out_start_date != $process_date && strtotime($ot_start_time) < strtotime('12:00:00')) {
+            	if ($is_12_shift) {
+            		$sched_in_dt = "$process_date " . $schedule[0]["in_time"];
+            		$ot_start    = date('Y-m-d H:i:s', strtotime("$sched_in_dt + 12 hours"));
+            	} elseif ($out_start_date != $process_date && strtotime($ot_start_time) < strtotime('12:00:00')) {
             		$ot_start = "$out_start_date $ot_start_time";
             	} elseif (strtotime($in_end_time) > strtotime('12:00:00') && !$is_shift_night_type){
             		$ot_start = "$process_date $ot_start_time";
@@ -161,13 +168,9 @@ class Attn_process_model extends CI_Model{
             	// Check if employee is on approved Outside Duty (OD)
             	$is_od  = $this->od_check($process_date, $emp_id);
 
-            	// Rule: If single-day SL or CL, and next calendar day is already Absent (A), forfeit leave
-            	if ($leaves && $this->check_single_day_sl_cl($process_date, $emp_id)) {
-            		$next_cal_date = date('Y-m-d', strtotime("$process_date + 1 days"));
-            		$next_cal_log = $this->db->select('present_status')->where('emp_id', $emp_id)->where('shift_log_date', $next_cal_date)->get('pr_emp_shift_log')->row();
-            		if (!empty($next_cal_log) && strtoupper(trim($next_cal_log->present_status)) == 'A') {
-            			$leaves = false;
-            		}
+            	// Rule: If employee is on approved leave, but next working/calendar day is already Absent (A), forfeit leave (becomes 'A')
+            	if ($leaves && $this->is_next_day_absent($process_date, $emp_id)) {
+            		$leaves = false;
             	}
 
             	if ($leaves) {
@@ -200,8 +203,46 @@ class Attn_process_model extends CI_Model{
             		// in_time within in_start to in_end
             		// out_time within out_start to out_end
             		// Check both in_time and out_time independently so single punch (in only or out only) is captured
-            		$in_time  = $this->time_check_in($in_start_time, $in_end_time, $emp_id, 'ASC', $table);
-            		$out_time = $this->time_check_in($out_start_time, $out_end_time, $emp_id, 'DESC', $table);
+            		$in_time  = $this->time_check_in($in_start_dt, $in_end_dt, $emp_id, 'ASC', $table);
+            		$out_time = $this->time_check_in($out_start_dt, $out_end_dt, $emp_id, 'DESC', $table);
+
+            		// 12-Hour Shift Rules:
+            		// Rule 1: In-time within 4 hours after scheduled in-time is counted as scheduled in-time
+            		if ($is_12_shift && !empty($in_time) && $in_time != '00:00:00') {
+            			$sched_in_dt = "$process_date " . $schedule[0]["in_time"];
+            			$snap_end_dt = date('Y-m-d H:i:s', strtotime("$sched_in_dt + 4 hours"));
+            			if (strtotime($in_time) <= strtotime($snap_end_dt)) {
+            				$in_time = $sched_in_dt;
+            			}
+            		}
+
+            		// Rule 2: 12-Hour Shift max OT is 12 hours (total 24 hours work).
+            		// If employee worked continuously into the next day and punched on the next day morning/shift:
+            		// Previous shift MUST close at the 24-hour mark ($transition_dt = $sched_in_dt + 24 hours)
+            		// so previous shift gets full 12h regular duty (6 to 6) + 12h OT (till 6 AM).
+            		// And any punch on the next day (e.g. at 10:00 AM or within next shift's 4-hour snap window)
+            		// will be used as the new shift's IN punch for normal day duty!
+            		if ($is_12_shift && !empty($in_time) && $in_time != '00:00:00' && (empty($out_time) || $out_time == '00:00:00')) {
+            			$sched_in_dt   = "$process_date " . $schedule[0]["in_time"];
+            			$transition_dt = date('Y-m-d H:i:s', strtotime("$sched_in_dt + 24 hours"));
+            			$search_start  = date('Y-m-d H:i:s', strtotime($out_end_dt . ' + 1 seconds'));
+            			// Look ahead through the next day's 4-hour snap window (up to +28 hours 30 minutes from shift start)
+            			$search_end    = date('Y-m-d H:i:s', strtotime("$sched_in_dt + 28 hours 30 minutes"));
+
+            			$next_punch = $this->time_check_in($search_start, $search_end, $emp_id, 'ASC');
+            			if (!empty($next_punch)) {
+            				// If punch was right around transition (<= transition + 15 mins), use that punch
+            				// If punch was later (e.g. 06:30, 08:00, 10:00 AM), close previous shift at exactly $transition_dt (06:00:00)
+            				// so previous shift closes cleanly at 6 AM with max 12h OT,
+            				// and the later punch belongs to the new shift as normal day duty!
+            				if (strtotime($next_punch) <= strtotime("$transition_dt + 15 minutes")) {
+            					$out_time = $next_punch;
+            				} else {
+            					$out_time = $transition_dt;
+            				}
+            			}
+            		}
+
             		if (!empty($in_time) && !empty($out_time) && $in_time == $out_time) {
             			$out_time = '00:00:00';
             		}
@@ -216,7 +257,7 @@ class Attn_process_model extends CI_Model{
             	if (!$leaves && !empty($in_time) && empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
             		$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
             		$table_next = 'att_'.date('Y_m',strtotime($next_day));
-            		$out_time = $this->time_check_in($out_start_time, $out_end_time, $emp_id, 'DESC', $table_next);
+            		$out_time = $this->time_check_in($out_start_dt, $out_end_dt, $emp_id, 'DESC', $table_next);
             	}
 				// dd($out_time);
 
@@ -264,7 +305,11 @@ class Attn_process_model extends CI_Model{
 				//============= Check employee attendance status & Special Shift Policies =============
 				$attn_status = 'A';
 				if($leaves){
-					$attn_status = "L";
+					if ($this->is_next_day_absent($process_date, $emp_id)) {
+						$attn_status = "A";
+					} else {
+						$attn_status = "L";
+					}
 					$in_time = '00:00:00';
 					$out_time = '00:00:00';
 					$tot_hour = 0;
@@ -309,12 +354,26 @@ class Attn_process_model extends CI_Model{
 					$early_exit = 0;
 					$alert_msg = 0;
 				}elseif ($process_date == $holiday || $holiday === true){
-					$attn_status = "H";
+					// Bridge Absent Policy: If employee did not work and was absent on previous working day, holiday becomes Absent (A)
+					$has_punch = (!empty($in_time) && $in_time != '00:00:00') || (!empty($out_time) && $out_time != '00:00:00');
+					$is_bridge_absent = !$has_punch && $this->check_bridge_absent($emp_id, $process_date);
+					if ($is_bridge_absent) {
+						$attn_status = "A";
+					} else {
+						$attn_status = "H";
+					}
 					if (empty($in_time) || $in_time == '00:00:00') {
 						$out_time = '00:00:00';
 					}
 				}elseif ($process_date == $weekend || $weekend === true){
-					$attn_status = "W";
+					// Bridge Absent Policy: If employee did not work and was absent on previous working day, weekend becomes Absent (A)
+					$has_punch = (!empty($in_time) && $in_time != '00:00:00') || (!empty($out_time) && $out_time != '00:00:00');
+					$is_bridge_absent = !$has_punch && $this->check_bridge_absent($emp_id, $process_date);
+					if ($is_bridge_absent) {
+						$attn_status = "A";
+					} else {
+						$attn_status = "W";
+					}
 					if (empty($in_time) || $in_time == '00:00:00') {
 						$out_time = '00:00:00';
 					}
@@ -325,46 +384,67 @@ class Attn_process_model extends CI_Model{
 					} else {
 						$attn_status = "A";
 					}
-				}elseif ((strtolower(trim($sec_name)) == 'billing' || strtolower(trim($shift_name)) == 'billing') && ($in_time != '' || ($out_time != '' && $out_time != '00:00:00'))){
+				}elseif ($is_billing_shift && ($in_time != '' || ($out_time != '' && $out_time != '00:00:00'))){
 					// Billing Section/Shift Policy:
-					// In-start between 07:00 AM to 06:00 AM (next day).
-					// General Duty = 8 hrs (480 mins). > 8 hrs = Overtime, < 8 hrs = Early Out (3 days = 1 day salary deduction).
+					// 1. Working time counts 8 hrs from actual in_time (whenever they punch in).
+					// 2. NO late count (late_status = 0).
+					// 3. If total punched time < 8 hrs (480 mins): Half-day salary deduction (deduction_hour = 4).
+					// 4. If total punched time > 8 hrs & employee is OT eligible: overtime is granted for excess hours.
 					$attn_status = "P";
 					$work_mins = 0;
-					if ($in_time != '' && $out_time != '' && $out_time != '00:00:00' && strtotime($out_time) > strtotime($in_time)) {
+					if ($in_time != '' && $in_time != '00:00:00' && $out_time != '' && $out_time != '00:00:00' && strtotime($out_time) > strtotime($in_time)) {
 						$work_mins = round((strtotime($out_time) - strtotime($in_time)) / 60);
 					}
 
+					$is_ot_eligible = ($ot_entitle == 0 || $com_ot_entitle == 0);
+
 					if ($work_mins >= 480) {
-						// Work >= 8 hours -> Calculate Overtime
-						$extra_mins = $work_mins - 480;
-						$ot_hour = floor($extra_mins / 60);
-						if ($extra_mins % 60 >= $ot_last_hour) {
-							$ot_hour += 1;
-						}
-						$tot_hour = $ot_hour;
-						if ($ot_hour > 2) {
-							$eot_hour = $ot_hour - 2;
-							$ot_hour = 2;
+						// Work >= 8 hours -> Full day fulfilled
+						$early_exit = 0;
+						$deduction_hour = 0;
+						if ($is_ot_eligible) {
+							$extra_mins = $work_mins - 480;
+							$calc_ot = floor($extra_mins / 60);
+							if (!empty($ot_last_hour) && ($extra_mins % 60) >= $ot_last_hour) {
+								$calc_ot += 1;
+							}
+							$tot_hour = $calc_ot;
+							if ($calc_ot > 2) {
+								$ot_hour  = 2;
+								$eot_hour = $calc_ot - 2;
+							} else {
+								$ot_hour  = $calc_ot;
+								$eot_hour = 0;
+							}
+							$ot_eot_4pm  = min($eot_hour, 2);
+							$ot_eot_12am = min($eot_hour, 5);
+						} else {
+							$ot_hour     = 0;
+							$eot_hour    = 0;
+							$tot_hour    = 0;
+							$ot_eot_4pm  = 0;
+							$ot_eot_12am = 0;
 						}
 					} else {
-						// Work < 8 hours -> Early Exit
+						// Work < 8 hours (or single punch) -> Half-day salary deduction
 						$early_exit = 1;
-						// Cumulative Policy: 3 Early Exits = 1 day absence salary deduction
-						$m_start = date('Y-m-01', strtotime($process_date));
-						$prev_early_exits = $this->db->where('emp_id', $emp_id)
-							->where('shift_log_date >=', $m_start)
-							->where('shift_log_date <', $process_date)
-							->where('early_exit', 1)
-							->get('pr_emp_shift_log')->num_rows();
-
-						if (($prev_early_exits + 1) % 3 == 0) {
-							$deduction_hour = 8;
-						}
+						$deduction_hour = 4; // Half-day deduction (4 hours = 0.5 day)
+						$ot_hour     = 0;
+						$eot_hour    = 0;
+						$tot_hour    = 0;
+						$ot_eot_4pm  = 0;
+						$ot_eot_12am = 0;
 					}
-				}elseif (($in_time != '' && $in_time != '00:00:00') || ($out_time != '' && $out_time != '00:00:00')){
-					// Single punch (in only OR out only) or normal punches: ALWAYS P!
+				}elseif (($in_time != '' && $in_time != '00:00:00') && ($out_time != '' && $out_time != '00:00:00') && $in_time != $out_time){
+					// Both IN and OUT punches are present and distinct -> Full Day Present
 					$attn_status = "P";
+					$deduction_hour = 0;
+					$early_exit = 0;
+				}elseif (($in_time != '' && $in_time != '00:00:00') || ($out_time != '' && $out_time != '00:00:00')){
+					// Punch Error: Only IN punch or only OUT punch present -> Half Day (4 hours deduction)
+					$attn_status = "P";
+					$deduction_hour = 4; // Half-day deduction
+					$early_exit = 1;
 				}
 				//============= Check employee attendance status =============
 
@@ -402,13 +482,17 @@ class Attn_process_model extends CI_Model{
 								$eot_hour = 8;
 							}
 						}
-						// Shift 12 Night, Shift 12 Morning Max OT limit = 4 hours
-						if (in_array(strtolower(trim($shift_name)), array('shift 12 night', 'shift 12 morning', '12 night', '12 morning', 'shift12 night', 'shift12 morning', 'shift 12night', 'shift 12morning'))) {
-							if ($eot_hour > 4) {
-								$eot_hour = 4;
+						// Shift 12 Night, Shift 12 Morning Max OT limit = 12 hours
+						if ($is_12_shift) {
+							if ($eot_hour > 12) {
+								$eot_hour = 12;
 							}
 						}
 
+					} elseif ($is_billing_shift) {
+						// Billing Shift on regular working day:
+						// OT already calculated from flexible in_time to out_time (8 hrs duty + extra).
+						// Do NOT overwrite with standard ot_start!
 					} else {
 
 						// dd("KO");
@@ -453,10 +537,10 @@ class Attn_process_model extends CI_Model{
 								}
 								$tot_hour = $ot_hour + $eot_hour;
 							}
-							// Shift 12 Night, Shift 12 Morning Max OT limit = 4 hours total (2 hrs OT + max 2 hrs EOT)
-							if (in_array(strtolower(trim($shift_name)), array('shift 12 night', 'shift 12 morning', '12 night', '12 morning', 'shift12 night', 'shift12 morning', 'shift 12night', 'shift 12morning'))) {
-								if ($eot_hour > 2) {
-									$eot_hour = 2;
+							// Shift 12 Night, Shift 12 Morning Max OT limit = 12 hours total (2 hrs OT + max 10 hrs EOT)
+							if ($is_12_shift) {
+								if ($eot_hour > 10) {
+									$eot_hour = 10;
 								}
 								$tot_hour = $ot_hour + $eot_hour;
 							}
@@ -468,7 +552,9 @@ class Attn_process_model extends CI_Model{
 								$ot_eot_4pm = $eot_hour;
 							}
 							// 12am EOT Calculation
-							if ($tiffin_break_time2 < $out_time && $tiffin_minute2 != 0) {
+							if ($is_12_shift) {
+								$ot_eot_12am = min($eot_hour, 10);
+							} elseif ($tiffin_break_time2 < $out_time && $tiffin_minute2 != 0) {
 								$ot_eot_12am = 5;
 							} else {
 								if ($eot_hour > 5) {
@@ -482,15 +568,12 @@ class Attn_process_model extends CI_Model{
 				}
 				//============ End  Working day/Weeked/Holiday OT Calculation =============
 
-				// Night Allowance unit
-				if (!empty($night_rules) && strtotime($out_time) > strtotime($night_rules)) {
-					$night_allo = 1;
-				}
-                // echo $night_allowance;exit;
+				// Allowances: All allowances disabled as per company policy
+				$night_allo = 0;
 
-				// Late Status check
+				// Late Status check: No late count for 12-hour shifts
 				$late_start_time = "$process_date $late_start_time";
-				if ($attn_status == 'W' || $attn_status == 'H' || $attn_status == 'L' || $attn_status == 'OD' || in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))) {
+				if ($is_billing_shift || $is_12_shift || $attn_status == 'W' || $attn_status == 'H' || $attn_status == 'L' || $attn_status == 'OD' || in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))) {
 					$late_status = 0;
 				} elseif ($in_time > $late_start_time && $in_time != '' && $in_time != '00:00:00') {
 					$late_status = 1;
@@ -499,14 +582,9 @@ class Attn_process_model extends CI_Model{
 				}
 				// Late Status
 
-				// week and holiday allownance check
-				if($attn_status == "W" && $in_time != '' && $in_time != '00:00:00'){
-				 	$weekly_allo = 1;
-				}
-				if($attn_status == "H" && $in_time != '' && $in_time != '00:00:00'){
-				 	$holiday_allo = 1;
-				}
-				// week and holiday end
+				// week and holiday allowance: disabled as per policy
+				$weekly_allo = 0;
+				$holiday_allo = 0;
 
 				// get alert message
 				$alert_msg = 0;
@@ -541,34 +619,15 @@ class Attn_process_model extends CI_Model{
 				$this->db->where('emp_id', $emp_id);
 				$this->db->update('pr_emp_shift_log', $data);
 
-				// Rule: If an employee takes a single-day SL or CL, and is absent (A) on the next calendar day,
-				// both the leave date and the next date must be shown as Absent (A).
-				$prev_cal_date = date('Y-m-d', strtotime("$process_date - 1 days"));
+				// Rule: If an employee took leave, but is absent on subsequent day(s):
+				// The preceding consecutive leave days are forfeited in attendance log (marked 'A'),
+				// while remaining counted/deducted in pr_leave_trans.
 				if ($attn_status == 'A') {
-					if ($this->check_single_day_sl_cl($prev_cal_date, $emp_id)) {
-						$this->db->where('emp_id', $emp_id)
-								 ->where('shift_log_date', $prev_cal_date)
-								 ->update('pr_emp_shift_log', array(
-									'present_status' => 'A',
-									'in_time'        => '00:00:00',
-									'out_time'       => '00:00:00',
-									'tot'            => 0,
-									'ot'             => 0,
-									'eot'            => 0,
-									'late_status'    => 0,
-									'weekly_allo'    => 0,
-									'holiday_allo'   => 0
-								 ));
-					}
+					$this->forfeit_consecutive_preceding_leaves($emp_id, $process_date);
+					$this->bridge_consecutive_subsequent_weekends_holidays($emp_id, $process_date);
 				} else {
-					if ($this->check_single_day_sl_cl($prev_cal_date, $emp_id)) {
-						$this->db->where('emp_id', $emp_id)
-								 ->where('shift_log_date', $prev_cal_date)
-								 ->where('present_status', 'A')
-								 ->update('pr_emp_shift_log', array(
-									'present_status' => 'L'
-								 ));
-					}
+					$this->restore_consecutive_preceding_leaves($emp_id, $process_date);
+					$this->unbridge_consecutive_subsequent_weekends_holidays($emp_id, $process_date);
 				}
 			}
 		}
@@ -1163,25 +1222,194 @@ class Attn_process_model extends CI_Model{
         return ($query->num_rows() > 0);
     }
 
-    function check_single_day_sl_cl($date, $emp_id)
+    function check_bridge_absent($emp_id, $date)
     {
-        $this->db->select("leave_type, leave_start, leave_end, start_date, total_leave");
-        $this->db->where("(leave_start <= '$date' AND leave_end >= '$date') ");
-        $this->db->where("emp_id", $emp_id);
-        $this->db->where_in("LOWER(leave_type)", array('sl', 'cl'));
-        $this->db->where("(status = 'approved' OR status IS NULL)");
-        $query = $this->db->get("pr_leave_trans");
-        if ($query->num_rows() > 0) {
-            foreach ($query->result() as $row) {
-                $start = !empty($row->leave_start) ? $row->leave_start : $row->start_date;
-                $end   = !empty($row->leave_end) ? $row->leave_end : $start;
-                $total = !empty($row->total_leave) ? $row->total_leave : 1;
-                if ($total == 1 || $start == $end) {
+        // Bridge Absent: Check immediately preceding day(s) up to 7 days
+        // If the preceding scheduled working day was Absent (A), this weekend/holiday becomes Absent (A)
+        $prev_date = date('Y-m-d', strtotime("$date - 1 days"));
+        for ($i = 0; $i < 7; $i++) {
+            $log = $this->db->select('present_status')
+                            ->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $prev_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+
+            if (!empty($log)) {
+                $status = strtoupper(trim($log->present_status));
+                // If preceding day was Absent (A), bridge rule triggers!
+                if ($status === 'A') {
                     return true;
                 }
+                // If preceding day was W or H (e.g. multi-day weekend/holiday), continue checking previous day
+                if ($status === 'W' || $status === 'H') {
+                    $prev_date = date('Y-m-d', strtotime("$prev_date - 1 days"));
+                    continue;
+                }
+                // Preceding day was Present (P), Leave (L), OD, etc. -> No bridge absent
+                return false;
+            } else {
+                break;
             }
         }
         return false;
+    }
+
+    function is_next_day_absent($date, $emp_id)
+    {
+        $next_date = date('Y-m-d', strtotime("$date + 1 days"));
+        for ($i = 0; $i < 7; $i++) {
+            $log = $this->db->select('present_status')
+                            ->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $next_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+            if (!empty($log)) {
+                $status = strtoupper(trim($log->present_status));
+                if ($status === 'A') {
+                    return true;
+                }
+                if ($status === 'W' || $status === 'H' || $status === 'L') {
+                    $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
+                    continue;
+                }
+                return false;
+            } else {
+                break;
+            }
+        }
+        return false;
+    }
+
+    function forfeit_consecutive_preceding_leaves($emp_id, $absent_date)
+    {
+        $curr_date = date('Y-m-d', strtotime("$absent_date - 1 days"));
+        for ($i = 0; $i < 30; $i++) {
+            $has_leave = $this->db->where("(leave_start <= '$curr_date' AND leave_end >= '$curr_date')")
+                                  ->where("emp_id", $emp_id)
+                                  ->where("(status = 'approved' OR status IS NULL)")
+                                  ->get("pr_leave_trans")
+                                  ->num_rows();
+
+            if ($has_leave > 0) {
+                // Forfeit this leave in pr_emp_shift_log by marking it Absent (A),
+                // while KEEPING pr_leave_trans INTACT so the leave balance is still consumed!
+                $this->db->where('emp_id', $emp_id)
+                         ->where('shift_log_date', $curr_date)
+                         ->update('pr_emp_shift_log', array(
+                             'present_status' => 'A',
+                             'in_time'        => '00:00:00',
+                             'out_time'       => '00:00:00',
+                             'tot'            => 0,
+                             'ot'             => 0,
+                             'eot'            => 0,
+                             'late_status'    => 0,
+                             'deduction_hour' => 0,
+                             'weekly_allo'    => 0,
+                             'holiday_allo'   => 0
+                         ));
+                $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+            } else {
+                break;
+            }
+        }
+    }
+
+    function restore_consecutive_preceding_leaves($emp_id, $present_date)
+    {
+        $curr_date = date('Y-m-d', strtotime("$present_date - 1 days"));
+        for ($i = 0; $i < 30; $i++) {
+            $has_leave = $this->db->where("(leave_start <= '$curr_date' AND leave_end >= '$curr_date')")
+                                  ->where("emp_id", $emp_id)
+                                  ->where("(status = 'approved' OR status IS NULL)")
+                                  ->get("pr_leave_trans")
+                                  ->num_rows();
+
+            if ($has_leave > 0) {
+                // Restore status in shift log to 'L' if it was previously set to 'A'
+                $this->db->where('emp_id', $emp_id)
+                         ->where('shift_log_date', $curr_date)
+                         ->where('present_status', 'A')
+                         ->update('pr_emp_shift_log', array(
+                             'present_status' => 'L'
+                         ));
+                $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+            } else {
+                break;
+            }
+        }
+    }
+
+    function bridge_consecutive_subsequent_weekends_holidays($emp_id, $absent_date)
+    {
+        $next_date = date('Y-m-d', strtotime("$absent_date + 1 days"));
+        for ($i = 0; $i < 7; $i++) {
+            $log = $this->db->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $next_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+            if (!empty($log)) {
+                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                if ($has_punch) {
+                    break;
+                }
+                if ($log->present_status === 'W' || $log->present_status === 'H') {
+                    $this->db->where('emp_id', $emp_id)
+                             ->where('shift_log_date', $next_date)
+                             ->update('pr_emp_shift_log', array(
+                                 'present_status' => 'A',
+                                 'tot'            => 0,
+                                 'ot'             => 0,
+                                 'eot'            => 0,
+                                 'weekly_allo'    => 0,
+                                 'holiday_allo'   => 0
+                             ));
+                    $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
+    function unbridge_consecutive_subsequent_weekends_holidays($emp_id, $present_date)
+    {
+        $next_date = date('Y-m-d', strtotime("$present_date + 1 days"));
+        for ($i = 0; $i < 7; $i++) {
+            $log = $this->db->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $next_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+            if (!empty($log)) {
+                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                if ($has_punch) {
+                    break;
+                }
+                $is_wk = $this->check_weekend($emp_id, $next_date, false);
+                $is_hol = $this->check_holiday($emp_id, $next_date);
+                if ($is_hol) {
+                    $this->db->where('emp_id', $emp_id)
+                             ->where('shift_log_date', $next_date)
+                             ->update('pr_emp_shift_log', array('present_status' => 'H'));
+                    $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
+                } elseif ($is_wk) {
+                    $this->db->where('emp_id', $emp_id)
+                             ->where('shift_log_date', $next_date)
+                             ->update('pr_emp_shift_log', array('present_status' => 'W'));
+                    $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+
+    function check_single_day_sl_cl($date, $emp_id)
+    {
+        return $this->leave_chech($date, $emp_id);
     }
 
 	function get_night_allowance_rules($process_date, $unit_id, $desig_id){
