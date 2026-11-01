@@ -28,8 +28,8 @@
             <?php echo form_error('id_number','<div class="text-danger">','</div>'); ?>
           </div>
           <div class="form-group">
-            <label>Password</label>
-            <input type="password" name="password"value="<?=set_value('password',$row->password)?>" class="form-control">
+            <label>Password <small style="color: #888;">(Leave blank to keep current password)</small></label>
+            <input type="password" name="password" value="" placeholder="Enter new password to change" class="form-control" autocomplete="new-password">
             <?php echo form_error('password','<div class="text-danger">','</div>'); ?>
           </div>
 

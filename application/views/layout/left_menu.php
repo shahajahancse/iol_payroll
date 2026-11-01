@@ -33,17 +33,21 @@
             </li>
           <?php } ?> -->
 
-          <?php if(in_array(12,$acl)) { ?> 
+          <?php if(in_array(11,$acl) || in_array(12,$acl)) { ?> 
             <li class="<?= activate_method('employee_list') ?>">
               <a href="<?=base_url('emp_info_con/employee_list')?>">
                 <i class="fa fa-users"></i> Employee List
               </a>
             </li>
+          <?php } ?>
+          <?php if(in_array(50,$acl) || in_array(12,$acl)) { ?>
             <li class="start <?= activate_method('personal_info') ?>">
               <a href="<?=base_url('emp_info_con/personal_info')?>">
                 <i class="fa fa-address-book"></i> Add Employee
               </a>
             </li>
+          <?php } ?>
+          <?php if(in_array(12,$acl)) { ?>
             <li class="start <?= activate_method('personal_info_short') ?>">
               <a href="<?=base_url('emp_info_con/personal_info_short')?>">
                 <i class="fa fa-address-book"></i> Add Employee Short Form
@@ -85,16 +89,26 @@
             </li>
           <?php } ?>
 
+          <?php if(in_array(51,$acl) || in_array(14,$acl) || in_array(2,$acl) || $u_username === 'admin') { ?>
           <li class="<?= activate_method('running_shift_change') ?>">
             <a href="<?= base_url('entry_system_con/running_shift_change')?>" class="anchor_cls">
               <i class="fa fa-random"></i> Emp Shift Change
             </a>
           </li>
+          <?php } ?>
 
           <?php if(in_array(16,$acl)) { ?>
             <li class="<?= activate_method('emp_holiday_add') ?>">
               <a href="<?= base_url('entry_system_con/emp_holiday_add')?>" class="anchor_cls">
                 <i class="fa fa-calendar-check-o"></i> Holiday Add
+              </a>
+            </li>
+          <?php } ?>
+
+          <?php if(in_array(15,$acl)) { ?>
+            <li class="<?= activate_method('emp_weekend_add') ?>">
+              <a href="<?= base_url('entry_system_con/emp_weekend_add')?>" class="anchor_cls">
+                <i class="fa fa-calendar-plus-o"></i> Weekend Add
               </a>
             </li>
           <?php } ?>
@@ -272,12 +286,14 @@
               </a>
             </li>
           <?php } ?>
+          <?php if(in_array(52,$acl) || in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
           <li class="<?= ($curr_class === 'attn_regularization_con') ? 'active' : '' ?>">
             <a href="<?= base_url('attn_regularization/dashboard') ?>" class="anchor_cls">
               <i class="fa fa-calendar-check-o text-warning"></i> Attn. Regularization
             </a>
           </li>
-          <?php if(in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
+          <?php } ?>
+          <?php if(in_array(53,$acl) || in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
             <li class="<?= ($curr_class === 'od_management_con') ? 'active' : '' ?>">
               <a href="<?= base_url('od') ?>" class="anchor_cls">
                 <i class="fa fa-briefcase text-info"></i> Outside Duty (OD)
@@ -301,17 +317,21 @@
             </li>
           <?php } ?>
 
+          <?php if(in_array(54,$acl) || in_array(4,$acl) || $u_username === 'admin') { ?>
           <li class="<?= ($this->router->fetch_class() == 'arrear_salary_con') ? 'active' : '' ?>">
             <a href="<?=base_url('arrear_salary')?>" class="anchor_cls">
               <i class="fa fa-credit-card text-success"></i> Arrear Salary
             </a>
           </li>
+          <?php } ?>
 
+          <?php if(in_array(32,$acl) || in_array(4,$acl) || $u_username === 'admin') { ?>
           <li class="<?= ($this->router->fetch_class() == 'advanced_salary_con') ? 'active' : '' ?>">
             <a href="<?=base_url('advanced_salary')?>" class="anchor_cls">
               <i class="fa fa-money text-warning"></i> Advanced Salary
             </a>
           </li>
+          <?php } ?>
 
           <?php if(in_array(33,$acl)) { ?>
             <li class="<?= activate_method('grid_salary_report') ?>">
@@ -411,34 +431,22 @@
                 <i class="fa fa-sitemap"></i> Department
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(55,$acl) || in_array(35,$acl)) { ?>
             <li class="<?= activate_method('section') ?>">
               <a href="<?=base_url('setup_con/section')?>" class="anchor_cls">
                 <i class="fa fa-th-large"></i> Section
               </a>
             </li>
+          <?php } ?>
 
-            <!--
-            <li class="<?= activate_method('line') ?>">
-              <a href="<?=base_url('setup_con/line')?>" class="anchor_cls">
-                <i class="fa fa-arrows-h"></i> Line
-              </a>
-            </li>
-            -->
-
+          <?php if(in_array(56,$acl) || in_array(35,$acl)) { ?>
             <li class="<?= activate_method('designation') ?>">
               <a href="<?=base_url('setup_con/designation')?>" class="anchor_cls">
                 <i class="fa fa-id-badge"></i> Designation
               </a>
             </li>
-
-            <!--
-            <li class="<?= activate_method('position') ?>">
-              <a href="<?=base_url('setup_con/position')?>" class="anchor_cls">
-                <i class="fa fa-map-marker"></i> Position
-              </a>
-            </li>
-            -->
           <?php } ?>
 
           <!--
@@ -458,7 +466,11 @@
             </li>
           <?php } ?>
 
-          <?php if(in_array(38,$acl)) { ?>
+          <!--
+          <?php 
+          // All Allowance hidden conditionally
+          $show_all_allowance = false;
+          if($show_all_allowance && in_array(38,$acl)) { ?>
             <li class="<?= activate_method('weekend_allowance_setup') ?>">
               <a href="<?=base_url()?>setup_con/weekend_allowance_setup">
                 <i class="fa fa-calendar"></i> Weekend Allowance
@@ -485,13 +497,15 @@
           <?php } ?>
           -->
 
-          <?php if(in_array(38,$acl)) { ?>
+          <?php if(in_array(39,$acl)) { ?>
             <li class="<?= activate_method('shift_schedule') ?>">
               <a href="<?=base_url('setup_con/shift_schedule')?>" class="anchor_cls">
                 <i class="fa fa-clock-o"></i> Shift Schedules
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(57,$acl) || in_array(39,$acl)) { ?>
             <li class="<?= activate_method('shift_management') ?>">
               <a href="<?=base_url('setup_con/shift_management')?>" class="anchor_cls">
                 <i class="fa fa-random"></i> Shift Manage
@@ -499,7 +513,10 @@
             </li>
           <?php } ?>
 
-          <?php if(in_array(40,$acl)) { ?>
+          <?php 
+          // Roster Shift hidden conditionally
+          $show_roster_shift = false;
+          if($show_roster_shift && in_array(40,$acl)) { ?>
             <li class="<?= activate_method('emp_roster_shift') ?>">
               <a href="<?=base_url('setup_con/emp_roster_shift')?>" class="anchor_cls">
                 <i class="fa fa-calendar-check-o"></i> Roster Shift
@@ -523,13 +540,20 @@
                 <i class="fa fa-money"></i> Salary Grade
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(58,$acl) || in_array(42,$acl)) { ?>
             <li class="<?= activate_method('leave_setup') ?>">
               <a href="<?=base_url()?>setup_con/leave_setup" class="anchor_cls">
                 <i class="fa fa-plane"></i> Leave
               </a>
             </li>
+          <?php } ?>
 
+          <?php 
+          // Bonus Setup hidden conditionally
+          $show_bonus_setup = false;
+          if($show_bonus_setup && (in_array(59,$acl) || in_array(42,$acl))) { ?>
             <li class="<?= activate_method('bonus_setup') ?>">
               <a href="<?=base_url()?>setup_con/bonus_setup" class="anchor_cls">
                 <i class="fa fa-gift"></i> Bonus
@@ -555,24 +579,22 @@
         <span class="title">Settings </span> <span class="selected"></span> <span class="arrow <?= arrow_open('setting_con') ?>"></span> </a>
         <ul class="sub-menu">
           <?php if(in_array(44,$acl)) { ?>
-            <li class="<?= activate_method('crud') ?>">
-              <a href="<?=base_url('setting_con/crud')?>" class="anchor_cls" id="acl">
-                <i class="fa fa-key"></i> Access
-              </a>
-            </li>
-
             <li class="<?= activate_method('left_menu_acl') ?>">
               <a href="<?=base_url('setting_con/left_menu_acl')?>" class="anchor_cls" id="acl">
                 <i class="fa fa-bars"></i> Left Menu Access
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(60,$acl) || in_array(44,$acl)) { ?>
             <li class="<?= activate_method('user_acl_hrm') ?>">
               <a href="<?=base_url('setting_con/user_acl_hrm')?>" class="anchor_cls" id="acl">
                 <i class="fa fa-user"></i> User Access HRM
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(212,$acl) || in_array(44,$acl)) { ?>
             <li class="<?= activate_method('user_acl_pr') ?>">
               <a href="<?=base_url('setting_con/user_acl_pr')?>" class="anchor_cls" id="acl">
                 <i class="fa fa-money"></i> User Access Payroll

@@ -10,57 +10,81 @@ class Admin_model extends CI_Model {
 
 	function check_user_account()
 	{
-
-			$user_id=$this->input->post('username');
-
-			$password=$this->input->post('password');
-
-			$this->db->select('id_number');
-			$this->db->where('id_number',$user_id);
-			$this->db->where('password',$password);
-			$this->db->where('level',1);
-
-			$query = $this->db->get('members');
-
-				if ($query->num_rows() > 0)
-				{
-				 	$row = $query->row();
-					$name = $row->id_number;
-					$log_data = array('admin' => $name,'admin_logged_in' => TRUE);
-				    return $log_data;
-			    }
-			    else
-			    {
-				    return false;
-			    }
-
-
-     }
-
-	function check_user_account_FE()
-	{
-
 		$user_id = $this->input->post('username');
-		$password = $this->input->post('password');
+		$password = (string) $this->input->post('password');
 
-		$this->db->select("id, id_number, level, unit_name, user_mode, status");
-		$this->db->where('id_number',$user_id);
-		$this->db->where('password',$password);
-		$this->db->where('status ','Enable');
+		$this->db->select('id, id_number, password');
+		$this->db->where('id_number', $user_id);
+		$this->db->where('level', 1);
 
 		$query = $this->db->get('members');
 
 		if ($query->num_rows() > 0)
 		{
-			$query = $query->row();
-			$log_data = array('status' => 200, 'response' => 'success', 'data' => $query, 'logged_in' => true);
-		    return $log_data;
-	    }
-	    else
-	    {
-		   return $log_data = array('status' => 201, 'response' => 'faild', 'data' => null, 'logged_in' => false);
-	    }
-    }
+			$row = $query->row();
+			$is_valid = false;
+
+			if (password_verify($password, $row->password)) {
+				$is_valid = true;
+			} elseif ($row->password === $password) {
+				$is_valid = true;
+				$this->db->where('id', $row->id);
+				$this->db->update('members', array(
+					'password' => password_hash($password, PASSWORD_DEFAULT)
+				));
+			}
+
+			if ($is_valid) {
+				$name = $row->id_number;
+				$log_data = array('admin' => $name, 'admin_logged_in' => TRUE);
+				return $log_data;
+			}
+		}
+
+		return false;
+	}
+
+	function check_user_account_FE($user_id = null, $password = null)
+	{
+		if ($user_id === null) {
+			$user_id = $this->input->post('username');
+		}
+		if ($password === null) {
+			$password = (string) $this->input->post('password');
+		}
+
+		$this->db->select("id, id_number, password, level, unit_name, user_mode, status");
+		$this->db->where('id_number', $user_id);
+		$this->db->where('status', 'Enable');
+
+		$query = $this->db->get('members');
+
+		if ($query->num_rows() > 0)
+		{
+			$user = $query->row();
+			$is_valid = false;
+
+			// Check password hash using password_verify or fallback to plain text for legacy users
+			if (password_verify($password, $user->password)) {
+				$is_valid = true;
+			} elseif ($user->password === $password) {
+				$is_valid = true;
+				// Auto-upgrade legacy plain text password to secure hash
+				$this->db->where('id', $user->id);
+				$this->db->update('members', array(
+					'password' => password_hash($password, PASSWORD_DEFAULT)
+				));
+			}
+
+			if ($is_valid) {
+				unset($user->password); // Remove password before saving to session
+				$log_data = array('status' => 200, 'response' => 'success', 'data' => $user, 'logged_in' => true);
+				return $log_data;
+			}
+		}
+
+		return array('status' => 201, 'response' => 'faild', 'data' => null, 'logged_in' => false);
+	}
 
 
 	 function insert_book($image)
