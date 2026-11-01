@@ -143,6 +143,14 @@
 							$row->com_ot =0;
 							$extra_ot_hour = 0;
 						}
+						elseif($row->present_status == 'OD' || (isset($emp_data['od_map']) && isset($emp_data['od_map'][$row->shift_log_date]))){
+							$att_status = "OD";
+							$att_status_count = "P";
+							$row->in_time = "00:00:00";
+							$row->out_time = "00:00:00";
+							$row->com_ot = 0;
+							$extra_ot_hour = 0;
+						}
 						elseif($row->in_time !='00:00:00' and $row->out_time !='00:00:00'){
 							$att_status = "P";
 							$att_status_count = "P";
@@ -263,7 +271,7 @@
 							echo $att_status;
 							echo "&nbsp;</td>";
 
-							if($att_status == "P"){
+							if($att_status == "P" || $att_status == "OD"){
 								$present_count++;
 							}
 							elseif($att_status == "A"){
@@ -281,20 +289,32 @@
 							elseif($att_status == "Holiday"){
 								$holiday_count++;
 							}
-							if($att_status_count != "Leave" && !in_array($att_status, $leave_codes) && $row->late_status == 1){
-								if (!empty($row->is_waived)) {
-									$base_remark = !empty($row->remarks) ? $row->remarks : "Late";
-									$remark = (stripos($base_remark, 'waived') !== false) ? $base_remark : $base_remark . ' (Waived)';
-								} else {
-									$remark = !empty($row->remarks) ? $row->remarks : "Late";
+							$user_remark = '';
+							if (!empty($row->reg_remarks)) {
+								$user_remark = trim($row->reg_remarks);
+							} elseif (!empty($row->remarks)) {
+								$user_remark = trim($row->remarks);
+								if (!empty($row->reg_reason) && stripos($user_remark, trim($row->reg_reason) . ':') === 0) {
+									$user_remark = trim(substr($user_remark, strlen(trim($row->reg_reason)) + 1));
+								} elseif (strpos($user_remark, ': ') !== false) {
+									$parts = explode(': ', $user_remark, 2);
+									if (!empty($parts[1])) {
+										$user_remark = trim($parts[1]);
+									}
+								}
+							}
+							if (!empty($user_remark)) {
+								$user_remark = preg_replace('/\s*\(waived\)\s*$/i', '', $user_remark);
+							}
+
+							if (!empty($user_remark)) {
+								$remark = $user_remark;
+							} elseif ($att_status_count != "Leave" && !in_array($att_status, $leave_codes) && $row->late_status == 1) {
+								$remark = "Late";
+								if (empty($row->is_waived)) {
 									$late_count++;
 								}
-							} elseif (!empty($row->remarks)) {
-								$remark = $row->remarks;
-								if (!empty($row->is_waived) && stripos($remark, 'waived') === false) {
-									$remark .= ' (Waived)';
-								}
-							} else{
+							} else {
 								$remark = "";
 							}
 							echo "<td>&nbsp;";

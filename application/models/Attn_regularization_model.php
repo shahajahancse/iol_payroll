@@ -251,7 +251,7 @@ class Attn_regularization_model extends CI_Model
 
         // If approved, sync to pr_emp_shift_log
         if ($status === 'Approved') {
-            $full_remark = !empty($reason_type) ? "{$reason_type}: {$remarks}" : $remarks;
+            $full_remark = !empty($remarks) ? $remarks : $reason_type;
             $adj_in  = !empty($data['adjusted_in_time']) ? $data['adjusted_in_time'] : null;
             $adj_out = !empty($data['adjusted_out_time']) ? $data['adjusted_out_time'] : null;
 
@@ -304,7 +304,7 @@ class Attn_regularization_model extends CI_Model
         $this->db->where('id', $id)->update('pr_attn_regularization', $update);
 
         if ($status === 'Approved') {
-            $full_remark = !empty($reg->reason_type) ? "{$reg->reason_type}: {$reg->remarks}" : $reg->remarks;
+            $full_remark = !empty($reg->remarks) ? $reg->remarks : $reg->reason_type;
             $this->sync_shift_log($reg->emp_id, $reg->att_date, $full_remark, $reg->waive_deduction, $reg->id, $reg->adjusted_in_time, $reg->adjusted_out_time);
         } else {
             // Revert shift log waiver if rejected or cancelled

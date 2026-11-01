@@ -300,10 +300,8 @@ class Od_management_model extends CI_Model
             $this->db->insert('pr_emp_od_dates', $date_row);
         }
 
-        // If created directly with 'approved' status, synchronize attendance shift log immediately
-        if ($parent_data['status'] === 'approved') {
-            $this->sync_attendance_od($data['emp_id'], $dates, $parent_data['unit_id']);
-        }
+        // Synchronize attendance shift log immediately so Job Card records OD status
+        $this->sync_attendance_od($data['emp_id'], $dates, $parent_data['unit_id']);
 
         $this->db->trans_complete();
 
@@ -374,10 +372,8 @@ class Od_management_model extends CI_Model
             $this->db->insert('pr_emp_od_dates', $date_row);
         }
 
-        // Always sync attendance for approved OD
-        if ($target_status === 'approved') {
-            $this->sync_attendance_od($existing->emp_id, $dates, $existing->unit_id);
-        }
+        // Synchronize attendance shift log immediately so Job Card records OD status
+        $this->sync_attendance_od($existing->emp_id, $dates, $existing->unit_id);
 
         $this->db->trans_complete();
 

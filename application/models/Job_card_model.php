@@ -312,7 +312,7 @@ class Job_card_model extends CI_Model{
 
 		$this->db->select('
 						pr_emp_shift_log.*,
-						COALESCE(NULLIF(pr_emp_shift_log.remarks, ""), CONCAT_WS(": ", reg.reason_type, NULLIF(reg.remarks, ""))) as remarks,
+						COALESCE(NULLIF(reg.remarks, ""), NULLIF(pr_emp_shift_log.remarks, "")) as remarks,
 						GREATEST(COALESCE(pr_emp_shift_log.is_waived, 0), COALESCE(reg.waive_deduction, 0)) as is_waived,
 						reg.reason_type as reg_reason,
 						reg.remarks as reg_remarks
@@ -323,6 +323,28 @@ class Job_card_model extends CI_Model{
 		$this->db->where("pr_emp_shift_log.shift_log_date BETWEEN '$start_date' AND '$end_date' ");
 		$this->db->order_by("pr_emp_shift_log.shift_log_date");
 		$query = $this->db->get()->result();
+
+		// Sanitize remarks so only user-entered text is shown (no reason_type prefix, no waived text)
+		foreach ($query as $row) {
+			$clean = '';
+			if (!empty($row->reg_remarks)) {
+				$clean = trim($row->reg_remarks);
+			} elseif (!empty($row->remarks)) {
+				$clean = trim($row->remarks);
+				if (!empty($row->reg_reason) && stripos($clean, trim($row->reg_reason) . ':') === 0) {
+					$clean = trim(substr($clean, strlen(trim($row->reg_reason)) + 1));
+				} elseif (strpos($clean, ': ') !== false) {
+					$parts = explode(': ', $clean, 2);
+					if (!empty($parts[1])) {
+						$clean = trim($parts[1]);
+					}
+				}
+			}
+			if (!empty($clean)) {
+				$clean = preg_replace('/\s*\(waived\)\s*$/i', '', $clean);
+			}
+			$row->remarks = $clean;
+		}
 
 		$leaves = $this->leave_per_emp($start_date, $end_date, $emp_id);
 		$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
@@ -354,12 +376,12 @@ class Job_card_model extends CI_Model{
 			}
 		}
 
-		// Synchronize Approved Outside Duty (OD)
+		// Synchronize Outside Duty (OD) - approved or pending
 		$od_map = array();
 		if ($this->db->table_exists('pr_emp_od_dates')) {
 			$od_rows = $this->db->select('od_date')
 				->where('emp_id', $emp_id)
-				->where('status', 'approved')
+				->where_in('status', array('approved', 'pending'))
 				->where("od_date >=", $start_date)
 				->where("od_date <=", $end_date)
 				->get('pr_emp_od_dates')
@@ -370,8 +392,11 @@ class Job_card_model extends CI_Model{
 				}
 			}
 		}
+		$data['od_map'] = $od_map;
 
+		$existing_dates = array();
 		foreach ($query as $row) {
+			$existing_dates[$row->shift_log_date] = true;
 			if (isset($od_map[$row->shift_log_date]) || $row->present_status == 'OD') {
 				if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
 					$row->present_status = 'OD';
@@ -385,6 +410,42 @@ class Job_card_model extends CI_Model{
 					$row->deduction_hour = 0;
 				}
 			}
+		}
+
+		$has_new_od = false;
+		foreach ($od_map as $od_date => $val) {
+			if (!isset($existing_dates[$od_date])) {
+				$dummy = new stdClass();
+				$dummy->in_time        = '00:00:00';
+				$dummy->out_time       = '00:00:00';
+				$dummy->shift_log_date = $od_date;
+				$dummy->schedule_id    = 1;
+				$dummy->ot             = 0;
+				$dummy->eot            = 0;
+				$dummy->com_ot         = 0;
+				$dummy->com_eot        = 0;
+				$dummy->ot_eot_4pm     = 0;
+				$dummy->ot_eot_12am    = 0;
+				$dummy->false_ot_4     = 0;
+				$dummy->false_ot_12    = 0;
+				$dummy->false_ot_all   = 0;
+				$dummy->late_status    = 0;
+				$dummy->present_status = 'OD';
+				$dummy->deduction_hour = 0;
+				$dummy->modify_eot     = 0;
+				$dummy->remarks        = '';
+				$dummy->is_waived      = 0;
+				$dummy->reg_reason     = null;
+				$dummy->reg_remarks    = null;
+				$dummy->shift_name     = 'Day';
+				$query[] = $dummy;
+				$has_new_od = true;
+			}
+		}
+		if ($has_new_od) {
+			usort($query, function($a, $b) {
+				return strcmp($a->shift_log_date, $b->shift_log_date);
+			});
 		}
 
 		// Rule: If an employee takes a single-day SL or CL, and is absent (A) on the next calendar day,
@@ -532,7 +593,7 @@ class Job_card_model extends CI_Model{
 						pr_emp_shift_log.present_status,
 						pr_emp_shift_log.deduction_hour,
 						pr_emp_shift_log.modify_eot,
-						COALESCE(NULLIF(pr_emp_shift_log.remarks, ""), CONCAT_WS(": ", reg.reason_type, NULLIF(reg.remarks, ""))) as remarks,
+						COALESCE(NULLIF(reg.remarks, ""), NULLIF(pr_emp_shift_log.remarks, "")) as remarks,
 						GREATEST(COALESCE(pr_emp_shift_log.is_waived, 0), COALESCE(reg.waive_deduction, 0)) as is_waived,
 						reg.reason_type as reg_reason,
 						reg.remarks as reg_remarks,
@@ -547,6 +608,28 @@ class Job_card_model extends CI_Model{
 		$this->db->where("pr_emp_shift_log.shift_log_date <=", $end_date);
 		$this->db->order_by("pr_emp_shift_log.shift_log_date");
 		$query = $this->db->get()->result();
+
+		// Sanitize remarks so only user-entered text is shown (no reason_type prefix, no waived text)
+		foreach ($query as $row) {
+			$clean = '';
+			if (!empty($row->reg_remarks)) {
+				$clean = trim($row->reg_remarks);
+			} elseif (!empty($row->remarks)) {
+				$clean = trim($row->remarks);
+				if (!empty($row->reg_reason) && stripos($clean, trim($row->reg_reason) . ':') === 0) {
+					$clean = trim(substr($clean, strlen(trim($row->reg_reason)) + 1));
+				} elseif (strpos($clean, ': ') !== false) {
+					$parts = explode(': ', $clean, 2);
+					if (!empty($parts[1])) {
+						$clean = trim($parts[1]);
+					}
+				}
+			}
+			if (!empty($clean)) {
+				$clean = preg_replace('/\s*\(waived\)\s*$/i', '', $clean);
+			}
+			$row->remarks = $clean;
+		}
 
 		$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
 		foreach ($query as $row) {
@@ -580,12 +663,12 @@ class Job_card_model extends CI_Model{
 			}
 		}
 
-		// Synchronize Approved Outside Duty (OD)
+		// Synchronize Outside Duty (OD) - approved or pending
 		$od_map = array();
 		if ($this->db->table_exists('pr_emp_od_dates')) {
 			$od_rows = $this->db->select('od_date')
 				->where('emp_id', $emp_id)
-				->where('status', 'approved')
+				->where_in('status', array('approved', 'pending'))
 				->where("od_date >=", $start_date)
 				->where("od_date <=", $end_date)
 				->get('pr_emp_od_dates')
@@ -596,8 +679,11 @@ class Job_card_model extends CI_Model{
 				}
 			}
 		}
+		$data['od_map'] = $od_map;
 
+		$existing_dates = array();
 		foreach ($query as $row) {
+			$existing_dates[$row->shift_log_date] = true;
 			if (isset($od_map[$row->shift_log_date]) || $row->present_status == 'OD') {
 				if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
 					$row->present_status = 'OD';
@@ -611,6 +697,42 @@ class Job_card_model extends CI_Model{
 					$row->deduction_hour = 0;
 				}
 			}
+		}
+
+		$has_new_od = false;
+		foreach ($od_map as $od_date => $val) {
+			if (!isset($existing_dates[$od_date])) {
+				$dummy = new stdClass();
+				$dummy->in_time        = '00:00:00';
+				$dummy->out_time       = '00:00:00';
+				$dummy->shift_log_date = $od_date;
+				$dummy->schedule_id    = 1;
+				$dummy->ot             = 0;
+				$dummy->eot            = 0;
+				$dummy->com_ot         = 0;
+				$dummy->com_eot        = 0;
+				$dummy->ot_eot_4pm     = 0;
+				$dummy->ot_eot_12am    = 0;
+				$dummy->false_ot_4     = 0;
+				$dummy->false_ot_12    = 0;
+				$dummy->false_ot_all   = 0;
+				$dummy->late_status    = 0;
+				$dummy->present_status = 'OD';
+				$dummy->deduction_hour = 0;
+				$dummy->modify_eot     = 0;
+				$dummy->remarks        = '';
+				$dummy->is_waived      = 0;
+				$dummy->reg_reason     = null;
+				$dummy->reg_remarks    = null;
+				$dummy->shift_name     = 'Day';
+				$query[] = $dummy;
+				$has_new_od = true;
+			}
+		}
+		if ($has_new_od) {
+			usort($query, function($a, $b) {
+				return strcmp($a->shift_log_date, $b->shift_log_date);
+			});
 		}
 
 		// Rule: If an employee takes a single-day SL or CL, and is absent (A) on the next calendar day,

@@ -1217,7 +1217,7 @@ class Attn_process_model extends CI_Model{
         }
         $this->db->where("od_date", $process_date);
         $this->db->where("emp_id", $emp_id);
-        $this->db->where("status", "approved");
+        $this->db->where_in("status", array("approved", "pending"));
         $query = $this->db->get("pr_emp_od_dates");
         return ($query->num_rows() > 0);
     }
