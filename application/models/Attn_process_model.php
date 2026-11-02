@@ -141,6 +141,14 @@ class Attn_process_model extends CI_Model{
             	}
             	$out_end_dt = "$out_end_date $out_end_time";
 
+            	// Safety buffer for Shift B overnight OT:
+            	// Workers finishing overnight OT at 06:00 AM punch out between 06:00 and 07:00 AM.
+            	// If schedule out_end is 06:00:00, extend search up to 07:00:00 so punches like 06:01 AM are captured.
+            	if (in_array(strtolower(trim($shift_name)), array('shift b', 'shiftb')) && strtotime($out_end_time) <= strtotime('06:00:00')) {
+            		$out_end_time = '07:00:00';
+            		$out_end_dt   = "$out_end_date $out_end_time";
+            	}
+
             	$out_date = $out_end_date;
 
             	// OT start time define
