@@ -42,11 +42,19 @@ class Ot_approval_con extends CI_Controller
     }
 
     /**
-     * Determine if current user has Admin privileges (strictly username "admin")
+     * Determine if current user has Admin privileges ("admin" or level "All" / superadmin)
      */
     public function is_admin()
     {
-        return ($this->get_current_username() === 'admin');
+        $user = isset($this->data['user_data']) ? $this->data['user_data'] : null;
+        $uname = $user && !empty($user->id_number) ? strtolower(trim($user->id_number)) : '';
+        $session_uname = strtolower(trim($this->session->userdata('username') ? $this->session->userdata('username') : ''));
+        $level = $user && !empty($user->level) ? strtolower(trim($user->level)) : strtolower(trim($this->session->userdata('level') ? $this->session->userdata('level') : ''));
+
+        if ($uname === 'admin' || $session_uname === 'admin' || $level === 'all' || $level === '0' || $level === '1') {
+            return true;
+        }
+        return false;
     }
 
     /**
