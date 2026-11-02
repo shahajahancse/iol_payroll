@@ -16,6 +16,7 @@
 					$present_count = 0;
 					$absent_count = 0;
 					$leave_count = 0;
+					$leave_breakdown = array();
 					$ot_count = 0;
 					$late_count = 0;
 					$wk_off_count = 0;
@@ -117,7 +118,7 @@
 							$leave_name = strtoupper(trim($row->present_status));
 							if ($leave_name == 'L') {
 								$lt = $this->job_card_model->get_leave_type($row->shift_log_date, $value->emp_id);
-								$leave_name = !empty($lt) ? $lt : 'Leave';
+								$leave_name = !empty($lt) ? $lt : 'L';
 							}
 						}
 
@@ -273,6 +274,10 @@
 							}
 							elseif($att_status_count == "Leave" || in_array($att_status, $leave_codes)){
 								$leave_count++;
+								$code_label = strtoupper(trim($att_status));
+								if ($code_label != 'L' && $code_label != 'LEAVE') {
+									$leave_breakdown[$code_label] = isset($leave_breakdown[$code_label]) ? $leave_breakdown[$code_label] + 1 : 1;
+								}
 							}
 							elseif($att_status == "P(Error)"){
 								$perror_count++;
@@ -412,6 +417,13 @@
 
 					echo "<td>";
 					echo $leave_count;
+					if (!empty($leave_breakdown)) {
+						$parts = array();
+						foreach ($leave_breakdown as $c => $n) {
+							$parts[] = "$c: $n";
+						}
+						echo "<br><span style='font-size:10px; font-weight:normal;'>(" . implode(', ', $parts) . ")</span>";
+					}
 					echo "</td>";
 
 					echo "<td>";

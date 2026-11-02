@@ -5513,8 +5513,12 @@ class Grid_model extends CI_Model{
 				$this->db->limit(1);
 				$query = $this->db->get();
 				foreach($query->result() as $row){
-					if(in_array($row->shift_log_date,$leave)){
-						$leave_type = $this->get_leave_type($row->shift_log_date,$emp_id);
+					$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+					if(isset($leave[$row->shift_log_date]) || in_array(strtoupper(trim($row->present_status)), $leave_codes)){
+						$leave_type = isset($leave[$row->shift_log_date]) ? $leave[$row->shift_log_date] : $this->get_leave_type($row->shift_log_date,$emp_id);
+						if (empty($leave_type)) {
+							$leave_type = (!empty($row->present_status) && $row->present_status != 'L') ? strtoupper(trim($row->present_status)) : 'L';
+						}
 						$att_status_count = "Leave";
 						$att_status = $leave_type;
 						$row->in_time = "00:00:00";
@@ -6058,8 +6062,12 @@ class Grid_model extends CI_Model{
 				$this->db->limit(1);
 				$query = $this->db->get();
 				foreach($query->result() as $row){
-					if(in_array($row->shift_log_date,$leave)){
-						$leave_type = $this->get_leave_type($row->shift_log_date,$emp_id);
+					$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+					if(isset($leave[$row->shift_log_date]) || in_array(strtoupper(trim($row->present_status)), $leave_codes)){
+						$leave_type = isset($leave[$row->shift_log_date]) ? $leave[$row->shift_log_date] : $this->get_leave_type($row->shift_log_date,$emp_id);
+						if (empty($leave_type)) {
+							$leave_type = (!empty($row->present_status) && $row->present_status != 'L') ? strtoupper(trim($row->present_status)) : 'L';
+						}
 						$att_status_count = "Leave";
 						$att_status = $leave_type;
 						$row->in_time = "00:00:00";
@@ -6348,9 +6356,13 @@ class Grid_model extends CI_Model{
 				foreach($query3->result() as $row3)
 				{
 
-					if(in_array($row3->shift_log_date,$leave))
+					$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+					if(isset($leave[$row3->shift_log_date]) || in_array(strtoupper(trim($row3->present_status)), $leave_codes))
 					{
-						$leave_type = $this->get_leave_type($row3->shift_log_date,$emp_id);
+						$leave_type = isset($leave[$row3->shift_log_date]) ? $leave[$row3->shift_log_date] : $this->get_leave_type($row3->shift_log_date,$emp_id);
+						if (empty($leave_type)) {
+							$leave_type = (!empty($row3->present_status) && $row3->present_status != 'L') ? strtoupper(trim($row3->present_status)) : 'L';
+						}
 						$att_status_count = "Leave";
 						$att_status = $leave_type;
 						$row->in_time = "00:00:00";
@@ -11295,11 +11307,22 @@ function grid_emp_job_application($grid_emp_id){
    {
    		$this->db->select('leave_type');
 		$this->db->where('emp_id', $emp_id);
-		$this->db->where('start_date', $shift_log_date);
+		$this->db->where("((leave_start <= '$shift_log_date' AND leave_end >= '$shift_log_date') OR start_date = '$shift_log_date')");
+		$this->db->where("(status != 'rejected' AND status != 'returned' OR status IS NULL)");
 		$query = $this->db->get('pr_leave_trans');
 		$row = $query->row();
-		$leave_type = $row->leave_type;
-		return $leave_type;
+		if (!empty($row) && !empty($row->leave_type)) {
+			return strtoupper(trim($row->leave_type));
+		}
+		if ($this->db->table_exists('pr_maternity_entry_histry')) {
+			$ml = $this->db->where('emp_id', $emp_id)
+				->where("start_date <= '$shift_log_date' AND end_date >= '$shift_log_date'")
+				->get('pr_maternity_entry_histry')->row();
+			if (!empty($ml)) {
+				return 'ML';
+			}
+		}
+		return '';
    }
 
     function get_shift_out_time($id)

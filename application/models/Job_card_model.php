@@ -13,19 +13,33 @@ class Job_card_model extends CI_Model{
 		$this->db->select("leave_type, leave_start, leave_end, start_date");
 		$this->db->where("((leave_start <= '$sEndDate' AND leave_end >= '$sStartDate') OR (start_date BETWEEN '$sStartDate' AND '$sEndDate'))");
 		$this->db->where("emp_id = '$emp_id'");
-		$this->db->where("(status = 'approved' OR status IS NULL)");
+		$this->db->where("(status != 'rejected' AND status != 'returned' OR status IS NULL)");
 		$query = $this->db->get("pr_leave_trans");
 		$leave = array();
 		foreach ($query->result() as $row)
 		{
-			$start = !empty($row->leave_start) ? $row->leave_start : $row->start_date;
-			$end   = !empty($row->leave_end) ? $row->leave_end : $start;
+			$start = !empty($row->leave_start) && $row->leave_start != '0000-00-00' ? $row->leave_start : $row->start_date;
+			$end   = !empty($row->leave_end) && $row->leave_end != '0000-00-00' ? $row->leave_end : $start;
 			$cur   = max(strtotime($sStartDate), strtotime($start));
 			$end_t = min(strtotime($sEndDate), strtotime($end));
 			while ($cur <= $end_t) {
 				$d = date('Y-m-d', $cur);
 				$leave[$d] = strtoupper(trim($row->leave_type));
 				$cur = strtotime('+1 day', $cur);
+			}
+		}
+		if ($this->db->table_exists('pr_maternity_entry_histry')) {
+			$ml_query = $this->db->where('emp_id', $emp_id)
+				->where("start_date <= '$sEndDate' AND end_date >= '$sStartDate'")
+				->get('pr_maternity_entry_histry');
+			foreach ($ml_query->result() as $mrow) {
+				$cur   = max(strtotime($sStartDate), strtotime($mrow->start_date));
+				$end_t = min(strtotime($sEndDate), strtotime($mrow->end_date));
+				while ($cur <= $end_t) {
+					$d = date('Y-m-d', $cur);
+					$leave[$d] = 'ML';
+					$cur = strtotime('+1 day', $cur);
+				}
 			}
 		}
 		return $leave;
@@ -180,10 +194,21 @@ class Job_card_model extends CI_Model{
    		$this->db->select('leave_type');
 		$this->db->where('emp_id', $emp_id);
 	    $this->db->where("((leave_start <= '$shift_log_date' AND leave_end >= '$shift_log_date') OR start_date = '$shift_log_date')");
-		$this->db->where("(status = 'approved' OR status IS NULL)");
+		$this->db->where("(status != 'rejected' AND status != 'returned' OR status IS NULL)");
 		$query = $this->db->get('pr_leave_trans');
 		$row = $query->row();
-		return (!empty($row) && !empty($row->leave_type)) ? strtoupper(trim($row->leave_type)) : '';
+		if (!empty($row) && !empty($row->leave_type)) {
+			return strtoupper(trim($row->leave_type));
+		}
+		if ($this->db->table_exists('pr_maternity_entry_histry')) {
+			$ml = $this->db->where('emp_id', $emp_id)
+				->where("start_date <= '$shift_log_date' AND end_date >= '$shift_log_date'")
+				->get('pr_maternity_entry_histry')->row();
+			if (!empty($ml)) {
+				return 'ML';
+			}
+		}
+		return '';
    }
 
 	function get_join_date($emp_id, $sStartDate, $sEndDate)
