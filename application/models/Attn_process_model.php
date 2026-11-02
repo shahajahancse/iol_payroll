@@ -357,6 +357,9 @@ class Attn_process_model extends CI_Model{
 					$is_bridge_absent = !$has_punch && $this->check_bridge_absent($emp_id, $process_date);
 					if ($is_bridge_absent) {
 						$attn_status = "A";
+					} elseif ($has_punch && $ot_entitle == 1) {
+						// For ot_entitle == 1, working on holiday counts as normal duty day
+						$attn_status = "P";
 					} else {
 						$attn_status = "H";
 					}
@@ -369,6 +372,9 @@ class Attn_process_model extends CI_Model{
 					$is_bridge_absent = !$has_punch && $this->check_bridge_absent($emp_id, $process_date);
 					if ($is_bridge_absent) {
 						$attn_status = "A";
+					} elseif ($has_punch && $ot_entitle == 1) {
+						// For ot_entitle == 1, working on weekend counts as normal duty day
+						$attn_status = "P";
 					} else {
 						$attn_status = "W";
 					}
@@ -447,12 +453,22 @@ class Attn_process_model extends CI_Model{
 				//============= Check employee attendance status =============
 
 				//============= Working day/Weeked/Holiday OT Calculation =============
-				if ($attn_status != 'A' && $attn_status != 'L' && $in_time != "" && $in_time != "00:00:00" && $out_time !="" && $out_time != "00:00:00" && $in_time != $out_time) {
+				if ($ot_entitle == 1) {
+					// Ineligible for OT (Staff): all hours count as normal duty, no OT generated
+					$tot_hour    = 0;
+					$ot_hour     = 0;
+					$eot_hour    = 0;
+					$ot_eot_4pm  = 0;
+					$ot_eot_12am = 0;
+				} elseif ($attn_status != 'A' && $attn_status != 'L' && $in_time != "" && $in_time != "00:00:00" && $out_time !="" && $out_time != "00:00:00" && $in_time != $out_time) {
 					//======= Weeked/Holiday Extra OT Calculation==========
 					if($process_date == $weekend || $weekend === true || $process_date == $holiday || $holiday === true){
 
                 		$start_date_time = strtotime($in_time);
-						$end_date_time 	= strtotime($out_time);
+						$end_date_time 	 = strtotime($out_time);
+						if ($end_date_time < $start_date_time) {
+							$end_date_time = strtotime("+1 day", $end_date_time);
+						}
 						$minute = round(($end_date_time - $start_date_time)/60);
 
 						// Lunch break Deduction
@@ -469,23 +485,20 @@ class Attn_process_model extends CI_Model{
 							$minute = $minute - $tiffin_minute2;
 						}
 
-						// Total eot cal...
-						$eot_hour 	= floor($minute / 60);
-						if ($minute % 60 >= $ot_last_hour) {
+						if ($minute < 0) {
+							$minute = 0;
+						}
+
+						// Full time duty on off day / weekend / holiday is counted as OT (no 8h or 12h cap)
+						$eot_hour = floor($minute / 60);
+						if (!empty($ot_last_hour) && ($minute % 60) >= $ot_last_hour) {
 							$eot_hour = $eot_hour + 1;
 						}
-						// Shift A, Shift B, Shift C Max OT limit = 8 hours
-						if (in_array(strtolower(trim($shift_name)), array('shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc'))) {
-							if ($eot_hour > 8) {
-								$eot_hour = 8;
-							}
-						}
-						// Shift 12 Night, Shift 12 Morning Max OT limit = 12 hours
-						if ($is_12_shift) {
-							if ($eot_hour > 12) {
-								$eot_hour = 12;
-							}
-						}
+						$tot_hour = $eot_hour;
+						$ot_hour  = 0;
+
+						$ot_eot_4pm  = min($eot_hour, 2);
+						$ot_eot_12am = min($eot_hour, 5);
 
 					} elseif ($is_billing_shift) {
 						// Billing Shift on regular working day:
