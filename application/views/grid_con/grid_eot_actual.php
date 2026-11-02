@@ -123,18 +123,28 @@
 							$row->ot = 0;
 							$row->eot = 0;
 						}
-						elseif(in_array($row->shift_log_date,$emp_data['holiday'])){
-							$att_status = "Holiday";
-							$att_status_count = "Holiday";
-							if ($row->in_time == '00:00:00' || empty($row->in_time)) {
+						elseif(in_array($row->shift_log_date,$emp_data['holiday']) || $row->present_status == 'H'){
+							$has_punch = (!empty($row->in_time) && $row->in_time != '00:00:00') || (!empty($row->out_time) && $row->out_time != '00:00:00');
+							if (!$has_punch) {
+								$att_status = "Holiday";
+								$att_status_count = "Holiday";
+								$row->in_time = "00:00:00";
 								$row->out_time = "00:00:00";
+							} else {
+								$att_status = ($row->present_status == 'P') ? "P" : "Holiday";
+								$att_status_count = $att_status;
 							}
 						}
-						elseif($row->present_status == 'W') {
-							$att_status = "Work Off";
-							$att_status_count = "Work Off";
-							if ($row->in_time == '00:00:00' || empty($row->in_time)) {
+						elseif(in_array($row->shift_log_date, $emp_data['weekend']) || $row->present_status == 'W') {
+							$has_punch = (!empty($row->in_time) && $row->in_time != '00:00:00') || (!empty($row->out_time) && $row->out_time != '00:00:00');
+							if (!$has_punch) {
+								$att_status = "Work Off";
+								$att_status_count = "Work Off";
+								$row->in_time = "00:00:00";
 								$row->out_time = "00:00:00";
+							} else {
+								$att_status = ($row->present_status == 'P') ? "P" : "Work Off";
+								$att_status_count = $att_status;
 							}
 						}
 						elseif($row->present_status == 'OD' || (isset($emp_data['od_map']) && isset($emp_data['od_map'][$row->shift_log_date]))){
