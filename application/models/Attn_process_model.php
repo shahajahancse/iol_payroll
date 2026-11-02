@@ -1137,6 +1137,12 @@ class Attn_process_model extends CI_Model{
 		return '';
 	}
 
+	function prox($empid)
+	{
+		$row = $this->db->select('proxi_id')->where('emp_id', $empid)->get('pr_id_proxi')->row();
+		return !empty($row) ? $row->proxi_id : $empid;
+	}
+
 	function time_check_manual($date, $emp_id, $monitor_con, $table = null, $out_date = null) {
 		$target_table = !empty($table) ? $table : ('att_' . date('Y_m', strtotime($date)));
 		if (!$this->db->table_exists($target_table)) {
