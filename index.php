@@ -54,7 +54,13 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
+	if (isset($_SERVER['CI_ENV'])) {
+		define('ENVIRONMENT', $_SERVER['CI_ENV']);
+	} elseif (isset($_SERVER['SERVER_NAME']) && in_array($_SERVER['SERVER_NAME'], array('localhost', '127.0.0.1')) || (php_sapi_name() === 'cli' && (!isset($_SERVER['HTTP_HOST'])))) {
+		define('ENVIRONMENT', 'development');
+	} else {
+		define('ENVIRONMENT', 'production');
+	}
 
 /*
  *---------------------------------------------------------------

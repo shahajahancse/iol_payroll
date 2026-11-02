@@ -103,8 +103,7 @@ class Pf_model extends CI_Model{
 	
 	function get_update_pf($emp_id,$start_date)
 	{
-		$query = $this->db->query("select SUM(`provident_fund`) AS provident_fund FROM  (SELECT * FROM  pr_pay_scale_sheet WHERE `emp_id`='$emp_id' GROUP BY `salary_month`) AS pay_sheet WHERE pay_sheet.salary_month <= '$start_date'");
-		//echo $this->db->last_query();
+		$query = $this->db->query("select SUM(`provident_fund`) AS provident_fund FROM  (SELECT * FROM  pr_pay_scale_sheet WHERE `emp_id`=? GROUP BY `salary_month`) AS pay_sheet WHERE pay_sheet.salary_month <= ?", array($emp_id, $start_date));
 		if($query->num_rows() > 0)
 		{
 			$row = $query->row();

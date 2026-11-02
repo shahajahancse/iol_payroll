@@ -1,0 +1,12 @@
+# Disable PHP and script execution in this directory
+<FilesMatch "(?i)\.(php|php3|php4|php5|php7|phtml|pl|py|cgi|sh|bash)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>

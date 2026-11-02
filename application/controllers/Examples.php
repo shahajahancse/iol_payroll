@@ -5,13 +5,8 @@ class Examples extends CI_Controller {
 	function __construct()
 	{
 		parent::__construct();
-		
-		/* Standard Libraries */
-		$this->load->database();
-		$this->load->helper('url');
-		/* ------------------ */	
-		
-		$this->load->library('Grocery_crud');	
+		show_404();
+		exit();
 	}
 	
 	function _example_output($output = null)

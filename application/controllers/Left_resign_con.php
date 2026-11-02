@@ -6,8 +6,13 @@ class Left_resign_con extends CI_Controller {
 		parent::__construct();
 		$this->load->model('Left_resign_model');
 		$this->load->model('Common_model');
+
+		if ($this->session->userdata('logged_in') == false) {
+			redirect("authentication");
+			exit();
+		}
+
 		$this->data['user_data'] = $this->session->userdata('data');
-		
 	}
 	//------------------------------------------------
 	// Resign / Left View

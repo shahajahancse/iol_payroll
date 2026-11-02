@@ -45,8 +45,8 @@ class Setup_con extends CI_Controller
 
         $condition = 0;
         if ($this->input->get('request')) {
-            $query = $this->input->get('request');
-            $condition = "(pr_units.unit_name LIKE '" . $query . "%' OR emp_depertment.dept_name LIKE '%" . $query . "%' OR emp_depertment.dept_bangla LIKE '%" . $query . "%')";
+            $query = $this->db->escape_like_str($this->input->get('request'));
+            $condition = "(pr_units.unit_name LIKE '%" . $query . "%' OR emp_depertment.dept_name LIKE '%" . $query . "%' OR emp_depertment.dept_bangla LIKE '%" . $query . "%')";
         }
         $this->load->model('Crud_model');
         $pr_dept = $this->Crud_model->dept_infos($limit, $start, $condition, $this->data['user_data']->unit_name);
@@ -162,8 +162,8 @@ class Setup_con extends CI_Controller
 
         $condition = 0;
         if ($this->input->get('request')) {
-            $query = $this->input->get('request');
-            $condition = "(pr_units.unit_name LIKE '" . $query . "%' OR emp_depertment.dept_name LIKE '%" . $query . "%' OR emp_depertment.dept_bangla LIKE '%" . $query . "%')";
+            $query = $this->db->escape_like_str($this->input->get('request'));
+            $condition = "(epo.po_name_en LIKE '%" . $query . "%' OR epo.po_name_bn LIKE '%" . $query . "%' OR edis.name_en LIKE '%" . $query . "%' OR eup.name_en LIKE '%" . $query . "%')";
         }
 
         $this->load->model('Crud_model');
@@ -296,8 +296,8 @@ class Setup_con extends CI_Controller
 
         $condition = 0;
         if ($this->input->get('request')) {
-            $query = $this->input->get('request');
-            $condition = "(pr_units.unit_name LIKE '" . $query . "%' OR emp_depertment.dept_name LIKE '%" . $query . "%' OR emp_depertment.dept_bangla LIKE '%" . $query . "%')";
+            $query = $this->db->escape_like_str($this->input->get('request'));
+            $condition = "(epo.po_name_en LIKE '%" . $query . "%' OR epo.po_name_bn LIKE '%" . $query . "%' OR edis.name_en LIKE '%" . $query . "%' OR eup.name_en LIKE '%" . $query . "%')";
         }
 
         $this->load->model('Crud_model');
@@ -427,8 +427,8 @@ class Setup_con extends CI_Controller
 
         $condition = 0;
         if ($this->input->get('request')) {
-            $query = $this->input->get('request');
-            $condition = "(pr_units.unit_name LIKE '" . $query . "%' OR emp_depertment.dept_name LIKE '%" . $query . "%' OR emp_depertment.dept_bangla LIKE '%" . $query . "%')";
+            $query = $this->db->escape_like_str($this->input->get('request'));
+            $condition = "(epo.po_name_en LIKE '%" . $query . "%' OR epo.po_name_bn LIKE '%" . $query . "%' OR edis.name_en LIKE '%" . $query . "%' OR eup.name_en LIKE '%" . $query . "%')";
         }
 
         $this->load->model('Crud_model');

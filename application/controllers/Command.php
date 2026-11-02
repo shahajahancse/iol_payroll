@@ -18,10 +18,18 @@ class Command extends CI_Controller {
 	    set_time_limit(0);
 
 		/* Standard Libraries */
-		// $this->load->library('grocery_CRUD');
-		// $this->load->model('acl_model');
 		$this->load->dbforge();
-		// exit('only for developer');
+
+		if (!is_cli()) {
+			$this->load->library('session');
+			$user_data = $this->session->userdata('data');
+			$uname = $user_data && !empty($user_data->id_number) ? strtolower(trim($user_data->id_number)) : '';
+			$level = $user_data && !empty($user_data->level) ? strtolower(trim($user_data->level)) : '';
+			if (!$this->session->userdata('logged_in') || ($uname !== 'admin' && $level !== 'all')) {
+				show_404();
+				exit();
+			}
+		}
 	}
 
 	public function iea()
