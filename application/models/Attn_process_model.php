@@ -244,9 +244,9 @@ class Attn_process_model extends CI_Model{
             		if (!empty($in_time) && !empty($out_time) && $in_time == $out_time) {
             			$out_time = '00:00:00';
             		}
-            		// If employee did not punch IN on this date and out_date is next day,
-            		// any punch on the next day morning belongs to the next day's shift, not this shift's exit.
-            		if ((empty($in_time) || $in_time == '00:00:00') && $out_date > $process_date) {
+            		// If employee did not punch IN on this date and the OUT punch that was found occurred on the next day,
+            		// that next day morning punch belongs to the next day's shift, not this shift's exit.
+            		if ((empty($in_time) || $in_time == '00:00:00') && !empty($out_time) && $out_time != '00:00:00' && date('Y-m-d', strtotime($out_time)) > $process_date) {
             			$out_time = '00:00:00';
             		}
             	}
