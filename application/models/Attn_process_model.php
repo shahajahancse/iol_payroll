@@ -148,12 +148,10 @@ class Attn_process_model extends CI_Model{
             	if ($is_12_shift) {
             		$sched_in_dt = "$process_date " . $schedule[0]["in_time"];
             		$ot_start    = date('Y-m-d H:i:s', strtotime("$sched_in_dt + 12 hours"));
-            	} elseif ($out_start_date != $process_date && strtotime($ot_start_time) < strtotime('12:00:00')) {
+            	} elseif ($out_start_date != $process_date || $is_shift_night_type) {
             		$ot_start = "$out_start_date $ot_start_time";
-            	} elseif (strtotime($in_end_time) > strtotime('12:00:00') && !$is_shift_night_type){
-            		$ot_start = "$process_date $ot_start_time";
             	} else {
-            		$ot_start = "$out_end_date $ot_start_time";
+            		$ot_start = "$process_date $ot_start_time";
             	}
 
             	$in_start_time  = $in_start_dt;
