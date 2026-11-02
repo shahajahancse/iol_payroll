@@ -414,6 +414,10 @@ class Attn_process_model extends CI_Model{
 							if (!empty($ot_last_hour) && ($extra_mins % 60) >= $ot_last_hour) {
 								$calc_ot += 1;
 							}
+							// Per day maximum OT limit = 16 hours
+							if ($calc_ot > 16) {
+								$calc_ot = 16;
+							}
 							$tot_hour = $calc_ot;
 							if ($calc_ot > 2) {
 								$ot_hour  = 2;
@@ -491,10 +495,14 @@ class Attn_process_model extends CI_Model{
 							$minute = 0;
 						}
 
-						// Full time duty on off day / weekend / holiday is counted as OT (no 8h or 12h cap)
+						// Full time duty on off day / weekend / holiday is counted as OT (capped at max 16 hours per day)
 						$eot_hour = floor($minute / 60);
 						if (!empty($ot_last_hour) && ($minute % 60) >= $ot_last_hour) {
 							$eot_hour = $eot_hour + 1;
+						}
+						// Per day maximum OT limit = 16 hours
+						if ($eot_hour > 16) {
+							$eot_hour = 16;
 						}
 						$tot_hour = $eot_hour;
 						$ot_hour  = 0;
@@ -543,20 +551,11 @@ class Attn_process_model extends CI_Model{
 								$eot_hour = $ot_hour - 2;
 								$ot_hour = 2;
 							}
-							// Shift A, Shift B, Shift C Max OT limit = 8 hours total (2 hrs OT + max 6 hrs EOT)
-							if (in_array(strtolower(trim($shift_name)), array('shift a', 'shift b', 'shift c', 'shifta', 'shiftb', 'shiftc'))) {
-								if ($eot_hour > 6) {
-									$eot_hour = 6;
-								}
-								$tot_hour = $ot_hour + $eot_hour;
+							// Per day maximum OT limit = 16 hours total (2 hrs normal OT + max 14 hrs EOT)
+							if ($eot_hour > 14) {
+								$eot_hour = 14;
 							}
-							// Shift 12 Night, Shift 12 Morning Max OT limit = 12 hours total (2 hrs OT + max 10 hrs EOT)
-							if ($is_12_shift) {
-								if ($eot_hour > 10) {
-									$eot_hour = 10;
-								}
-								$tot_hour = $ot_hour + $eot_hour;
-							}
+							$tot_hour = $ot_hour + $eot_hour;
 							// dd($eot_hour);
 							// 9pm EOT Calculation
 							if ($eot_hour > 2) {
