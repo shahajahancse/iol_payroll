@@ -212,9 +212,19 @@ class Attn_process_model extends CI_Model{
             		$in_time  = $this->time_check_in($in_start_dt, $in_end_dt, $emp_id, 'ASC', $table);
             		$out_time = $this->time_check_in($out_start_dt, $out_end_dt, $emp_id, 'DESC', $table);
 
+            		// Priority for manual entry from Entry System (device_id = 0)
+            		$manual_in = $this->time_check_manual($process_date, $emp_id, 1, $table);
+            		if (!empty($manual_in)) {
+            			$in_time = $manual_in;
+            		}
+            		$manual_out = $this->time_check_manual($process_date, $emp_id, 2, $table, $out_end_date);
+            		if (!empty($manual_out)) {
+            			$out_time = $manual_out;
+            		}
+
             		// 12-Hour Shift Rules:
-            		// Rule 1: In-time within 4 hours after scheduled in-time is counted as scheduled in-time
-            		if ($is_12_shift && !empty($in_time) && $in_time != '00:00:00') {
+            		// Rule 1: In-time within 4 hours after scheduled in-time is counted as scheduled in-time (unless manually entered)
+            		if ($is_12_shift && !empty($in_time) && $in_time != '00:00:00' && empty($manual_in)) {
             			$sched_in_dt = "$process_date " . $schedule[0]["in_time"];
             			$snap_end_dt = date('Y-m-d H:i:s', strtotime("$sched_in_dt + 4 hours"));
             			if (strtotime($in_time) <= strtotime($snap_end_dt)) {
@@ -1125,6 +1135,253 @@ class Attn_process_model extends CI_Model{
 		}
 
 		return '';
+	}
+
+	function time_check_manual($date, $emp_id, $monitor_con, $table = null, $out_date = null) {
+		$target_table = !empty($table) ? $table : ('att_' . date('Y_m', strtotime($date)));
+		if (!$this->db->table_exists($target_table)) {
+			return '';
+		}
+
+		$proxi = $this->prox($emp_id);
+		$ids = array($emp_id);
+		if (!empty($proxi) && $proxi != $emp_id) {
+			$ids[] = $proxi;
+		}
+
+		if ($monitor_con == 1) {
+			// IN punch: look for device_id = 0, monitor_con = 1 on shift date
+			$this->db->select("date_time");
+			$this->db->from($target_table);
+			$this->db->where_in("proxi_id", $ids);
+			$this->db->where("device_id", 0);
+			$this->db->where("monitor_con", 1);
+			$this->db->like("date_time", $date);
+			$this->db->order_by("date_time", "ASC");
+			$this->db->limit(1);
+			$row = $this->db->get()->row();
+			if (!empty($row)) {
+				return $row->date_time;
+			}
+			return '';
+		} else {
+			// OUT punch: look for device_id = 0, monitor_con = 2
+			$search_date = !empty($out_date) ? $out_date : $date;
+			$out_table = 'att_' . date('Y_m', strtotime($search_date));
+			if ($this->db->table_exists($out_table)) {
+				$this->db->select("date_time");
+				$this->db->from($out_table);
+				$this->db->where_in("proxi_id", $ids);
+				$this->db->where("device_id", 0);
+				$this->db->where("monitor_con", 2);
+				$this->db->like("date_time", $search_date);
+				$this->db->order_by("date_time", "DESC");
+				$this->db->limit(1);
+				$row = $this->db->get()->row();
+				if (!empty($row)) {
+					return $row->date_time;
+				}
+			}
+			if ($search_date != $date && $this->db->table_exists($target_table)) {
+				$this->db->select("date_time");
+				$this->db->from($target_table);
+				$this->db->where_in("proxi_id", $ids);
+				$this->db->where("device_id", 0);
+				$this->db->where("monitor_con", 2);
+				$this->db->like("date_time", $date);
+				$this->db->order_by("date_time", "DESC");
+				$this->db->limit(1);
+				$row = $this->db->get()->row();
+				if (!empty($row)) {
+					return $row->date_time;
+				}
+			}
+			return '';
+		}
+	}
+
+	public function update_shift_log_manual_times($emp_ids, $date, $in_time_raw, $out_time_raw, $unit_id = 1)
+	{
+		if (empty($emp_ids) || empty($date)) {
+			return;
+		}
+		if (!is_array($emp_ids)) {
+			$emp_ids = array_filter(array_map('trim', explode(',', $emp_ids)));
+		}
+
+		$in_time  = (!empty($in_time_raw) && $in_time_raw != '00:00:00') ? date('H:i:s', strtotime($in_time_raw)) : '';
+		$out_time = (!empty($out_time_raw) && $out_time_raw != '00:00:00') ? date('H:i:s', strtotime($out_time_raw)) : '';
+
+		if (empty($in_time) && empty($out_time)) {
+			return;
+		}
+
+		foreach ($emp_ids as $emp_id) {
+			$emp_id = trim($emp_id);
+			if (empty($emp_id)) continue;
+
+			$shift_log = $this->db->where('emp_id', $emp_id)
+								  ->where('shift_log_date', $date)
+								  ->get('pr_emp_shift_log')
+								  ->row();
+
+			$final_in  = !empty($in_time) ? $in_time : (!empty($shift_log->in_time) ? $shift_log->in_time : '00:00:00');
+			$final_out = !empty($out_time) ? $out_time : (!empty($shift_log->out_time) ? $shift_log->out_time : '00:00:00');
+
+			// Get employee shift and schedule
+			$com_info = $this->db->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+			$ot_entitle = !empty($com_info) ? (int)$com_info->ot_entitle : 0;
+			$shift_id = !empty($shift_log->shift_id) ? $shift_log->shift_id : (!empty($com_info) ? $com_info->emp_shift : 1);
+			$schedule_id = !empty($shift_log->schedule_id) ? $shift_log->schedule_id : (!empty($com_info) ? $com_info->emp_sh_sched : 1);
+
+			$emp_shift = $this->emp_shift_check_process($emp_id, $shift_id, $schedule_id, $date);
+			$schedule  = $this->get_emp_schedule(!empty($emp_shift->schedule_id) ? $emp_shift->schedule_id : $schedule_id);
+
+			$ot_start_time = !empty($schedule[0]['ot_start']) ? $schedule[0]['ot_start'] : '17:00:00';
+			$late_start_time = !empty($schedule[0]['late_start']) ? $schedule[0]['late_start'] : '09:15:00';
+			$tiffin_break_end1 = !empty($schedule[0]['tiffin_break_end1']) ? $schedule[0]['tiffin_break_end1'] : '00:00:00';
+			$tiffin_minute = !empty($schedule[0]['tiffin_minute']) ? (int)$schedule[0]['tiffin_minute'] : 0;
+			$tiffin_break_time2 = !empty($schedule[0]['tiffin_break_time2']) ? $schedule[0]['tiffin_break_time2'] : '00:00:00';
+			$tiffin_minute2 = !empty($schedule[0]['tiffin_minute2']) ? (int)$schedule[0]['tiffin_minute2'] : 0;
+			$lunch_in_time = !empty($schedule[0]['lunch_in_time']) ? $schedule[0]['lunch_in_time'] : '13:00:00';
+			$lunch_minute = !empty($schedule[0]['lunch_minute']) ? (int)$schedule[0]['lunch_minute'] : 0;
+			$ot_last_hour = !empty($schedule[0]['ot_last_hour']) ? (int)$schedule[0]['ot_last_hour'] : 15;
+
+			$weekend = $this->check_weekend($emp_id, $date);
+			$holiday = $this->check_holiday($emp_id, $date);
+			$is_weekend_holiday = ($date == $weekend || $weekend === true || $date == $holiday || $holiday === true);
+
+			// Present status
+			if ($is_weekend_holiday) {
+				$present_status = ($ot_entitle == 1) ? 'P' : (($date == $holiday || $holiday === true) ? 'H' : 'W');
+			} else {
+				$present_status = ($final_in != '00:00:00' || $final_out != '00:00:00') ? 'P' : 'A';
+			}
+
+			// Deductions & early exit
+			$deduction_hour = 0;
+			$early_exit = 0;
+			if ($final_in != '00:00:00' && $final_out != '00:00:00' && $final_in != $final_out) {
+				$deduction_hour = 0;
+				$early_exit = 0;
+			} elseif ($final_in != '00:00:00' || $final_out != '00:00:00') {
+				$deduction_hour = 4;
+				$early_exit = 1;
+			}
+
+			// Late status
+			$late_status = 0;
+			if (!$is_weekend_holiday && $final_in != '00:00:00' && strtotime($final_in) > strtotime($late_start_time)) {
+				$late_status = 1;
+			}
+
+			// OT Calculation (capped at max 16 hours per day)
+			$tot_hour = 0;
+			$ot_hour = 0;
+			$eot_hour = 0;
+			$ot_eot_4pm = 0;
+			$ot_eot_12am = 0;
+
+			if ($ot_entitle != 1 && $final_in != '00:00:00' && $final_out != '00:00:00' && $final_in != $final_out) {
+				if ($is_weekend_holiday) {
+					$start_dt = strtotime("$date $final_in");
+					$end_dt   = strtotime("$date $final_out");
+					if ($end_dt < $start_dt) {
+						$end_dt = strtotime("+1 day", $end_dt);
+					}
+					$minute = round(($end_dt - $start_dt) / 60);
+					if ($final_out > $lunch_in_time && $lunch_minute != 0) {
+						$minute -= $lunch_minute;
+					}
+					if ($final_out > $tiffin_break_end1 && $tiffin_minute != 0) {
+						$minute -= $tiffin_minute;
+					}
+					if ($final_out > $tiffin_break_time2 && $tiffin_minute2 != 0) {
+						$minute -= $tiffin_minute2;
+					}
+					if ($minute < 0) $minute = 0;
+
+					$eot_hour = floor($minute / 60);
+					if (!empty($ot_last_hour) && ($minute % 60) >= $ot_last_hour) {
+						$eot_hour += 1;
+					}
+					if ($eot_hour > 16) {
+						$eot_hour = 16;
+					}
+					$tot_hour = $eot_hour;
+					$ot_hour = 0;
+					$ot_eot_4pm  = min($eot_hour, 2);
+					$ot_eot_12am = min($eot_hour, 5);
+				} else {
+					$ot_start_dt = strtotime("$date $ot_start_time");
+					$out_dt      = strtotime("$date $final_out");
+					if ($out_dt < $ot_start_dt) {
+						$out_dt = strtotime("+1 day", $out_dt);
+					}
+					if ($out_dt > $ot_start_dt) {
+						$minute = round(($out_dt - $ot_start_dt) / 60);
+						if ($final_out > $tiffin_break_end1 && $tiffin_minute != 0) {
+							$minute = ($minute > $tiffin_minute) ? ($minute - $tiffin_minute) : 0;
+						}
+						if ($final_out > $tiffin_break_time2 && $tiffin_minute2 != 0) {
+							$minute = ($minute > $tiffin_minute2) ? ($minute - $tiffin_minute2) : 0;
+						}
+						$calc = floor($minute / 60);
+						if (($minute % 60) >= $ot_last_hour) {
+							$calc += 1;
+						}
+						if ($calc > 2) {
+							$ot_hour  = 2;
+							$eot_hour = $calc - 2;
+						} else {
+							$ot_hour  = $calc;
+							$eot_hour = 0;
+						}
+						if ($eot_hour > 14) {
+							$eot_hour = 14;
+						}
+						$tot_hour = $ot_hour + $eot_hour;
+						$ot_eot_4pm  = min($eot_hour, 2);
+						$ot_eot_12am = min($eot_hour, 5);
+					}
+				}
+			}
+
+			$update_data = array(
+				'in_time'        => $final_in,
+				'out_time'       => $final_out,
+				'present_status' => $present_status,
+				'deduction_hour' => $deduction_hour,
+				'early_exit'     => $early_exit,
+				'late_status'    => $late_status,
+				'ot'             => $ot_hour,
+				'eot'            => $eot_hour,
+				'tot'            => $tot_hour,
+				'ot_eot_4pm'     => $ot_eot_4pm,
+				'ot_eot_12am'    => $ot_eot_12am
+			);
+
+			if (!empty($shift_log)) {
+				$this->db->where('emp_id', $emp_id)
+						 ->where('shift_log_date', $date)
+						 ->update('pr_emp_shift_log', $update_data);
+			} else {
+				$update_data['emp_id'] = $emp_id;
+				$update_data['shift_log_date'] = $date;
+				$update_data['unit_id'] = $unit_id;
+				$update_data['shift_id'] = $shift_id;
+				$update_data['schedule_id'] = $schedule_id;
+				$this->db->insert('pr_emp_shift_log', $update_data);
+			}
+		}
+
+		// Sync to Daily OT Approval if table exists
+		try {
+			$this->load->model('Ot_approval_model');
+			$this->Ot_approval_model->generate_or_sync_daily_ot($date, $date, $unit_id);
+		} catch (Exception $e) {
+			log_message('error', 'Daily OT sync error in manual entry: ' . $e->getMessage());
+		}
 	}
 
 	function check_resign($id, $att_date)

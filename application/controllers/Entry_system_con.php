@@ -932,6 +932,9 @@ class Entry_system_con extends CI_Controller
             // Run attendance process for this date so shift_log is properly populated with status, in/out, OT, etc.
             $this->Attn_process_model->attn_process($curr_date, $unit_id, $emp_ids);
 
+            // DIRECTLY GUARANTEE EXACT MANUAL TIMES IN pr_emp_shift_log TABLE
+            $this->Attn_process_model->update_shift_log_manual_times($emp_ids, $curr_date, $in_time, $out_time, $unit_id);
+
             $curr_date = date('Y-m-d', strtotime('+1 day', strtotime($curr_date)));
         }
 
@@ -951,28 +954,38 @@ class Entry_system_con extends CI_Controller
             $this->db->query('ALTER TABLE `' . $att_table . '` ADD `monitor_con` int(2) DEFAULT 1;');
         }
 
-        $check = $this->db->where('proxi_id', $proxi_id)->where('date_time', $datetime)->get($att_table)->row();
-        if (empty($check)) {
-            $data = array(
+        $date_part = date('Y-m-d', strtotime($datetime));
+        // Remove older manual entry for this date and monitor_con to avoid duplicates
+        $this->db->where('proxi_id', $proxi_id)
+                 ->where('device_id', 0)
+                 ->where('monitor_con', $monitor_con)
+                 ->like('date_time', $date_part)
+                 ->delete($att_table);
+
+        if (!empty($emp_id) && $emp_id != $proxi_id) {
+            $this->db->where('proxi_id', $emp_id)
+                     ->where('device_id', 0)
+                     ->where('monitor_con', $monitor_con)
+                     ->like('date_time', $date_part)
+                     ->delete($att_table);
+        }
+
+        $data = array(
+            'device_id'   => 0,
+            'proxi_id'    => $proxi_id,
+            'date_time'   => $datetime,
+            'monitor_con' => $monitor_con
+        );
+        $this->db->insert($att_table, $data);
+
+        if (!empty($emp_id) && $emp_id != $proxi_id) {
+            $data_emp = array(
                 'device_id'   => 0,
-                'proxi_id'    => $proxi_id,
+                'proxi_id'    => $emp_id,
                 'date_time'   => $datetime,
                 'monitor_con' => $monitor_con
             );
-            $this->db->insert($att_table, $data);
-        }
-
-        if (!empty($emp_id) && $emp_id != $proxi_id) {
-            $check_emp = $this->db->where('proxi_id', $emp_id)->where('date_time', $datetime)->get($att_table)->row();
-            if (empty($check_emp)) {
-                $data_emp = array(
-                    'device_id'   => 0,
-                    'proxi_id'    => $emp_id,
-                    'date_time'   => $datetime,
-                    'monitor_con' => $monitor_con
-                );
-                $this->db->insert($att_table, $data_emp);
-            }
+            $this->db->insert($att_table, $data_emp);
         }
 
         return array('massage' => 1);
@@ -1119,6 +1132,11 @@ class Entry_system_con extends CI_Controller
                 $data1 = array();
             }
             $mm = $this->update_attn_log($data, $data1, $d, $emp_id, $unit_id, $proxi_id);
+
+            // DIRECTLY GUARANTEE EXACT MANUAL TIMES IN pr_emp_shift_log TABLE
+            $cur_in  = (!empty($in_time[$key]) && $in_time[$key] != '00:00:00') ? $in_time[$key] : '';
+            $cur_out = (!empty($out_time[$key]) && $out_time[$key] != '00:00:00') ? $out_time[$key] : '';
+            $this->Attn_process_model->update_shift_log_manual_times(array($emp_id), $d, $cur_in, $cur_out, $unit_id);
         }
 
         if (!empty($mm) && $mm['massage'] == 1) {
@@ -1148,16 +1166,43 @@ class Entry_system_con extends CI_Controller
         }
 
         if (!empty($data)) {
-            $check = $this->db->where('proxi_id', $proxi_id)->like('date_time', $data['date_time'])->get($att_table)->row();
-            if (empty($check)) {
-                $this->db->insert($att_table, $data);
+            $this->db->where('proxi_id', $proxi_id)
+                     ->where('device_id', 0)
+                     ->where('monitor_con', 1)
+                     ->like('date_time', $date)
+                     ->delete($att_table);
+            $this->db->insert($att_table, $data);
+            if (!empty($emp_id) && $emp_id != $proxi_id) {
+                $data_emp = $data;
+                $data_emp['proxi_id'] = $emp_id;
+                $this->db->where('proxi_id', $emp_id)
+                         ->where('device_id', 0)
+                         ->where('monitor_con', 1)
+                         ->like('date_time', $date)
+                         ->delete($att_table);
+                $this->db->insert($att_table, $data_emp);
             }
         }
 
         if (!empty($data1)) {
-            $check1 = $this->db->where('proxi_id', $proxi_id)->like('date_time', $data1['date_time'])->get($att_table)->row();
-            if (empty($check1)) {
-                $this->db->insert($att_table, $data1);
+            $out_d = date('Y-m-d', strtotime($data1['date_time']));
+            $out_att_table = "att_" . date("Y_m", strtotime($out_d));
+            $this->Attn_process_model->attn_month_table_check($out_att_table);
+            $this->db->where('proxi_id', $proxi_id)
+                     ->where('device_id', 0)
+                     ->where('monitor_con', 2)
+                     ->like('date_time', $out_d)
+                     ->delete($out_att_table);
+            $this->db->insert($out_att_table, $data1);
+            if (!empty($emp_id) && $emp_id != $proxi_id) {
+                $data1_emp = $data1;
+                $data1_emp['proxi_id'] = $emp_id;
+                $this->db->where('proxi_id', $emp_id)
+                         ->where('device_id', 0)
+                         ->where('monitor_con', 2)
+                         ->like('date_time', $out_d)
+                         ->delete($out_att_table);
+                $this->db->insert($out_att_table, $data1_emp);
             }
         }
 

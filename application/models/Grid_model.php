@@ -6558,17 +6558,16 @@ class Grid_model extends CI_Model{
 				// Also insert into att_YYYY_MM and process
 				$att_table = "att_" . date('Y_m', strtotime($day));
 				$this->Attn_process_model->attn_month_table_check($att_table);
-				$check = $this->db->where('proxi_id', $proxid)->where('date_time', $intime_entry)->get($att_table)->row();
-				if (empty($check)) {
-					$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $proxid, 'date_time' => $intime_entry, 'monitor_con' => 1));
-				}
+				$this->db->where('date_time LIKE', "$day %")->where('device_id', 0)->where('monitor_con', 1);
+				$this->db->group_start()->where('proxi_id', $proxid)->or_where('proxi_id', $empid)->group_end();
+				$this->db->delete($att_table);
+
+				$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $proxid, 'date_time' => $intime_entry, 'monitor_con' => 1));
 				if (!empty($empid) && $empid != $proxid) {
-					$check_emp = $this->db->where('proxi_id', $empid)->where('date_time', $intime_entry)->get($att_table)->row();
-					if (empty($check_emp)) {
-						$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $empid, 'date_time' => $intime_entry, 'monitor_con' => 1));
-					}
+					$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $empid, 'date_time' => $intime_entry, 'monitor_con' => 1));
 				}
 				$this->Attn_process_model->attn_process($day, $unit_id, array($empid));
+				$this->Attn_process_model->update_shift_log_manual_times(array($empid), $day, $time, '', $unit_id);
 			}
 		}
 		return "Insert Successfully";
@@ -11949,35 +11948,42 @@ function grid_emp_job_application($grid_emp_id){
 
 			$has_change = false;
 			if ($intime_check != "False") {
-				$check_in = $this->db->where('proxi_id', $proxi)->where('date_time', $date_time_in)->get($att_table)->row();
-				if (empty($check_in)) {
-					$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $proxi, 'date_time' => $date_time_in, 'monitor_con' => 1));
-				}
+				$this->db->where('date_time LIKE', "$manual_date %")->where('device_id', 0)->where('monitor_con', 1);
+				$this->db->group_start()->where('proxi_id', $proxi)->or_where('proxi_id', $emp_id)->group_end();
+				$this->db->delete($att_table);
+
+				$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $proxi, 'date_time' => $date_time_in, 'monitor_con' => 1));
 				if (!empty($emp_id) && $emp_id != $proxi) {
-					$check_emp = $this->db->where('proxi_id', $emp_id)->where('date_time', $date_time_in)->get($att_table)->row();
-					if (empty($check_emp)) {
-						$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $emp_id, 'date_time' => $date_time_in, 'monitor_con' => 1));
-					}
+					$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $emp_id, 'date_time' => $date_time_in, 'monitor_con' => 1));
 				}
 				$has_change = true;
 			}
 
 			if ($outtime_check != "False") {
-				$check_out = $this->db->where('proxi_id', $proxi)->where('date_time', $date_time_out)->get($att_table)->row();
-				if (empty($check_out)) {
-					$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $proxi, 'date_time' => $date_time_out, 'monitor_con' => 2));
+				$out_date = $manual_date;
+				if ($intime_check != "False" && strtotime($manual_outtime) < strtotime($manual_intime)) {
+					$out_date = date('Y-m-d', strtotime($manual_date . ' + 1 days'));
 				}
+				$date_time_out = "$out_date $manual_outtime";
+				$out_att_table = "att_" . date("Y_m", strtotime($out_date));
+				$this->Attn_process_model->attn_month_table_check($out_att_table);
+
+				$this->db->where('date_time LIKE', "$out_date %")->where('device_id', 0)->where('monitor_con', 2);
+				$this->db->group_start()->where('proxi_id', $proxi)->or_where('proxi_id', $emp_id)->group_end();
+				$this->db->delete($out_att_table);
+
+				$this->db->insert($out_att_table, array('device_id' => 0, 'proxi_id' => $proxi, 'date_time' => $date_time_out, 'monitor_con' => 2));
 				if (!empty($emp_id) && $emp_id != $proxi) {
-					$check_emp = $this->db->where('proxi_id', $emp_id)->where('date_time', $date_time_out)->get($att_table)->row();
-					if (empty($check_emp)) {
-						$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $emp_id, 'date_time' => $date_time_out, 'monitor_con' => 2));
-					}
+					$this->db->insert($out_att_table, array('device_id' => 0, 'proxi_id' => $emp_id, 'date_time' => $date_time_out, 'monitor_con' => 2));
 				}
 				$has_change = true;
 			}
 
 			if ($has_change) {
 				$this->Attn_process_model->attn_process($manual_date, $unit_id, array($emp_id));
+				$in_to_update = ($intime_check != "False") ? $manual_intime : '';
+				$out_to_update = ($outtime_check != "False") ? $manual_outtime : '';
+				$this->Attn_process_model->update_shift_log_manual_times(array($emp_id), $manual_date, $in_to_update, $out_to_update, $unit_id);
 			}
 		}
 	}
