@@ -262,7 +262,12 @@
                                 } else {
                                     $remark = "";
                                 }
-                                $daily_total_ot = $row->ot + $row->eot;
+                                if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+                                    $daily_total_ot = 0;
+                                } else {
+                                    $daily_total_ot = max(0, (float)$row->ot + (float)$row->eot);
+                                }
+                                $daily_total_ot = ($daily_total_ot == intval($daily_total_ot)) ? intval($daily_total_ot) : $daily_total_ot;
                                 $total_ot_hour = $total_ot_hour + $daily_total_ot;
 
                                 echo "<td>&nbsp;";

@@ -279,7 +279,16 @@
 							} else {
 								$remark = "";
 							}
-							$daily_total_ot = $row->eot + $row->ot - $row->deduction_hour + ($row->modify_eot);
+							if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+								$daily_total_ot = 0;
+							} else {
+								$raw_ot = (float)$row->eot + (float)$row->ot + (float)($row->modify_eot);
+								if (!empty($row->deduction_hour) && empty($row->is_waived)) {
+									$raw_ot = $raw_ot - (float)$row->deduction_hour;
+								}
+								$daily_total_ot = max(0, $raw_ot);
+							}
+							$daily_total_ot = ($daily_total_ot == intval($daily_total_ot)) ? intval($daily_total_ot) : $daily_total_ot;
 							$total_ot_hour = $total_ot_hour + $daily_total_ot;
 
 							echo "<td>&nbsp;";

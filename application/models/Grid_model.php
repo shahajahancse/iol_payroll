@@ -6524,24 +6524,40 @@ class Grid_model extends CI_Model{
 	function manual_attendance_entry($grid_firstdate, $grid_seconddate, $m_s_time, $grid_emp_id){
 		$data = array();
 		$query = $this->all_reguler_emp($grid_emp_id);
+		$this->load->model('Attn_process_model');
 
 		foreach($query->result() as $row){
 			$empid = $row->emp_id;
 			$emp_table = "temp_".$empid;
 			$deviceid = 1;
-
+			$unit_id = isset($row->unit_id) ? $row->unit_id : 1;
 			$proxid = $this->prox($empid);
 
 			$days = $this->GetDays($grid_firstdate, $grid_seconddate);
 			foreach($days as $day){
-				if($this->db->table_exists($emp_table) == TRUE ){
 				$time = date('H:i:s',strtotime($m_s_time));
 				$intime_entry = $day.' '.$time;
-				// $intime_entry =  date("Y-m-d H:i:s",strtotime($intime_entry));
-				$data = array('device_id'	=>$deviceid	, 'proxi_id'  =>$proxid, 'date_time'  => $intime_entry);
-				$this->db->insert($emp_table, $data);
+
+				if($this->db->table_exists($emp_table) == TRUE ){
+					$data = array('device_id' => $deviceid, 'proxi_id' => $proxid, 'date_time' => $intime_entry);
+					$this->db->insert($emp_table, $data);
+				}
+
+				// Also insert into att_YYYY_MM and process
+				$att_table = "att_" . date('Y_m', strtotime($day));
+				$this->Attn_process_model->attn_month_table_check($att_table);
+				$check = $this->db->where('proxi_id', $proxid)->where('date_time', $intime_entry)->get($att_table)->row();
+				if (empty($check)) {
+					$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $proxid, 'date_time' => $intime_entry, 'monitor_con' => 1));
+				}
+				if (!empty($empid) && $empid != $proxid) {
+					$check_emp = $this->db->where('proxi_id', $empid)->where('date_time', $intime_entry)->get($att_table)->row();
+					if (empty($check_emp)) {
+						$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $empid, 'date_time' => $intime_entry, 'monitor_con' => 1));
+					}
+				}
+				$this->Attn_process_model->attn_process($day, $unit_id, array($empid));
 			}
-		  }
 		}
 		return "Insert Successfully";
 	}
@@ -11845,14 +11861,16 @@ function grid_emp_job_application($grid_emp_id){
 
 	function manual_attendance_sheet_entry_db()
 	{
-
 		$count 		= $this->input->post('count');
 		$emp_id 	= $this->input->post('emp_id');
 		$proxi		= $this->input->post('proxi');
 
+		$this->load->model('Attn_process_model');
+		$com_row = $this->db->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+		$unit_id = !empty($com_row) ? $com_row->unit_id : 1;
+
 		for($i=0;$i<$count;$i++)
 		{
-
 			$intime_check = "True";
 			$outtime_check = "True";
 
@@ -11860,62 +11878,84 @@ function grid_emp_job_application($grid_emp_id){
 			$manual_date		= $this->input->post($manual_date_name);
 
 			$manual_intime_name = "manual_intime$i";
-			$manual_intime		= $this->input->post($manual_intime_name);
+			$manual_intime		= trim($this->input->post($manual_intime_name));
 
 			$manual_outtime_name 	= "manual_outtime$i";
-			$manual_outtime			= $this->input->post($manual_outtime_name);
-
-
-			//echo "<br/>".$time = date("H:i:s", strtotime($manual_intime));
+			$manual_outtime			= trim($this->input->post($manual_outtime_name));
 
 			if($manual_intime == "" && $manual_outtime == "")
 			{
 				continue;
 			}
 
-			if (preg_match("/[a-z]|[A-Z]|[a-z][A-Z]|[A-Z][a-z]/",$manual_intime))
-			{
-					$intime_check = "False";
-			}
-			if($manual_intime == "")
+			if (preg_match("/[a-z]|[A-Z]/", $manual_intime) || $manual_intime == "")
 			{
 				$intime_check = "False";
 			}
 
-
-			if (preg_match("/[a-z]|[A-Z]|[a-z][A-Z]|[A-Z][a-z]/",$manual_outtime))
-			{
-				$outtime_check = "False";
-				//continue;
-			}
-			if($manual_outtime == "")
+			if (preg_match("/[a-z]|[A-Z]/", $manual_outtime) || $manual_outtime == "")
 			{
 				$outtime_check = "False";
 			}
-
-
-
 
 			$date_time_in = "$manual_date $manual_intime";
 			$date_time_out = "$manual_date $manual_outtime";
 			$table = "temp_$emp_id";
 
-			$data['date_time'] 	= $date_time_in;
-			$data['proxi_id'] 	= $proxi;
-			$data['device_id'] 	= 1;
+			// Legacy temp table insert if exists
+			if ($this->db->table_exists($table)) {
+				$data['date_time'] 	= $date_time_in;
+				$data['proxi_id'] 	= $proxi;
+				$data['device_id'] 	= 1;
 
-			if($intime_check != "False")
-			{
-			 	$this->db->insert($table,$data);
+				if($intime_check != "False")
+				{
+					$this->db->insert($table, $data);
+				}
+
+				$data['date_time'] 	= $date_time_out;
+				if($outtime_check != "False")
+				{
+					$this->db->insert($table, $data);
+				}
 			}
 
-			$data['date_time'] 	= $date_time_out;
-			if($outtime_check != "False")
-			{
-				 $this->db->insert($table,$data);
-			}
-			//echo "$manual_date===$date_time====$manual_outtime</br>";
+			// Att table insert
+			$att_table = "att_" . date("Y_m", strtotime($manual_date));
+			$this->Attn_process_model->attn_month_table_check($att_table);
 
+			$has_change = false;
+			if ($intime_check != "False") {
+				$check_in = $this->db->where('proxi_id', $proxi)->where('date_time', $date_time_in)->get($att_table)->row();
+				if (empty($check_in)) {
+					$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $proxi, 'date_time' => $date_time_in, 'monitor_con' => 1));
+				}
+				if (!empty($emp_id) && $emp_id != $proxi) {
+					$check_emp = $this->db->where('proxi_id', $emp_id)->where('date_time', $date_time_in)->get($att_table)->row();
+					if (empty($check_emp)) {
+						$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $emp_id, 'date_time' => $date_time_in, 'monitor_con' => 1));
+					}
+				}
+				$has_change = true;
+			}
+
+			if ($outtime_check != "False") {
+				$check_out = $this->db->where('proxi_id', $proxi)->where('date_time', $date_time_out)->get($att_table)->row();
+				if (empty($check_out)) {
+					$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $proxi, 'date_time' => $date_time_out, 'monitor_con' => 2));
+				}
+				if (!empty($emp_id) && $emp_id != $proxi) {
+					$check_emp = $this->db->where('proxi_id', $emp_id)->where('date_time', $date_time_out)->get($att_table)->row();
+					if (empty($check_emp)) {
+						$this->db->insert($att_table, array('device_id' => 0, 'proxi_id' => $emp_id, 'date_time' => $date_time_out, 'monitor_con' => 2));
+					}
+				}
+				$has_change = true;
+			}
+
+			if ($has_change) {
+				$this->Attn_process_model->attn_process($manual_date, $unit_id, array($emp_id));
+			}
 		}
 	}
 

@@ -10,14 +10,16 @@ class Entry_system_con extends CI_Controller
         $this->load->model('Attn_process_model');
         $this->load->helper('url');
 
-        if ($this->session->userdata('logged_in') == false) {
-            redirect("authentication");
-        }
-        $this->data['user_data'] = $this->session->userdata('data');
-        if (!check_acl_list($this->data['user_data']->id, 3)) {
-            echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
-            redirect("payroll_con");
-            exit;
+        if (!is_cli()) {
+            if ($this->session->userdata('logged_in') == false) {
+                redirect("authentication");
+            }
+            $this->data['user_data'] = $this->session->userdata('data');
+            if (!check_acl_list($this->data['user_data']->id, 3)) {
+                echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
+                redirect("payroll_con");
+                exit;
+            }
         }
     }
 
@@ -820,120 +822,170 @@ class Entry_system_con extends CI_Controller
 
     public function present_entry()
     {
-        $sql         = $_POST['emp_id'];
-        $unit_id     = $_POST['unit_id'];
-        $first_date  = date('Y-m-d', strtotime($_POST['first_date']));
-        $second_date = date('Y-m-d', strtotime($_POST['second_date']));
-        $in_time     = date('H:i:s', strtotime($_POST['in_time']));
-        $out_time    = date('H:i:s', strtotime($_POST['out_time']));
+        $sql         = isset($_POST['emp_id']) ? $_POST['emp_id'] : '';
+        $unit_id     = isset($_POST['unit_id']) ? $_POST['unit_id'] : '';
+        $first_date  = !empty($_POST['first_date']) ? date('Y-m-d', strtotime($_POST['first_date'])) : '';
+        $second_date = !empty($_POST['second_date']) ? date('Y-m-d', strtotime($_POST['second_date'])) : '';
+        $in_time_raw  = isset($_POST['in_time']) ? trim($_POST['in_time']) : '';
+        $out_time_raw = isset($_POST['out_time']) ? trim($_POST['out_time']) : '';
 
-        if($in_time == '00:00:00' && $out_time == '00:00:00') {
-            echo 'Please enter at least In Time or Out Time';
-            exit;
+        if (empty($first_date) || empty($second_date)) {
+            echo 'Please select date range';
+            return;
         }
-        $emp_ids     = explode(',', $sql);
-        $mm = array();
 
-        // final process check
-		$slm = date("Y-m-01", strtotime($first_date));
-		$check = $this->db->where('unit_id', $unit_id)->where('block_month',$slm)->get('pay_salary_block');
-		if ($check->num_rows() > 0) {
-			echo "Sorry! This Month Already Final Processed";
-			return false; exit();
-		}
-		// final process check end
+        if (empty($in_time_raw) && empty($out_time_raw)) {
+            echo 'Please enter at least In Time or Out Time';
+            return;
+        }
+
+        $in_time  = (!empty($in_time_raw) && $in_time_raw != '00:00:00') ? date('H:i:s', strtotime($in_time_raw)) : '00:00:00';
+        $out_time = (!empty($out_time_raw) && $out_time_raw != '00:00:00') ? date('H:i:s', strtotime($out_time_raw)) : '00:00:00';
+
+        if ($in_time == '00:00:00' && $out_time == '00:00:00') {
+            echo 'Please enter at least In Time or Out Time';
+            return;
+        }
+
+        if (empty($sql)) {
+            echo 'Please select employee Id';
+            return;
+        }
+
+        $emp_ids = array_filter(array_map('trim', explode(',', $sql)));
+        if (empty($emp_ids)) {
+            echo 'Please select employee Id';
+            return;
+        }
+
+        // final process check for all months in date range
+        $start_m = date("Y-m-01", strtotime($first_date));
+        $end_m   = date("Y-m-01", strtotime($second_date));
+        $check_m = $start_m;
+        while ($check_m <= $end_m) {
+            $check = $this->db->where('unit_id', $unit_id)->where('block_month', $check_m)->get('pay_salary_block');
+            if ($check && $check->num_rows() > 0) {
+                echo "Sorry! Month " . date('F Y', strtotime($check_m)) . " Already Final Processed";
+                return;
+            }
+            $check_m = date("Y-m-01", strtotime('+1 month', strtotime($check_m)));
+        }
+
+        $this->load->model('Attn_process_model');
         $emp_data = $this->Attn_process_model->get_all_employee($emp_ids, 1);
+        if (!$emp_data || $emp_data->num_rows() == 0) {
+            echo 'No valid employee found';
+            return;
+        }
 
-        while ($first_date <= $second_date) {
-            $data = array();
+        $curr_date = $first_date;
+        $inserted_count = 0;
+
+        while ($curr_date <= $second_date) {
+            $att_table = "att_" . date("Y_m", strtotime($curr_date));
+            $this->Attn_process_model->attn_month_table_check($att_table);
+
             foreach ($emp_data->result() as $rows) {
-                $com_id         = $rows->id;
-                $emp_id         = $rows->emp_id;
-                $proxi_id       = $rows->proxi_id;
-                $shift_id       = $rows->shift_id;
-                $schedule_id    = $rows->schedule_id;
+                $emp_id       = $rows->emp_id;
+                $proxi_id     = !empty($rows->proxi_id) ? $rows->proxi_id : $emp_id;
+                $shift_id     = $rows->shift_id;
+                $schedule_id  = $rows->schedule_id;
 
-                $emp_shift = $this->Attn_process_model->emp_shift_check_process($emp_id,$shift_id,$schedule_id,$first_date);
+                $emp_shift = $this->Attn_process_model->emp_shift_check_process($emp_id, $shift_id, $schedule_id, $curr_date);
                 $schedule  = $this->Attn_process_model->get_emp_schedule($emp_shift->schedule_id);
-                $out_end   = $schedule[0]["out_end"];
-                // dd($schedule);
 
-                // in time insert here
-                if (strtotime($in_time) <= strtotime($out_end)) {
-                    $date = date('Y-m-d', strtotime($first_date . ' + 1 days'));
-                } else {
-                    $date = $first_date;
-                }
-                $data = array(
-                    'date_time'       => $date ." ".$in_time,
-                    'proxi_id'        => $proxi_id,
-                    'device_id'       => 0,
-                    'monitor_con'     => 2
-                );
+                // IN time punch: always on shift date $curr_date
                 if ($in_time != '00:00:00') {
-                    $mm = $this->insert_attn_process($data, $first_date, $unit_id, $rows->emp_id, $proxi_id);
+                    $in_dt = $curr_date . " " . $in_time;
+                    $this->insert_attn_punch($att_table, $proxi_id, $emp_id, $in_dt, 1);
+                    $inserted_count++;
                 }
 
-                // out time insert here
-                $date = $first_date;
-                if (strtotime($out_time) <= strtotime('11:59:59')) {
-                    $date = date('Y-m-d', strtotime($first_date . ' + 1 days'));
-                } else {
-                    $date = $first_date;
-                }
-                $data1 = array(
-                    'date_time'       => $date ." ".$out_time,
-                    'proxi_id'        => $proxi_id,
-                    'device_id'       => 0,
-                    'monitor_con'     => 2
-                );
+                // OUT time punch: check if overnight/crosses midnight
                 if ($out_time != '00:00:00') {
-                    $mm = $this->insert_attn_process($data1, $first_date, $unit_id, $rows->emp_id, $proxi_id);
+                    $is_night_schedule = false;
+                    if (!empty($schedule) && isset($schedule[0]['in_start']) && isset($schedule[0]['out_start'])) {
+                        if (strtotime($schedule[0]['out_start']) < strtotime($schedule[0]['in_start'])) {
+                            $is_night_schedule = true;
+                        }
+                    }
+
+                    $is_next_day = false;
+                    if ($in_time != '00:00:00' && strtotime($out_time) < strtotime($in_time)) {
+                        $is_next_day = true;
+                    } elseif ($in_time == '00:00:00' && $is_night_schedule && strtotime($out_time) <= strtotime('12:00:00')) {
+                        $is_next_day = true;
+                    }
+
+                    $out_date = $is_next_day ? date('Y-m-d', strtotime($curr_date . ' + 1 days')) : $curr_date;
+                    $out_att_table = "att_" . date("Y_m", strtotime($out_date));
+                    if ($out_att_table != $att_table) {
+                        $this->Attn_process_model->attn_month_table_check($out_att_table);
+                    }
+
+                    $out_dt = $out_date . " " . $out_time;
+                    $this->insert_attn_punch($out_att_table, $proxi_id, $emp_id, $out_dt, 2);
+                    $inserted_count++;
                 }
             }
-            $first_date = date('Y-m-d', strtotime('+1 days'. $first_date));
-		}
 
-        if (!empty($mm) && $mm['massage'] == 1) {
+            // Run attendance process for this date so shift_log is properly populated with status, in/out, OT, etc.
+            $this->Attn_process_model->attn_process($curr_date, $unit_id, $emp_ids);
+
+            $curr_date = date('Y-m-d', strtotime('+1 day', strtotime($curr_date)));
+        }
+
+        if ($inserted_count > 0) {
             echo 'success';
         } else {
             echo 'Record Not Inserted';
         }
     }
 
-    function insert_attn_process($data, $date, $unit_id, $emp_id, $proxi_id) {
+    public function insert_attn_punch($att_table, $proxi_id, $emp_id, $datetime, $monitor_con = 2)
+    {
         $this->load->model('Attn_process_model');
-        $att_table = "att_". date("Y_m", strtotime($date));
-        //dd($att_table);
-        if (!$this->db->table_exists($att_table)){
-            $this->db->query('CREATE TABLE IF NOT EXISTS `'.$att_table.'`(
-                    `att_id` int(11) NOT NULL AUTO_INCREMENT,
-                    `device_id` int(11) NOT NULL,
-                    `proxi_id` varchar(30) NOT NULL,
-                    `date_time` datetime NOT NULL,
-                    `monitor_con` int(2) DEFAULT 1,
-                    PRIMARY KEY (`att_id`),
-                    KEY `device_id` (`device_id`,`proxi_id`,`date_time`)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;'
+        $this->Attn_process_model->attn_month_table_check($att_table);
+
+        if (!$this->db->field_exists('monitor_con', $att_table)) {
+            $this->db->query('ALTER TABLE `' . $att_table . '` ADD `monitor_con` int(2) DEFAULT 1;');
+        }
+
+        $check = $this->db->where('proxi_id', $proxi_id)->where('date_time', $datetime)->get($att_table)->row();
+        if (empty($check)) {
+            $data = array(
+                'device_id'   => 0,
+                'proxi_id'    => $proxi_id,
+                'date_time'   => $datetime,
+                'monitor_con' => $monitor_con
             );
-        } else {
-            if (!$this->db->field_exists('monitor_con', $att_table)) {
-                $this->db->query('ALTER TABLE `'.$att_table.'` ADD `monitor_con` int(2) DEFAULT 1;');
+            $this->db->insert($att_table, $data);
+        }
+
+        if (!empty($emp_id) && $emp_id != $proxi_id) {
+            $check_emp = $this->db->where('proxi_id', $emp_id)->where('date_time', $datetime)->get($att_table)->row();
+            if (empty($check_emp)) {
+                $data_emp = array(
+                    'device_id'   => 0,
+                    'proxi_id'    => $emp_id,
+                    'date_time'   => $datetime,
+                    'monitor_con' => $monitor_con
+                );
+                $this->db->insert($att_table, $data_emp);
             }
         }
-        //dd($data);
-        if (!empty($data)) {
-            $check = $this->db->where('proxi_id', $proxi_id)->like('date_time', $data['date_time'])->get($att_table)->row();
-            if (empty($check)) {
-                $this->db->insert($att_table, $data);
-            }
+
+        return array('massage' => 1);
+    }
+
+    function insert_attn_process($data, $date, $unit_id, $emp_id, $proxi_id) {
+        $att_table = "att_" . date("Y_m", strtotime($date));
+        $datetime  = isset($data['date_time']) ? $data['date_time'] : '';
+        $monitor_con = isset($data['monitor_con']) ? $data['monitor_con'] : 2;
+        if (!empty($datetime)) {
+            $this->insert_attn_punch($att_table, $proxi_id, $emp_id, $datetime, $monitor_con);
         }
         return array('massage' => 1);
-
-        // if ($this->Attn_process_model->attn_process($date, $unit_id, array($emp_id))) {
-        //     return array('massage' => 1);
-        // } else {
-        //     return array('massage' => 0);
-        // }
     }
 
     public function log_sheet()
@@ -1047,11 +1099,14 @@ class Entry_system_con extends CI_Controller
                 $data = array();
             }
 
-            if (strtotime($out_time[$key]) <= strtotime($out_end) && strtotime($out_time[$key]) <= strtotime('12:00:00')) {
-                $dd = date('Y-m-d', strtotime($d . ' + 1 days'));
-            } else {
-                $dd = $d;
+            $is_night_sched = (!empty($schedule) && isset($schedule[0]['out_start']) && isset($schedule[0]['in_start']) && strtotime($schedule[0]['out_start']) < strtotime($schedule[0]['in_start']));
+            $is_next_day = false;
+            if (!empty($in_time[$key]) && $in_time[$key] != '00:00:00' && !empty($out_time[$key]) && $out_time[$key] != '00:00:00' && strtotime($out_time[$key]) < strtotime($in_time[$key])) {
+                $is_next_day = true;
+            } elseif ((empty($in_time[$key]) || $in_time[$key] == '00:00:00') && $is_night_sched && strtotime($out_time[$key]) <= strtotime('12:00:00')) {
+                $is_next_day = true;
             }
+            $dd = $is_next_day ? date('Y-m-d', strtotime($d . ' + 1 days')) : $d;
 
             if (!empty($out_time[$key]) && $out_time[$key] != '00:00:00') {
                 $data1 = array(
@@ -1174,11 +1229,17 @@ class Entry_system_con extends CI_Controller
         }
 
         $this->db->where("shift_log_date BETWEEN '$first_date' and '$second_date' ")->where_in('emp_id', $emp_ids);
-        if ($this->db->where('unit_id', $unit_id)->delete('pr_emp_shift_log')) {
-            echo 'success';
-        } else {
-            echo 'Record Not Deleted';
+        $this->db->where('unit_id', $unit_id)->delete('pr_emp_shift_log');
+
+        $this->load->model('Attn_process_model');
+        foreach ($emp_ids as $emp_id) {
+            $cur = $first_date;
+            while (strtotime($cur) <= strtotime($second_date)) {
+                $this->Attn_process_model->attn_process($cur, $unit_id, array($emp_id));
+                $cur = date('Y-m-d', strtotime($cur . ' + 1 day'));
+            }
         }
+        echo 'success';
     }
 
     public function log_delete()

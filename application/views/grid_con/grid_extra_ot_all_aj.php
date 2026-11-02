@@ -279,19 +279,26 @@
 							} else {
 								$remark = "";
 							}
+							if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+								$disp_ot = 0;
+								$disp_eot = 0;
+							} else {
+								$disp_ot = max(0, $row->com_ot);
+								$disp_eot = max(0, $row->com_eot);
+							}
 							echo "<td>&nbsp;";
-							echo $row->com_ot;
+							echo $disp_ot;
 							echo "&nbsp;</td>";
 
-							$total_ot = $total_ot + $row->com_ot;
-							$total_ot_hour = $total_ot_hour + $row->com_ot + $row->com_eot;
+							$total_ot = $total_ot + $disp_ot;
+							$total_ot_hour = $total_ot_hour + $disp_ot + $disp_eot;
 
 							echo "<td>&nbsp;";
-							echo $row->com_eot;
+							echo $disp_eot;
 							echo "&nbsp;</td>";
 
 							echo "<td>&nbsp;";
-							echo $row->com_eot + $row->com_ot;
+							echo $disp_eot + $disp_ot;
 							echo "&nbsp;</td>";
 
 							echo "<td>&nbsp;";

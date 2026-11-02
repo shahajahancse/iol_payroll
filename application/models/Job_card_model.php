@@ -489,6 +489,18 @@ class Job_card_model extends CI_Model{
 			}
 		}
 
+		// Missing out punch rule: If employee did not punch out (out_time is empty or 00:00:00), OT must be 0
+		foreach ($query as $row) {
+			if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+				$row->ot         = 0;
+				$row->eot        = 0;
+				$row->com_ot     = 0;
+				$row->com_eot    = 0;
+				$row->tot        = 0;
+				$row->modify_eot = 0;
+			}
+		}
+
 		// Synchronize Admin-approved OT from pr_daily_ot_approval into Job Card OT column
 		if ($this->db->table_exists('pr_daily_ot_approval')) {
 			$approvals = $this->db->select('ot_date, in_time, out_time, approved_ot_hours, status')
@@ -498,37 +510,58 @@ class Job_card_model extends CI_Model{
 				->get('pr_daily_ot_approval')
 				->result();
 
+			$approval_map = array();
 			if (!empty($approvals)) {
-				$approval_map = array();
 				foreach ($approvals as $app) {
 					$approval_map[$app->ot_date] = $app;
 				}
+			}
 
-				foreach ($query as $row) {
-					if (isset($approval_map[$row->shift_log_date])) {
-						$app = $approval_map[$row->shift_log_date];
-						if ($app->status === 'approved') {
-							$app_ot = (float)$app->approved_ot_hours;
-							$row->ot = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
-							$row->eot = 0;
-							$row->tot = $row->ot;
-							// If shift log was marked Absent or missing punches but approval has punches, restore them
-							if (($row->in_time == '00:00:00' || empty($row->in_time)) && !empty($app->in_time) && $app->in_time != '00:00:00') {
-								$row->in_time = $app->in_time;
-							}
-							if (($row->out_time == '00:00:00' || empty($row->out_time)) && !empty($app->out_time) && $app->out_time != '00:00:00') {
-								$row->out_time = $app->out_time;
-							}
-							if (strtoupper(trim($row->present_status)) == 'A' || empty($row->present_status)) {
-								$row->present_status = 'P';
-							}
-						} else {
-							// Pending or Rejected: only Admin-approved OT is shown in Job Card
-							$row->ot = 0;
-							$row->eot = 0;
-							$row->tot = 0;
+			foreach ($query as $row) {
+				if (isset($approval_map[$row->shift_log_date])) {
+					$app = $approval_map[$row->shift_log_date];
+					if ($app->status === 'approved') {
+						$app_ot = (float)$app->approved_ot_hours;
+						$row->ot      = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
+						$row->eot     = 0;
+						$row->tot     = $row->ot;
+						$row->com_ot  = $row->ot;
+						$row->com_eot = 0;
+						// If shift log was marked Absent or missing punches but approval has punches, restore them
+						if (($row->in_time == '00:00:00' || empty($row->in_time)) && !empty($app->in_time) && $app->in_time != '00:00:00') {
+							$row->in_time = $app->in_time;
 						}
+						if (($row->out_time == '00:00:00' || empty($row->out_time)) && !empty($app->out_time) && $app->out_time != '00:00:00') {
+							$row->out_time = $app->out_time;
+						}
+						if (strtoupper(trim($row->present_status)) == 'A' || empty($row->present_status)) {
+							$row->present_status = 'P';
+						}
+					} else {
+						// Pending or Rejected: only Admin-approved OT is shown in Job Card
+						$row->ot      = 0;
+						$row->eot     = 0;
+						$row->tot     = 0;
+						$row->com_ot  = 0;
+						$row->com_eot = 0;
 					}
+				} else {
+					// If OT occurred in shift log but NOT approved in pr_daily_ot_approval, OT must be 0
+					$row->ot      = 0;
+					$row->eot     = 0;
+					$row->tot     = 0;
+					$row->com_ot  = 0;
+					$row->com_eot = 0;
+				}
+
+				// If out punch or in punch is missing / 00:00:00, OT must strictly be 0
+				if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+					$row->ot         = 0;
+					$row->eot        = 0;
+					$row->com_ot     = 0;
+					$row->com_eot    = 0;
+					$row->tot        = 0;
+					$row->modify_eot = 0;
 				}
 			}
 		}
@@ -781,6 +814,18 @@ class Job_card_model extends CI_Model{
 			}
 		}
 
+		// Missing out punch rule: If employee did not punch out (out_time is empty or 00:00:00), OT must be 0
+		foreach ($query as $row) {
+			if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+				$row->ot         = 0;
+				$row->eot        = 0;
+				$row->com_ot     = 0;
+				$row->com_eot    = 0;
+				$row->tot        = 0;
+				$row->modify_eot = 0;
+			}
+		}
+
 		// Synchronize Admin-approved OT from pr_daily_ot_approval into Job Card OT column
 		if ($this->db->table_exists('pr_daily_ot_approval')) {
 			$approvals = $this->db->select('ot_date, in_time, out_time, approved_ot_hours, status')
@@ -790,37 +835,58 @@ class Job_card_model extends CI_Model{
 				->get('pr_daily_ot_approval')
 				->result();
 
+			$approval_map = array();
 			if (!empty($approvals)) {
-				$approval_map = array();
 				foreach ($approvals as $app) {
 					$approval_map[$app->ot_date] = $app;
 				}
+			}
 
-				foreach ($query as $row) {
-					if (isset($approval_map[$row->shift_log_date])) {
-						$app = $approval_map[$row->shift_log_date];
-						if ($app->status === 'approved') {
-							$app_ot = (float)$app->approved_ot_hours;
-							$row->ot = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
-							$row->eot = 0;
-							$row->tot = $row->ot;
-							// If shift log was marked Absent or missing punches but approval has punches, restore them
-							if (($row->in_time == '00:00:00' || empty($row->in_time)) && !empty($app->in_time) && $app->in_time != '00:00:00') {
-								$row->in_time = $app->in_time;
-							}
-							if (($row->out_time == '00:00:00' || empty($row->out_time)) && !empty($app->out_time) && $app->out_time != '00:00:00') {
-								$row->out_time = $app->out_time;
-							}
-							if (strtoupper(trim($row->present_status)) == 'A' || empty($row->present_status)) {
-								$row->present_status = 'P';
-							}
-						} else {
-							// Pending or Rejected: only Admin-approved OT is shown in Job Card
-							$row->ot = 0;
-							$row->eot = 0;
-							$row->tot = 0;
+			foreach ($query as $row) {
+				if (isset($approval_map[$row->shift_log_date])) {
+					$app = $approval_map[$row->shift_log_date];
+					if ($app->status === 'approved') {
+						$app_ot = (float)$app->approved_ot_hours;
+						$row->ot      = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
+						$row->eot     = 0;
+						$row->tot     = $row->ot;
+						$row->com_ot  = $row->ot;
+						$row->com_eot = 0;
+						// If shift log was marked Absent or missing punches but approval has punches, restore them
+						if (($row->in_time == '00:00:00' || empty($row->in_time)) && !empty($app->in_time) && $app->in_time != '00:00:00') {
+							$row->in_time = $app->in_time;
 						}
+						if (($row->out_time == '00:00:00' || empty($row->out_time)) && !empty($app->out_time) && $app->out_time != '00:00:00') {
+							$row->out_time = $app->out_time;
+						}
+						if (strtoupper(trim($row->present_status)) == 'A' || empty($row->present_status)) {
+							$row->present_status = 'P';
+						}
+					} else {
+						// Pending or Rejected: only Admin-approved OT is shown in Job Card
+						$row->ot      = 0;
+						$row->eot     = 0;
+						$row->tot     = 0;
+						$row->com_ot  = 0;
+						$row->com_eot = 0;
 					}
+				} else {
+					// If OT occurred in shift log but NOT approved in pr_daily_ot_approval, OT must be 0
+					$row->ot      = 0;
+					$row->eot     = 0;
+					$row->tot     = 0;
+					$row->com_ot  = 0;
+					$row->com_eot = 0;
+				}
+
+				// If out punch or in punch is missing / 00:00:00, OT must strictly be 0
+				if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+					$row->ot         = 0;
+					$row->eot        = 0;
+					$row->com_ot     = 0;
+					$row->com_eot    = 0;
+					$row->tot        = 0;
+					$row->modify_eot = 0;
 				}
 			}
 		}

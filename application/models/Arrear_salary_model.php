@@ -381,11 +381,13 @@ class Arrear_salary_model extends CI_Model {
         }
 
         $synced = array('pay_salary_sheet' => false, 'pay_salary_sheet_com' => false);
+        $pm_end = date('Y-m-t', strtotime($payment_month));
 
         // Sync pay_salary_sheet
         if ($this->db->table_exists('pay_salary_sheet')) {
             $sheet_row = $this->db->where('emp_id', $emp_id)
-                ->where("(salary_month = '{$pm}' OR salary_month = '{$pm_short}')")
+                ->where('salary_month >=', $pm)
+                ->where('salary_month <=', $pm_end)
                 ->get('pay_salary_sheet')
                 ->row();
 
@@ -395,8 +397,7 @@ class Arrear_salary_model extends CI_Model {
                 $diff = $total_arrear - $old_arrear;
                 $new_net_pay = $current_net_pay + $diff;
 
-                $this->db->where('emp_id', $emp_id)
-                    ->where("(salary_month = '{$pm}' OR salary_month = '{$pm_short}')")
+                $this->db->where('id', $sheet_row->id)
                     ->update('pay_salary_sheet', array(
                         'arrear_amount' => $total_arrear,
                         'net_pay'       => $new_net_pay
@@ -408,7 +409,8 @@ class Arrear_salary_model extends CI_Model {
         // Sync pay_salary_sheet_com
         if ($this->db->table_exists('pay_salary_sheet_com')) {
             $sheet_com_row = $this->db->where('emp_id', $emp_id)
-                ->where("(salary_month = '{$pm}' OR salary_month = '{$pm_short}')")
+                ->where('salary_month >=', $pm)
+                ->where('salary_month <=', $pm_end)
                 ->get('pay_salary_sheet_com')
                 ->row();
 
@@ -418,8 +420,7 @@ class Arrear_salary_model extends CI_Model {
                 $diff_com = $total_arrear - $old_arrear_com;
                 $new_net_pay_com = $current_net_pay_com + $diff_com;
 
-                $this->db->where('emp_id', $emp_id)
-                    ->where("(salary_month = '{$pm}' OR salary_month = '{$pm_short}')")
+                $this->db->where('id', $sheet_com_row->id)
                     ->update('pay_salary_sheet_com', array(
                         'arrear_amount' => $total_arrear,
                         'net_pay'       => $new_net_pay_com

@@ -317,22 +317,23 @@
 							} else {
 								$remark = "";
 							}
-							echo "<td>&nbsp;";
-							if($row->com_ot == 0){
-								echo $row->com_ot;
-							}else{
-								echo $row->com_ot;
+							if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+								$disp_ot = 0;
+							} else {
+								$disp_ot = max(0, $row->com_ot);
 							}
+							echo "<td>&nbsp;";
+							echo $disp_ot;
 							echo "&nbsp;</td>";
-							$total_ot_hour = $total_ot_hour + $row->com_ot + $extra_ot_hour;
-							$total_ot = $total_ot + $row->com_ot;
+							$total_ot_hour = $total_ot_hour + $disp_ot + $extra_ot_hour;
+							$total_ot = $total_ot + $disp_ot;
 
 							echo "<td>&nbsp;";
 							echo $extra_ot_hour;
 							echo "&nbsp;</td>";
 
 							echo "<td>&nbsp;";
-							echo $extra_ot_hour + $row->com_ot;
+							echo $extra_ot_hour + $disp_ot;
 							echo "&nbsp;</td>";
 
 							echo "<td>&nbsp;";
