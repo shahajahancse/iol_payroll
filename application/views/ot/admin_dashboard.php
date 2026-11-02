@@ -1383,7 +1383,7 @@ function renderTableRows(records) {
         html += '<td>' + row.ot_date + '</td>';
         html += '<td><span class="label label-default" style="font-size: 11px;">' + (row.in_time || '-') + '</span></td>';
         html += '<td><span class="label label-default" style="font-size: 11px;">' + (row.out_time || '-') + '</span></td>';
-        html += '<td>' + parseFloat(row.regular_hours || 8).toFixed(1) + 'h</td>';
+        html += '<td>' + (row.regular_hours !== null && row.regular_hours !== undefined ? parseFloat(row.regular_hours).toFixed(1) : '8.0') + 'h</td>';
         html += '<td><strong style="color: #006ba3;">' + parseFloat(row.actual_ot_hours || 0).toFixed(1) + 'h</strong></td>';
         html += '<td>' + parseFloat(row.calculated_ot_hours || row.actual_ot_hours || 0).toFixed(1) + 'h</td>';
         html += '<td><strong style="color: #16a34a; font-size: 14px;">' + parseFloat(row.approved_ot_hours || 0).toFixed(1) + 'h</strong></td>';
@@ -1708,7 +1708,7 @@ function openDetailsModal(id) {
             $('#det_ot_date').text(rec.ot_date);
             $('#det_in_time').text(rec.in_time || '-');
             $('#det_out_time').text(rec.out_time || '-');
-            $('#det_reg_hours').text(parseFloat(rec.regular_hours || 8).toFixed(1) + ' hrs');
+            $('#det_reg_hours').text((rec.regular_hours !== null && rec.regular_hours !== undefined ? parseFloat(rec.regular_hours).toFixed(1) : '8.0') + ' hrs');
             $('#det_actual_ot').text(parseFloat(rec.actual_ot_hours || 0).toFixed(1) + ' hrs');
             $('#det_approved_ot').text(parseFloat(rec.approved_ot_hours || 0).toFixed(1) + ' hrs');
 
