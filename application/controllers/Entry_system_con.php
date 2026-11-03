@@ -905,15 +905,19 @@ class Entry_system_con extends CI_Controller
                 if ($out_time != '00:00:00') {
                     $is_night_schedule = false;
                     if (!empty($schedule) && isset($schedule[0]['in_start']) && isset($schedule[0]['out_start'])) {
-                        if (strtotime($schedule[0]['out_start']) < strtotime($schedule[0]['in_start'])) {
+                        if (strtotime($schedule[0]['out_start']) < strtotime($schedule[0]['in_start']) ||
+                            (isset($schedule[0]['out_end']) && strtotime($schedule[0]['out_end']) < strtotime($schedule[0]['out_start']))) {
                             $is_night_schedule = true;
                         }
                     }
 
+                    // Rule: If out time is less than 08:00:01, auto add 1 day
                     $is_next_day = false;
-                    if ($in_time != '00:00:00' && strtotime($out_time) < strtotime($in_time)) {
+                    if (strtotime($out_time) < strtotime('08:00:01')) {
                         $is_next_day = true;
-                    } elseif ($in_time == '00:00:00' && $is_night_schedule && strtotime($out_time) <= strtotime('12:00:00')) {
+                    } elseif ($in_time != '00:00:00' && strtotime($out_time) < strtotime($in_time)) {
+                        $is_next_day = true;
+                    } elseif ($is_night_schedule && strtotime($out_time) <= strtotime('12:00:00')) {
                         $is_next_day = true;
                     }
 
@@ -921,6 +925,22 @@ class Entry_system_con extends CI_Controller
                     $out_att_table = "att_" . date("Y_m", strtotime($out_date));
                     if ($out_att_table != $att_table) {
                         $this->Attn_process_model->attn_month_table_check($out_att_table);
+                    }
+
+                    // If out punch is on next day, clean up any accidental same-day manual out punch on $curr_date
+                    if ($is_next_day) {
+                        $this->db->where('proxi_id', $proxi_id)
+                                 ->where('device_id', 0)
+                                 ->where('monitor_con', 2)
+                                 ->like('date_time', $curr_date)
+                                 ->delete($att_table);
+                        if (!empty($emp_id) && $emp_id != $proxi_id) {
+                            $this->db->where('proxi_id', $emp_id)
+                                     ->where('device_id', 0)
+                                     ->where('monitor_con', 2)
+                                     ->like('date_time', $curr_date)
+                                     ->delete($att_table);
+                        }
                     }
 
                     $out_dt = $out_date . " " . $out_time;
@@ -1112,11 +1132,13 @@ class Entry_system_con extends CI_Controller
                 $data = array();
             }
 
-            $is_night_sched = (!empty($schedule) && isset($schedule[0]['out_start']) && isset($schedule[0]['in_start']) && strtotime($schedule[0]['out_start']) < strtotime($schedule[0]['in_start']));
+            $is_night_sched = (!empty($schedule) && isset($schedule[0]['out_start']) && isset($schedule[0]['in_start']) && (strtotime($schedule[0]['out_start']) < strtotime($schedule[0]['in_start']) || (isset($schedule[0]['out_end']) && strtotime($schedule[0]['out_end']) < strtotime($schedule[0]['out_start']))));
             $is_next_day = false;
-            if (!empty($in_time[$key]) && $in_time[$key] != '00:00:00' && !empty($out_time[$key]) && $out_time[$key] != '00:00:00' && strtotime($out_time[$key]) < strtotime($in_time[$key])) {
+            if (!empty($out_time[$key]) && $out_time[$key] != '00:00:00' && strtotime($out_time[$key]) < strtotime('08:00:01')) {
                 $is_next_day = true;
-            } elseif ((empty($in_time[$key]) || $in_time[$key] == '00:00:00') && $is_night_sched && strtotime($out_time[$key]) <= strtotime('12:00:00')) {
+            } elseif (!empty($in_time[$key]) && $in_time[$key] != '00:00:00' && !empty($out_time[$key]) && $out_time[$key] != '00:00:00' && strtotime($out_time[$key]) < strtotime($in_time[$key])) {
+                $is_next_day = true;
+            } elseif (!empty($out_time[$key]) && $out_time[$key] != '00:00:00' && $is_night_sched && strtotime($out_time[$key]) <= strtotime('12:00:00')) {
                 $is_next_day = true;
             }
             $dd = $is_next_day ? date('Y-m-d', strtotime($d . ' + 1 days')) : $d;
@@ -1188,6 +1210,25 @@ class Entry_system_con extends CI_Controller
             $out_d = date('Y-m-d', strtotime($data1['date_time']));
             $out_att_table = "att_" . date("Y_m", strtotime($out_d));
             $this->Attn_process_model->attn_month_table_check($out_att_table);
+
+            if ($out_d != $date) {
+                $att_table = "att_" . date("Y_m", strtotime($date));
+                if ($this->db->table_exists($att_table)) {
+                    $this->db->where('proxi_id', $proxi_id)
+                             ->where('device_id', 0)
+                             ->where('monitor_con', 2)
+                             ->like('date_time', $date)
+                             ->delete($att_table);
+                    if (!empty($emp_id) && $emp_id != $proxi_id) {
+                        $this->db->where('proxi_id', $emp_id)
+                                 ->where('device_id', 0)
+                                 ->where('monitor_con', 2)
+                                 ->like('date_time', $date)
+                                 ->delete($att_table);
+                    }
+                }
+            }
+
             $this->db->where('proxi_id', $proxi_id)
                      ->where('device_id', 0)
                      ->where('monitor_con', 2)

@@ -11961,7 +11961,9 @@ function grid_emp_job_application($grid_emp_id){
 
 			if ($outtime_check != "False") {
 				$out_date = $manual_date;
-				if ($intime_check != "False" && strtotime($manual_outtime) < strtotime($manual_intime)) {
+				if (strtotime($manual_outtime) < strtotime('08:00:01')) {
+					$out_date = date('Y-m-d', strtotime($manual_date . ' + 1 days'));
+				} elseif ($intime_check != "False" && strtotime($manual_outtime) < strtotime($manual_intime)) {
 					$out_date = date('Y-m-d', strtotime($manual_date . ' + 1 days'));
 				}
 				$date_time_out = "$out_date $manual_outtime";

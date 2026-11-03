@@ -1172,15 +1172,18 @@ class Attn_process_model extends CI_Model{
 			return '';
 		} else {
 			// OUT punch: look for device_id = 0, monitor_con = 2
-			$search_date = !empty($out_date) ? $out_date : $date;
-			$out_table = 'att_' . date('Y_m', strtotime($search_date));
-			if ($this->db->table_exists($out_table)) {
+			$next_day = date('Y-m-d', strtotime($date . ' + 1 days'));
+			$next_table = 'att_' . date('Y_m', strtotime($next_day));
+
+			// 1. Check next day for early morning manual out punch (< 08:00:01)
+			if ($this->db->table_exists($next_table)) {
 				$this->db->select("date_time");
-				$this->db->from($out_table);
+				$this->db->from($next_table);
 				$this->db->where_in("proxi_id", $ids);
 				$this->db->where("device_id", 0);
 				$this->db->where("monitor_con", 2);
-				$this->db->like("date_time", $search_date);
+				$this->db->like("date_time", $next_day);
+				$this->db->where("TIME(date_time) <", "08:00:01");
 				$this->db->order_by("date_time", "DESC");
 				$this->db->limit(1);
 				$row = $this->db->get()->row();
@@ -1188,13 +1191,36 @@ class Attn_process_model extends CI_Model{
 					return $row->date_time;
 				}
 			}
-			if ($search_date != $date && $this->db->table_exists($target_table)) {
+
+			// 2. Check designated out_date if provided (and different from date and next_day)
+			if (!empty($out_date) && $out_date != $date && $out_date != $next_day) {
+				$out_table = 'att_' . date('Y_m', strtotime($out_date));
+				if ($this->db->table_exists($out_table)) {
+					$this->db->select("date_time");
+					$this->db->from($out_table);
+					$this->db->where_in("proxi_id", $ids);
+					$this->db->where("device_id", 0);
+					$this->db->where("monitor_con", 2);
+					$this->db->like("date_time", $out_date);
+					$this->db->order_by("date_time", "DESC");
+					$this->db->limit(1);
+					$row = $this->db->get()->row();
+					if (!empty($row)) {
+						return $row->date_time;
+					}
+				}
+			}
+
+			// 3. Check shift date ($date): only consider out punch >= 08:00:01
+			// (punches < 08:00:01 on $date belonged to previous day's overnight shift)
+			if ($this->db->table_exists($target_table)) {
 				$this->db->select("date_time");
 				$this->db->from($target_table);
 				$this->db->where_in("proxi_id", $ids);
 				$this->db->where("device_id", 0);
 				$this->db->where("monitor_con", 2);
 				$this->db->like("date_time", $date);
+				$this->db->where("TIME(date_time) >=", "08:00:01");
 				$this->db->order_by("date_time", "DESC");
 				$this->db->limit(1);
 				$row = $this->db->get()->row();
@@ -1202,6 +1228,7 @@ class Attn_process_model extends CI_Model{
 					return $row->date_time;
 				}
 			}
+
 			return '';
 		}
 	}
