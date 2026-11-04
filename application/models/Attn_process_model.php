@@ -174,11 +174,6 @@ class Attn_process_model extends CI_Model{
             	// Check if employee is on approved Outside Duty (OD)
             	$is_od  = $this->od_check($process_date, $emp_id);
 
-            	// Rule: If employee is on approved leave, but next working/calendar day is already Absent (A), forfeit leave (becomes 'A')
-            	if ($leaves && $this->is_next_day_absent($process_date, $emp_id)) {
-            		$leaves = false;
-            	}
-
             	if ($leaves) {
             		// When employee is on leave, no in-time or out-time should be recorded or shown
             		$in_time  = '00:00:00';
@@ -321,11 +316,7 @@ class Attn_process_model extends CI_Model{
 				//============= Check employee attendance status & Special Shift Policies =============
 				$attn_status = 'A';
 				if($leaves){
-					if ($this->is_next_day_absent($process_date, $emp_id)) {
-						$attn_status = "A";
-					} else {
-						$attn_status = "L";
-					}
+					$attn_status = "L";
 					$in_time = '00:00:00';
 					$out_time = '00:00:00';
 					$tot_hour = 0;
@@ -640,15 +631,6 @@ class Attn_process_model extends CI_Model{
 				$this->db->where('shift_log_date', $process_date);
 				$this->db->where('emp_id', $emp_id);
 				$this->db->update('pr_emp_shift_log', $data);
-
-				// Rule: If an employee took leave, but is absent on subsequent day(s):
-				// The preceding consecutive leave days are forfeited in attendance log (marked 'A'),
-				// while remaining counted/deducted in pr_leave_trans.
-				if ($attn_status == 'A') {
-					$this->forfeit_consecutive_preceding_leaves($emp_id, $process_date);
-				} else {
-					$this->restore_consecutive_preceding_leaves($emp_id, $process_date);
-				}
 			}
 		}
 

@@ -473,46 +473,7 @@ class Job_card_model extends CI_Model{
 			});
 		}
 
-		// Rule: If an employee takes a single-day SL or CL, and is absent (A) on the next calendar day,
-		// then both the leave date and the next date must be shown as Absent (A).
-		$single_leaves = $this->get_single_day_leaves($start_date, $end_date, $emp_id);
-		$date_map = array();
-		foreach ($query as $idx => $row) {
-			$date_map[$row->shift_log_date] = $idx;
-		}
 
-		foreach ($query as $idx => $row) {
-			$cur_date = $row->shift_log_date;
-			if (isset($single_leaves[$cur_date])) {
-				$next_date = date('Y-m-d', strtotime("$cur_date + 1 days"));
-				$next_is_absent = false;
-
-				if (isset($date_map[$next_date])) {
-					$next_idx = $date_map[$next_date];
-					$next_status = strtoupper(trim($query[$next_idx]->present_status));
-					if ($next_status == 'A') {
-						$next_is_absent = true;
-					}
-				} else {
-					$next_row = $this->db->select('present_status')->where('emp_id', $emp_id)->where('shift_log_date', $next_date)->get('pr_emp_shift_log')->row();
-					if (!empty($next_row) && strtoupper(trim($next_row->present_status)) == 'A') {
-						$next_is_absent = true;
-					}
-				}
-
-				if ($next_is_absent) {
-					$row->present_status = 'A';
-					$row->in_time        = '00:00:00';
-					$row->out_time       = '00:00:00';
-					$row->ot             = 0;
-					$row->eot            = 0;
-					$row->com_ot         = 0;
-					$row->com_eot        = 0;
-					$row->late_status    = 0;
-					$row->deduction_hour = 0;
-				}
-			}
-		}
 
 		// Missing out punch rule: If employee did not punch out (out_time is empty or 00:00:00), OT must be 0
 		foreach ($query as $row) {
@@ -793,51 +754,7 @@ class Job_card_model extends CI_Model{
 			});
 		}
 
-		// Rule: If an employee takes a single-day SL or CL, and is absent (A) on the next calendar day,
-		// then both the leave date and the next date must be shown as Absent (A).
-		$single_leaves = $this->get_single_day_leaves($start_date, $end_date, $emp_id);
-		$date_map = array();
-		foreach ($query as $idx => $row) {
-			$date_map[$row->shift_log_date] = $idx;
-		}
 
-		foreach ($query as $idx => $row) {
-			$cur_date = $row->shift_log_date;
-			if (isset($single_leaves[$cur_date])) {
-				$next_date = date('Y-m-d', strtotime("$cur_date + 1 days"));
-				$next_is_absent = false;
-
-				if (isset($date_map[$next_date])) {
-					$next_idx = $date_map[$next_date];
-					$next_status = strtoupper(trim($query[$next_idx]->present_status));
-					if ($next_status == 'A') {
-						$next_is_absent = true;
-					}
-				} else {
-					$next_row = $this->db->select('present_status')->where('emp_id', $emp_id)->where('shift_log_date', $next_date)->get('pr_emp_shift_log')->row();
-					if (!empty($next_row) && strtoupper(trim($next_row->present_status)) == 'A') {
-						$next_is_absent = true;
-					}
-				}
-
-				if ($next_is_absent) {
-					$row->present_status = 'A';
-					$row->in_time        = '00:00:00';
-					$row->out_time       = '00:00:00';
-					$row->ot             = 0;
-					$row->eot            = 0;
-					$row->com_ot         = 0;
-					$row->com_eot        = 0;
-					$row->ot_eot_4pm     = 0;
-					$row->ot_eot_12am    = 0;
-					$row->late_status    = 0;
-					$row->deduction_hour = 0;
-					if (isset($data['leave'][$cur_date])) {
-						unset($data['leave'][$cur_date]);
-					}
-				}
-			}
-		}
 
 		// Missing out punch rule: If employee did not punch out (out_time is empty or 00:00:00), OT must be 0
 		foreach ($query as $row) {

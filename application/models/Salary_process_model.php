@@ -628,8 +628,8 @@ class Salary_process_model extends CI_Model{
 					$data["arrear_amount"]     = $arrear_amount;
 					$data_com["arrear_amount"] = $arrear_amount;
 
-					// net_pay NON COMPLIENCE and COMPLIENCE
-					$data["net_pay"]     = $gross_sal + $att_bouns + $ot_amount + $arrear_amount - $total_deduction;
+					// net_pay NON COMPLIENCE (includes full OT: ot_amount + eot_amount) and COMPLIENCE
+					$data["net_pay"]     = $gross_sal + $att_bouns + $ot_amount + $eot_amount + $arrear_amount - $total_deduction;
 					$data_com["net_pay"] = $gross_sal_com + $att_bouns + $ot_amount + $arrear_amount - $total_deduction_com ;//Zuel 140420
 
 

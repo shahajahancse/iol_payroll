@@ -405,19 +405,21 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo $att_bonus;
 		echo "</td>";
 		
+		// Full OT: regular OT + extra OT
+		$emp_full_ot_hour = (float)$value[$k]->ot_hour + (float)$value[$k]->eot_hour;
 		echo "<td>";
-		print_r ($value[$k]->ot_hour);
+		echo $emp_full_ot_hour;
 		
-		$total_ot_hour 			= $total_ot_hour + $value[$k]->ot_hour;
-		$grand_total_ot_hour 	= $grand_total_ot_hour + $value[$k]->ot_hour;
+		$total_ot_hour 			= $total_ot_hour + $emp_full_ot_hour;
+		$grand_total_ot_hour 	= $grand_total_ot_hour + $emp_full_ot_hour;
 		echo "</td>";
 		
 		echo "<td>";
 		print_r ($value[$k]->ot_rate);
 		echo "</td>";
 		
-		$ot_amount 					= $value[$k]->ot_amount;	
-		$ot_eot_amount 				= $ot_amount;// + $eot_amount;
+		$ot_amount 					= round((float)$value[$k]->ot_amount + (float)$value[$k]->eot_amount);	
+		$ot_eot_amount 				= $ot_amount;
 		$total_ot_eot_amount 		= $total_ot_eot_amount + $ot_eot_amount;
 		$grand_total_ot_eot_amount 	= $grand_total_ot_eot_amount + $ot_eot_amount;
 		echo "<td>";
