@@ -1054,17 +1054,11 @@ class Entry_system_con extends CI_Controller
                     emp_designation.desig_name,
                 ');
         $this->db->from('pr_emp_com_info');
-        $this->db->from('pr_emp_per_info');
-        $this->db->from('emp_depertment');
-        $this->db->from('emp_section');
-        $this->db->from('emp_line_num');
-        $this->db->from('emp_designation');
-
-        $this->db->where('pr_emp_com_info.emp_dept_id = emp_depertment.dept_id');
-        $this->db->where('pr_emp_com_info.emp_sec_id = emp_section.id');
-        $this->db->where('pr_emp_com_info.emp_line_id = emp_line_num.id');
-        $this->db->where('pr_emp_com_info.emp_desi_id = emp_designation.id');
-        $this->db->where('pr_emp_per_info.emp_id = pr_emp_com_info.emp_id');
+        $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_emp_com_info.emp_id', 'left');
+        $this->db->join('emp_depertment', 'emp_depertment.dept_id = pr_emp_com_info.emp_dept_id', 'left');
+        $this->db->join('emp_section', 'emp_section.id = pr_emp_com_info.emp_sec_id', 'left');
+        $this->db->join('emp_line_num', 'emp_line_num.id = pr_emp_com_info.emp_line_id', 'left');
+        $this->db->join('emp_designation', 'emp_designation.id = pr_emp_com_info.emp_desi_id', 'left');
         $this->db->where_in('pr_emp_com_info.emp_id', $emp_id);
         $row = $this->db->get()->row();
         $this->data['row'] = $row;
