@@ -205,3 +205,24 @@ $route['advanced_salary/get_employee_ajax']         = 'advanced_salary_con/get_e
 $route['advanced_salary/report_data_ajax']          = 'advanced_salary_con/report_data_ajax';
 $route['advanced_salary/export_excel']              = 'advanced_salary_con/export_excel';
 $route['advanced_salary/export_csv']                = 'advanced_salary_con/export_csv';
+
+$route['penalty']                                   = 'penalty_con/index';
+$route['penalty/list_ajax']                         = 'penalty_con/list_ajax';
+$route['penalty/get_details_ajax/(:num)']           = 'penalty_con/get_details_ajax/$1';
+$route['penalty/save']                              = 'penalty_con/save';
+$route['penalty/cancel/(:num)']                     = 'penalty_con/cancel/$1';
+$route['penalty/delete/(:num)']                     = 'penalty_con/delete/$1';
+$route['penalty/employee_search_ajax']              = 'penalty_con/employee_search_ajax';
+$route['penalty/get_employee_ajax']                 = 'penalty_con/get_employee_ajax';
+$route['penalty/penalty_sheet']                     = 'penalty_con/penalty_sheet';
+
+// Backward compatibility
+$route['palanty']                                   = 'penalty_con/index';
+$route['palanty/list_ajax']                         = 'penalty_con/list_ajax';
+$route['palanty/get_details_ajax/(:num)']           = 'penalty_con/get_details_ajax/$1';
+$route['palanty/save']                              = 'penalty_con/save';
+$route['palanty/cancel/(:num)']                     = 'penalty_con/cancel/$1';
+$route['palanty/delete/(:num)']                     = 'penalty_con/delete/$1';
+$route['palanty/employee_search_ajax']              = 'penalty_con/employee_search_ajax';
+$route['palanty/get_employee_ajax']                 = 'penalty_con/get_employee_ajax';
+$route['palanty/palanty_sheet']                     = 'penalty_con/penalty_sheet';

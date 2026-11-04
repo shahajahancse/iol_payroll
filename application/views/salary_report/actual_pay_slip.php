@@ -291,6 +291,14 @@
                                                 : <?php  echo $rows->adv_deduct;   ?>
                                         </td>
                                     </tr>
+                                    <?php if (!empty($rows->penalty_deduct) && $rows->penalty_deduct > 0) { ?>
+                                    <tr>
+                                        <td width="50%"> পেনাল্টি </td>
+                                        <td style="font-family: SutonnyMJ; font-size:12px;">
+                                                : <?php  echo $rows->penalty_deduct;   ?>
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
                                     <tr>
                                         <td >অনুপস্থিত</td>
                                         <td  style="font-family: SutonnyMJ; font-size:12px;">
@@ -616,6 +624,14 @@
                                                 : <?php  echo $rows->adv_deduct;   ?>
                                         </td>
                                     </tr>
+                                    <?php if (!empty($rows->penalty_deduct) && $rows->penalty_deduct > 0) { ?>
+                                    <tr>
+                                        <td width="50%"> পেনাল্টি </td>
+                                        <td style="font-family: SutonnyMJ; font-size:12px;">
+                                                : <?php  echo $rows->penalty_deduct;   ?>
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
                                     <tr>
                                         <td >অনুপস্থিত</td>
                                         <td  style="font-family: SutonnyMJ; font-size:12px;">

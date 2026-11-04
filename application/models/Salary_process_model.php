@@ -387,6 +387,7 @@ class Salary_process_model extends CI_Model{
 					}
 
 					$advance_deduct = $this->advance_loan_deduction($emp_id, $salary_month);
+					$penalty_deduct = $this->penalty_deduction($emp_id, $salary_month);
 					//DEDUCTION
 
 					//****** deduct hour & amount **************************************************
@@ -418,7 +419,7 @@ class Salary_process_model extends CI_Model{
 					//OTHERS DEDUCTION
 					$others_deduct = 0;
 					$tax_deduct = 0;
-					$total_deduction = $advance_deduct + $abs_deduction + $others_deduct + $tax_deduct + $stamp;
+					$total_deduction = $advance_deduct + $penalty_deduct + $abs_deduction + $others_deduct + $tax_deduct + $stamp;
 
 					$data["abs_deduction"] 		= $abs_deduction;
 					$data["late_count"] 		= $late_count;
@@ -426,13 +427,14 @@ class Salary_process_model extends CI_Model{
 					$data["deduct_hour"] 		= $deduct_hour;
 					$data["deduct_amount"] 		= $deduct_amount;
 					$data["adv_deduct"] 		= $advance_deduct;
+					$data["penalty_deduct"] 	= $penalty_deduct;
 					$data["others_deduct"] 		= $others_deduct;
 					$data["tax_deduct"] 		= $tax_deduct;
 					$data["stamp"] 				= $stamp;
 					$data["total_deduct"] 		= $total_deduction;
 
 					//COMPLIENCE
-					$total_deduction_com = $advance_deduct + $abs_deduction_com + $others_deduct + $tax_deduct + $stamp ;//+ $deduct_amount;
+					$total_deduction_com = $advance_deduct + $penalty_deduct + $abs_deduction_com + $others_deduct + $tax_deduct + $stamp ;//+ $deduct_amount;
 
 					$data_com["abs_deduction"] 		= $abs_deduction_com;
 					$data_com["late_count"] 		= $late_count;
@@ -440,6 +442,7 @@ class Salary_process_model extends CI_Model{
 					$data_com["deduct_hour"] 		= 0;
 					$data_com["deduct_amount"] 		= 0;
 					$data_com["adv_deduct"] 		= $advance_deduct;
+					$data_com["penalty_deduct"] 	= $penalty_deduct;
 					$data_com["others_deduct"] 		= $others_deduct;
 					$data_com["tax_deduct"] 		= $tax_deduct;
 					$data_com["stamp"] 				= $stamp;
@@ -766,6 +769,21 @@ class Salary_process_model extends CI_Model{
 		$query = $this->db->get()->row();
 
 		return $query;
+	}
+
+	function penalty_deduction($emp_id, $salary_month)
+	{
+		$total_penalty = 0.00;
+		if ($this->db->table_exists('emp_penaltys')) {
+			$this->load->model('Penalty_model');
+			$total_penalty = $this->Penalty_model->get_palanty_deduction($emp_id, $salary_month);
+		}
+		return round((float)$total_penalty, 2);
+	}
+
+	function palanty_deduction($emp_id, $salary_month)
+	{
+		return $this->penalty_deduction($emp_id, $salary_month);
 	}
 
 	function advance_loan_deduction($emp_id, $salary_month)

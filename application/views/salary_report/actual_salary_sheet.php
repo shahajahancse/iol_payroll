@@ -65,6 +65,7 @@ $k = 0;
 	 $grand_total_food_allow		= 0;
 	 $grand_total_gross_salary		= 0;
 	 $grand_total_adv_deduct		= 0;
+	 $grand_total_penalty_deduct	= 0;
 	 $grand_total_att_bonus			= 0;
 	 $grand_total_late_deduction	= 0;
 	 $grand_total_hd_deduct_amount	= 0;
@@ -168,6 +169,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 -->	  <?php } ?> 
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>সর্বমোট টাকা</strong></div></td>
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>অগ্রীম কর্তন</strong></div></td>
+    <td rowspan="2" width="22" height="20px"><div align="center"><strong>পেনাল্টি কর্তন</strong></div></td>
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>রাজস্ব কর্তন</strong></div></td>
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>সর্বমোট প্রাপ্য</strong></div></td>
 	<td rowspan="2"  width="180"><div align="center"><strong>গ্রহীতার স্বাক্ষর</strong></div></td>
@@ -214,6 +216,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
    $total_food_allow		= 0;
    $total_gross_salary		= 0;
    $total_adv_deduct		= 0;
+   $total_penalty_deduct	= 0;
    $total_att_bonus			= 0;
    $total_hd_deduct_amount	= 0;
    $total_late_deduction	= 0;
@@ -450,6 +453,13 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo "<td>";
 		echo $adv_deduct;
 		echo "</td>";
+
+		$penalty_deduct 			= isset($value[$k]->penalty_deduct) ? $value[$k]->penalty_deduct : (isset($value[$k]->palanty_deduct) ? $value[$k]->palanty_deduct : 0);
+		$total_penalty_deduct 		= $total_penalty_deduct + $penalty_deduct;
+		$grand_total_penalty_deduct = $grand_total_penalty_deduct + $penalty_deduct;
+		echo "<td>";
+		echo $penalty_deduct;
+		echo "</td>";
 	
 		$stamp_deduct 				= $value[$k]->stamp;
 		// $stamp_deduct 				= 0;
@@ -466,10 +476,10 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 			// exit('hi ali');
 			$net_pay 				= $total_sum - $stamp_deduct ;
 		}else{
-			$net_pay 				= $total_sum - $stamp_deduct - $adv_deduct;
+			$net_pay 				= $total_sum - $stamp_deduct - $adv_deduct - $penalty_deduct;
 		}*/
 
-		$net_pay 				= $total_sum - $stamp_deduct - $adv_deduct;
+		$net_pay 				= $total_sum - $stamp_deduct - $adv_deduct - $penalty_deduct;
 		$total_net_pay 			= $total_net_pay + $net_pay;
 		$grand_total_net_pay 	= $grand_total_net_pay + $net_pay;
 			
@@ -507,6 +517,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
         <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_ot_eot_amount);?></strong></td>
         <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($in_total_sum);?></strong></td>
           <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_adv_deduct);?></strong></td>
+          <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_penalty_deduct);?></strong></td>
       
         <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_stamp_deduct);?></strong></td>
        
@@ -541,6 +552,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_ot_eot_amount);?></strong></td>
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_sum);?></strong></td>
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_adv_deduct);?></strong></td>
+            <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_penalty_deduct);?></strong></td>
         	<td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_stamp_deduct);?></strong></td>
 			<td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_net_pay);?></strong></td>
 			<td align="center" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_wages_with_stamp);?></strong></td>
@@ -548,7 +560,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
             </tr>
 			<?php } ?>
 			<tr>
-				<td colspan="37">
+				<td colspan="38">
 					<?php 
 					$siginfo['unit_id'] = $unit_id;
 					$this->load->view("authorised_signature", $siginfo);?>

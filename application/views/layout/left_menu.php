@@ -306,8 +306,8 @@
 
       <!-- Payroll -->
       <?php if(in_array(4,$acl)) { ?>
-      <li class="start <?= activate_class(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con']) ?>"> <a href="javascript:;"> <i class="fa fa-money"></i>
-        <span class="title">Payroll </span> <span class="selected"></span> <span class="arrow <?= arrow_open(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con']) ?>"></span> </a>
+      <li class="start <?= activate_class(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con', 'penalty_con', 'palanty_con']) ?>"> <a href="javascript:;"> <i class="fa fa-money"></i>
+        <span class="title">Payroll </span> <span class="selected"></span> <span class="arrow <?= arrow_open(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con', 'penalty_con', 'palanty_con']) ?>"></span> </a>
         <ul class="sub-menu">
           <?php if(in_array(31,$acl)) { ?>
             <li class="<?= activate_method('salary_process_form') ?>">
@@ -329,6 +329,14 @@
           <li class="<?= ($this->router->fetch_class() == 'advanced_salary_con') ? 'active' : '' ?>">
             <a href="<?=base_url('advanced_salary')?>" class="anchor_cls">
               <i class="fa fa-money text-warning"></i> Advanced Salary
+            </a>
+          </li>
+          <?php } ?>
+
+          <?php if(in_array(4,$acl) || $u_username === 'admin') { ?>
+          <li class="<?= ($this->router->fetch_class() == 'penalty_con' || $this->router->fetch_class() == 'palanty_con') ? 'active' : '' ?>">
+            <a href="<?=base_url('penalty')?>" class="anchor_cls">
+              <i class="fa fa-minus-circle text-danger"></i> Penalty
             </a>
           </li>
           <?php } ?>
@@ -677,4 +685,5 @@
   </div>
 </div>
 <!-- END SIDEBAR -->
+
 
