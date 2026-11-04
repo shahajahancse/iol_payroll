@@ -42,10 +42,13 @@ class Penalty_model extends CI_Model
     public function get_dashboard_summary($unit_id = null)
     {
         $this->db->select("
-            COUNT(*) as total_entries,
+            COUNT(*) as total_count,
             COALESCE(SUM(amount), 0) as total_amount,
+            COALESCE(SUM(CASE WHEN status = 'Approved' THEN 1 ELSE 0 END), 0) as approved_count,
             COALESCE(SUM(CASE WHEN status = 'Approved' THEN amount ELSE 0 END), 0) as approved_amount,
+            COALESCE(SUM(CASE WHEN status = 'Pending' THEN 1 ELSE 0 END), 0) as pending_count,
             COALESCE(SUM(CASE WHEN status = 'Pending' THEN amount ELSE 0 END), 0) as pending_amount,
+            COALESCE(SUM(CASE WHEN status = 'Cancelled' THEN 1 ELSE 0 END), 0) as cancelled_count,
             COALESCE(SUM(CASE WHEN status = 'Cancelled' THEN amount ELSE 0 END), 0) as cancelled_amount
         ");
         $this->db->from($this->table);
@@ -53,11 +56,14 @@ class Penalty_model extends CI_Model
             $this->db->where('unit_id', $unit_id);
         }
         $row = $this->db->get()->row();
-        return array(
-            'total_entries'    => (int)($row->total_entries ?? 0),
+        return (object) array(
+            'total_count'      => (int)($row->total_count ?? 0),
             'total_amount'     => (float)($row->total_amount ?? 0),
+            'approved_count'   => (int)($row->approved_count ?? 0),
             'approved_amount'  => (float)($row->approved_amount ?? 0),
+            'pending_count'    => (int)($row->pending_count ?? 0),
             'pending_amount'   => (float)($row->pending_amount ?? 0),
+            'cancelled_count'  => (int)($row->cancelled_count ?? 0),
             'cancelled_amount' => (float)($row->cancelled_amount ?? 0),
         );
     }

@@ -918,10 +918,11 @@ function renderTable(records, page, limit, total) {
 
         var createdDate = row.created_at ? row.created_at.substring(0, 10) : '-';
 
+        var empName = row.name_en || row.emp_name || '-';
         html += '<tr>' +
             '<td>' + (sl++) + '</td>' +
             '<td><strong>' + (row.emp_id || '') + '</strong></td>' +
-            '<td><strong>' + (row.name_en || '') + '</strong></td>' +
+            '<td><strong>' + empName + '</strong></td>' +
             '<td>' + (row.dept_name || '-') + '</td>' +
             '<td>' + (row.desig_name || '-') + '</td>' +
             '<td><strong>' + (row.salary_month || '') + '</strong></td>' +
