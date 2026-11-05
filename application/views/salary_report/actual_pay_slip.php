@@ -226,7 +226,7 @@
                                         &#2456;&#2472;&#2509;&#2463;&#2494; </td>
                                     <td width="75">
                                         <font style="font-family: SutonnyMJ; font-size:12px;">:
-                                            <?php echo $rows->ot_hour;   ?>
+                                            <?php echo ((float)$rows->ot_hour + (float)$rows->eot_hour); // Full OT ?>
                                         </font>
                                     </td>
                                 </tr>
@@ -291,6 +291,14 @@
                                                 : <?php  echo $rows->adv_deduct;   ?>
                                         </td>
                                     </tr>
+                                    <?php if (!empty($rows->penalty_deduct) && $rows->penalty_deduct > 0) { ?>
+                                    <tr>
+                                        <td width="50%"> পেনাল্টি </td>
+                                        <td style="font-family: SutonnyMJ; font-size:12px;">
+                                                : <?php  echo $rows->penalty_deduct;   ?>
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
                                     <tr>
                                         <td >অনুপস্থিত</td>
                                         <td  style="font-family: SutonnyMJ; font-size:12px;">
@@ -326,7 +334,7 @@
                                         <td></td>
                                         <td width="210" style="font-weight: bold; padding-left: 5px;">(ঘ) অতিরিক্ত কাজ :
                                             <span style="font-family: SutonnyMJ; font-size: 12px;">
-                                                <?php echo ($rows->ot_amount); ?>
+                                                <?php echo round((float)$rows->ot_amount + (float)$rows->eot_amount); ?>
                                             </span>
                                         </td>
                                     </tr>
@@ -350,7 +358,7 @@
                                         <td>:</td>
                                         <td width="78" style="padding-right: 9px;" align="right">
                                             <font style="font-family: SutonnyMJ; font-size:12px;">
-                                                <?php  echo $rows->net_pay;    ?>
+                                                <?php $full_ot_amt = (float)$rows->ot_amount + (float)$rows->eot_amount; $full_net = (float)$rows->gross_sal - (float)$rows->total_deduct + (float)$rows->att_bonus + $full_ot_amt + (!empty($rows->arrear_amount) ? (float)$rows->arrear_amount : 0); echo round($full_net); ?>
                                             </font>
                                         </td>
                                     </tr>
@@ -551,7 +559,7 @@
                                         &#2456;&#2472;&#2509;&#2463;&#2494; </td>
                                     <td width="75">
                                         <font style="font-family: SutonnyMJ; font-size:12px;">:
-                                            <?php echo $rows->ot_hour;   ?>
+                                            <?php echo ((float)$rows->ot_hour + (float)$rows->eot_hour); // Full OT ?>
                                         </font>
                                     </td>
                                 </tr>
@@ -616,6 +624,14 @@
                                                 : <?php  echo $rows->adv_deduct;   ?>
                                         </td>
                                     </tr>
+                                    <?php if (!empty($rows->penalty_deduct) && $rows->penalty_deduct > 0) { ?>
+                                    <tr>
+                                        <td width="50%"> পেনাল্টি </td>
+                                        <td style="font-family: SutonnyMJ; font-size:12px;">
+                                                : <?php  echo $rows->penalty_deduct;   ?>
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
                                     <tr>
                                         <td >অনুপস্থিত</td>
                                         <td  style="font-family: SutonnyMJ; font-size:12px;">
@@ -651,7 +667,7 @@
                                         <td></td>
                                         <td width="210" style="font-weight: bold; padding-left: 5px;">(ঘ) অতিরিক্ত কাজ :
                                             <span style="font-family: SutonnyMJ; font-size: 12px;">
-                                                <?php echo $rows->ot_amount; ?>
+                                                <?php echo round((float)$rows->ot_amount + (float)$rows->eot_amount); ?>
                                             </span>
                                         </td>
                                     </tr>
@@ -675,7 +691,7 @@
                                         <td>:</td>
                                         <td width="78" style="padding-right: 9px;" align="right">
                                             <font style="font-family: SutonnyMJ; font-size:12px;">
-                                                <?php  echo $rows->net_pay;  ?>
+                                                <?php $full_ot_amt = (float)$rows->ot_amount + (float)$rows->eot_amount; $full_net = (float)$rows->gross_sal - (float)$rows->total_deduct + (float)$rows->att_bonus + $full_ot_amt + (!empty($rows->arrear_amount) ? (float)$rows->arrear_amount : 0); echo round($full_net); ?>
                                             </font>
                                         </td>
                                     </tr>

@@ -7680,34 +7680,32 @@ class Grid_model extends CI_Model{
 			//For Bank trans_allow
 			$all_data["bank_sum_trans_allow"][]=$this->get_sum_column($column_name,$emp_id_bank,$salary_month);
 
-			//For Cash ot_hour
-			$column_name = "ot_hour" ;
-			$all_data["cash_sum_ot_hour"][]=$this->get_sum_column($column_name,$emp_id_cash,$salary_month);
+			//For Cash ot_hour (Full OT = ot_hour + eot_hour)
+			$cash_ot_h = (float)$this->get_sum_column("ot_hour", $emp_id_cash, $salary_month);
+			$cash_eot_h = (float)$this->get_sum_column("eot_hour", $emp_id_cash, $salary_month);
+			$all_data["cash_sum_ot_hour"][] = $cash_ot_h + $cash_eot_h; // Full OT included
 
 			//For Bank ot_hour
-			$all_data["bank_sum_ot_hour"][]=$this->get_sum_column($column_name,$emp_id_bank,$salary_month);
+			$bank_ot_h = (float)$this->get_sum_column("ot_hour", $emp_id_bank, $salary_month);
+			$bank_eot_h = (float)$this->get_sum_column("eot_hour", $emp_id_bank, $salary_month);
+			$all_data["bank_sum_ot_hour"][] = $bank_ot_h + $bank_eot_h;
 
-			//For Cash ot_amount
-			$column_name = "ot_amount" ;
-			$all_data["cash_sum_ot_amount"][]=$this->get_sum_column($column_name,$emp_id_cash,$salary_month);
+			//For Cash ot_amount (Full OT Amount = ot_amount + eot_amount)
+			$cash_ot_amt = (float)$this->get_sum_column("ot_amount", $emp_id_cash, $salary_month);
+			$cash_eot_amt = (float)$this->get_sum_column("eot_amount", $emp_id_cash, $salary_month);
+			$all_data["cash_sum_ot_amount"][] = $cash_ot_amt + $cash_eot_amt;
+			$all_data["cash_sum_eot_amount"][] = $cash_eot_amt;
 
 			//For Bank ot_amount
-			$all_data["bank_sum_ot_amount"][]=$this->get_sum_column($column_name,$emp_id_bank,$salary_month);
+			$bank_ot_amt = (float)$this->get_sum_column("ot_amount", $emp_id_bank, $salary_month);
+			$bank_eot_amt = (float)$this->get_sum_column("eot_amount", $emp_id_bank, $salary_month);
+			$all_data["bank_sum_ot_amount"][] = $bank_ot_amt + $bank_eot_amt;
+			$all_data["bank_sum_eot_amount"][] = $bank_eot_amt;
 
-			//For Cash ot_amount
-			$column_name = "ot_hour" ;
-			$cash_sum_w_h_ot_hour = $this->get_sum_column($column_name,$emp_id_cash,$salary_month);
-			$all_data["cash_sum_w_h_ot_hour"][] = $cash_sum_w_h_ot_hour;
-
-			$bank_sum_w_h_ot_hour = $this->get_sum_column($column_name,$emp_id_bank,$salary_month);
-			$all_data["bank_sum_w_h_ot_hour"][] = $bank_sum_w_h_ot_hour;
-
-			$column_name = "ot_amount" ;
-			$cash_sum_w_h_ot_amt = $this->get_sum_column($column_name,$emp_id_cash,$salary_month);
-			$all_data["cash_sum_w_h_ot_amt"][] = $cash_sum_w_h_ot_amt;
-
-			$bank_sum_w_h_ot_amt = $this->get_sum_column($column_name,$emp_id_bank,$salary_month);
-			$all_data["bank_sum_w_h_ot_amt"][] = $bank_sum_w_h_ot_amt;
+			$all_data["cash_sum_w_h_ot_hour"][] = 0;
+			$all_data["bank_sum_w_h_ot_hour"][] = 0;
+			$all_data["cash_sum_w_h_ot_amt"][] = 0;
+			$all_data["bank_sum_w_h_ot_amt"][] = 0;
 
 
 			//For Cash att_bonus
@@ -7746,11 +7744,12 @@ class Grid_model extends CI_Model{
 			if($att_bonus_man_cash ==''){$att_bonus_man_cash = 0;}
 
 			$all_data["att_bonus_man_total"][]= $att_bonus_man_bank + $att_bonus_man_cash;
-			//For Cash net_pay
-			$column_name = "net_pay";
-			$all_data["cash_sum_net_pay"][]=$this->get_sum_column($column_name,$emp_id_cash,$salary_month);
+			//For Cash net_pay (including full OT amount)
+			$cash_np = (float)$this->get_sum_column("net_pay", $emp_id_cash, $salary_month);
+			$all_data["cash_sum_net_pay"][] = $cash_np + $cash_eot_amt;
 			//For Bank net_pay
-			$all_data["bank_sum_net_pay"][]=$this->get_sum_column($column_name,$emp_id_bank,$salary_month);
+			$bank_np = (float)$this->get_sum_column("net_pay", $emp_id_bank, $salary_month);
+			$all_data["bank_sum_net_pay"][] = $bank_np + $bank_eot_amt;
 
 			/*//For Cash 	holiday_allowance
 			$column_name = "holiday_allowance" ;
@@ -11961,7 +11960,9 @@ function grid_emp_job_application($grid_emp_id){
 
 			if ($outtime_check != "False") {
 				$out_date = $manual_date;
-				if ($intime_check != "False" && strtotime($manual_outtime) < strtotime($manual_intime)) {
+				if (strtotime($manual_outtime) < strtotime('08:00:01')) {
+					$out_date = date('Y-m-d', strtotime($manual_date . ' + 1 days'));
+				} elseif ($intime_check != "False" && strtotime($manual_outtime) < strtotime($manual_intime)) {
 					$out_date = date('Y-m-d', strtotime($manual_date . ' + 1 days'));
 				}
 				$date_time_out = "$out_date $manual_outtime";

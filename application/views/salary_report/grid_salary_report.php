@@ -212,6 +212,7 @@
                             <?php if(in_array(195,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_monthly_stop_sheet()">Stop Salary Sheet</button>
                             <?php } ?>
+                            <button class="btn input-sm sbtn" style="background:#dc2626 !important;" onclick="grid_penalty_sheet()">Penalty Sheet</button>
                             <?php /*
                             <?php if(in_array(196,$acl)) { ?>
                             <button class="btn input-sm sbtn" onclick="grid_salary_sheet_with_eot_bank()">Mobile Banking Report</button>
@@ -302,6 +303,18 @@
 
     <script src="<?php echo base_url(); ?>js/earn_leave.js" type="text/javascript"></script>
     <script src="<?php echo base_url(); ?>js/grid_content.js" type="text/javascript"></script>
+    <script>
+        function grid_penalty_sheet() {
+            var salary_month = $("#salary_month").val();
+            var unit_id = $("#unit_id").val();
+            if (!salary_month) {
+                alert("Please select Salary Month");
+                return false;
+            }
+            var url = hostname + "penalty/penalty_sheet?salary_month=" + encodeURIComponent(salary_month) + "&unit_id=" + encodeURIComponent(unit_id);
+            window.open(url, "_blank");
+        }
+    </script>
     <script>
         $(document).ready(function() {
             $("#searchi").on("keyup", function() {
@@ -433,3 +446,4 @@
             grid_emp_list();
         });
     </script>
+
