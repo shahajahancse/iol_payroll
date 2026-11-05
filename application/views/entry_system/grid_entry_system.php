@@ -1,4 +1,4 @@
-<script src="<?php echo base_url(); ?>js/grid_content.js" type="text/javascript"></script>
+<script src="<?php echo base_url(); ?>js/grid_content.js?v=<?php echo time(); ?>" type="text/javascript"></script>
     <style>
         #fileDiv #removeTr td {
             padding: 5px 10px !important;
@@ -29,24 +29,19 @@
             <!-- start default panel (dept/section/line/desig) -->
             <div class="row tablebox" style="display: block;">
                 <!-- <h3 style="font-weight: 600;"><?= $title ?></h3> -->
+                <input type="hidden" name="unit_id" id="unit_id" value="1">
+                <!-- shift -->
                 <div class="col-md-6">
                     <div class="form-group" style="margin-bottom: 10px !important;">
-                        <label>Unit <span style="color: red;">*</span> </label>
-                        <select name="unit_id" id="unit_id" class="form-control input-sm">
-                            <option value="">Select Unit</option>
-                            <?php
-                            foreach ($dept as $row) {
-                                if ($row['unit_id'] == $user_data->unit_name) {
-                                    $select_data = "selected";
-                                } else {
-                                    if ($user_data->level != "All") {
-                                        continue;
-                                    }
-                                }
-                                echo '<option ' . $select_data . '  value="' . $row['unit_id'] . '">' . $row['unit_name'] .
-                                    '</option>';
-                            }
-                            ?>
+                        <label>Shift </label>
+                        <select class="form-control input-sm shift" id='shift' name='shift' onChange="grid_emp_list()">
+                            <option value=''>Select Shift</option>
+                            <?php 
+                                $shifts = $this->db->get('pr_emp_shift');
+                                if (!empty($shifts)) {
+                                    foreach ($shifts->result() as $key => $val) { ?>
+                                        <option value='<?= $val->id ?>'><?= $val->shift_name ?></option>
+                                <?php } } ?>
                         </select>
                     </div>
                 </div>
@@ -55,13 +50,12 @@
                     <div class="form-group" style="margin-bottom: 10px !important;">
                         <label>Department </label>
                         <select class="form-control input-sm dept" id='dept' name='dept'>
-                            <?php if (!empty($user_data->unit_name)) {
-                                $dpts = $this->db->where('unit_id', $user_data->unit_name)->get('emp_depertment'); ?>
+                            <?php 
+                                $dpts = $this->db->where('unit_id', 1)->get('emp_depertment'); ?>
                                 <option value=''>Select Department</option>
                                 <?php foreach ($dpts->result() as $key => $val) { ?>
                                     <option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
-                            <?php }
-                            } ?>
+                            <?php } ?>
                         </select>
                     </div>
                 </div>
@@ -74,15 +68,8 @@
                         </select>
                     </div>
                 </div>
-                <!-- line -->
-                <div class="col-md-6">
-                    <div class="form-group" style="margin-bottom: 10px !important;">
-                        <label class="control-label">Line </label>
-                        <select class="form-control input-sm line" id='line' name='line'>
-                            <option value=''></option>
-                        </select>
-                    </div>
-                </div>
+                <!-- line (hidden) -->
+                <input type="hidden" class="line" id="line" name="line" value="0">
                 <!-- Designation -->
                 <div class="col-md-6">
                     <div class="form-group" style="margin-bottom: 10px !important;">
@@ -148,6 +135,8 @@
                                     <div class="input-group">
                                         <span class="input-group-btn" style="display: flex; gap: 15px;">
                                             <input class="btn btn-primary" onclick='present_entry(event)' type="button" value='Save' />
+                                            <input class="btn btn-info" onclick="log_sheet(event)" type="button" value="Attn. Sheet">
+                                            <input class="btn btn-danger" onclick="log_delete(event)" type="button" value="Log Delete">
                                             <?php
                                                 $user_id = $this->session->userdata('data')->id;
                                                 $acl = check_acl_list($user_id);
@@ -171,6 +160,7 @@
             </div>
 
             <!-- Stop Salary -->
+            <!--
             <?php
                 $user_id = $this->session->userdata('data')->id;
                 $acl = check_acl_list($user_id);
@@ -201,6 +191,7 @@
                     </div>
                 </div>
             <?php } ?>
+            -->
             <style>
                 .hints {
                     color: #436D19;
@@ -209,6 +200,7 @@
             </style>
 
             <!-- alert entry form   -->
+            <!--
             <div id="alert_system" class="row nav_head" style="margin-top: 13px;">
                 <div class="col-md-12" style="display: flex;gap: 11px;flex-direction: column;">
                     <div class="col-md-12" style="box-shadow: 0px 0px 2px 2px #bdbdbd;border-radius: 4px;padding-top: 10px; padding-bottom: 10px;">
@@ -238,6 +230,7 @@
                     </div>
                 </div>
             </div>
+            -->
         </div>
 
         <!-- employee list for right side -->
@@ -529,35 +522,60 @@
                 }
             }
         }
-    </script>
-    <script>
+
+        function loading_open() {
+            $('#loader').css('display', 'block');
+        }
+        function loading_close() {
+            $('#loader').css('display', 'none');
+        }
+
+        function get_checked_value(checkboxes) {
+            if (!checkboxes) return "";
+            var vals = [];
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) {
+                    vals.push(checkboxes[i].value);
+                }
+            }
+            return vals.join(",");
+        }
+
         function present_entry(e) {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
             var checkboxes = document.getElementsByName('emp_id[]');
-            var sql = get_checked_value(checkboxes);
-            let emp_id = sql.split(",");
-            if (emp_id == '') {
+            var sql = typeof get_checked_value === 'function' ? get_checked_value(checkboxes) : '';
+            if (!sql || sql == '') {
                 showMessage('error', 'Please select employee Id');
                 return false;
             }
-            unit_id = document.getElementById('unit_id').value;
-            if (unit_id == '') {
+            var emp_id = sql;
+
+            var unit_id_el = document.getElementById('unit_id');
+            var unit_id = unit_id_el ? unit_id_el.value : '1';
+            if (!unit_id) {
                 showMessage('error', 'Please select Unit');
                 return false;
             }
 
-            first_date = document.getElementById('first_date').value;
-            if (first_date == '') {
+            var first_date_el = document.getElementById('first_date');
+            var first_date = first_date_el ? first_date_el.value : '';
+            if (!first_date) {
                 showMessage('error', 'Please select First date');
                 return false;
             }
-            second_date = document.getElementById('second_date').value;
-            if (second_date == '') {
+            var second_date_el = document.getElementById('second_date');
+            var second_date = second_date_el ? second_date_el.value : '';
+            if (!second_date) {
                 showMessage('error', 'Please select Second date');
                 return false;
             }
-            in_time = document.getElementById('in_time').value;
-            out_time = document.getElementById('out_time').value;
+
+            var in_time_el = document.getElementById('in_time');
+            var in_time = in_time_el ? in_time_el.value : '';
+            var out_time_el = document.getElementById('out_time');
+            var out_time = out_time_el ? out_time_el.value : '';
+
             // Check if BOTH are empty
             if (in_time === '' && out_time === '') {
                 showMessage('error', 'Please select at least In Time or Out Time');
@@ -565,7 +583,7 @@
             }
 
             var formdata = $("#present_entry_form").serialize();
-            var data = "unit_id=" + unit_id + "&first_date=" + first_date + "&second_date=" + second_date + "&in_time=" + in_time + "&out_time=" + out_time + "&emp_id=" + emp_id + "&" + formdata; // Merge the data
+            var data = "unit_id=" + encodeURIComponent(unit_id) + "&first_date=" + encodeURIComponent(first_date) + "&second_date=" + encodeURIComponent(second_date) + "&in_time=" + encodeURIComponent(in_time) + "&out_time=" + encodeURIComponent(out_time) + "&emp_id=" + encodeURIComponent(emp_id) + "&" + formdata;
 
             $.ajax({
                 type: "POST",
@@ -587,34 +605,40 @@
         }
 
         function present_absent(e) {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
             var checkboxes = document.getElementsByName('emp_id[]');
-            var sql = get_checked_value(checkboxes);
-            let emp_id = sql.split(",");
-            if (emp_id == '') {
+            var sql = typeof get_checked_value === 'function' ? get_checked_value(checkboxes) : '';
+            if (!sql || sql == '') {
                 showMessage('error', 'Please select employee Id');
                 return false;
             }
-            unit_id = document.getElementById('unit_id').value;
-            if (unit_id == '') {
+            var emp_id = sql;
+
+            var unit_id_el = document.getElementById('unit_id');
+            var unit_id = unit_id_el ? unit_id_el.value : '1';
+            if (!unit_id) {
                 showMessage('error', 'Please select Unit');
                 return false;
             }
 
-            first_date = document.getElementById('first_date').value;
-            if (first_date == '') {
+            var first_date_el = document.getElementById('first_date');
+            var first_date = first_date_el ? first_date_el.value : '';
+            if (!first_date) {
                 showMessage('error', 'Please select First date');
                 return false;
             }
-            second_date = document.getElementById('second_date').value;
-            if (second_date == '') {
+            var second_date_el = document.getElementById('second_date');
+            var second_date = second_date_el ? second_date_el.value : '';
+            if (!second_date) {
                 showMessage('error', 'Please select Second date');
                 return false;
             }
-            time = document.getElementById('in_time').value;
+
+            var time_el = document.getElementById('in_time') || document.getElementById('time');
+            var time = time_el ? time_el.value : '';
 
             var formdata = $("#present_entry_form").serialize();
-            var data = "unit_id=" + unit_id + "&first_date=" + first_date + "&second_date=" + second_date + "&time=" + time + "&emp_id=" + emp_id + "&" + formdata; // Merge the data
+            var data = "unit_id=" + encodeURIComponent(unit_id) + "&first_date=" + encodeURIComponent(first_date) + "&second_date=" + encodeURIComponent(second_date) + "&time=" + encodeURIComponent(time) + "&emp_id=" + encodeURIComponent(emp_id) + "&" + formdata;
 
             $.ajax({
                 type: "POST",
@@ -636,34 +660,40 @@
         }
 
         function log_delete(e) {
-            e.preventDefault();
+            if (e && e.preventDefault) e.preventDefault();
             var checkboxes = document.getElementsByName('emp_id[]');
-            var sql = get_checked_value(checkboxes);
-            let emp_id = sql.split(",");
-            if (emp_id == '') {
+            var sql = typeof get_checked_value === 'function' ? get_checked_value(checkboxes) : '';
+            if (!sql || sql == '') {
                 showMessage('error', 'Please select employee Id');
                 return false;
             }
-            unit_id = document.getElementById('unit_id').value;
-            if (unit_id == '') {
+            var emp_id = sql;
+
+            var unit_id_el = document.getElementById('unit_id');
+            var unit_id = unit_id_el ? unit_id_el.value : '1';
+            if (!unit_id) {
                 showMessage('error', 'Please select Unit');
                 return false;
             }
 
-            first_date = document.getElementById('first_date').value;
-            if (first_date == '') {
+            var first_date_el = document.getElementById('first_date');
+            var first_date = first_date_el ? first_date_el.value : '';
+            if (!first_date) {
                 showMessage('error', 'Please select First date');
                 return false;
             }
-            second_date = document.getElementById('second_date').value;
-            if (second_date == '') {
+            var second_date_el = document.getElementById('second_date');
+            var second_date = second_date_el ? second_date_el.value : '';
+            if (!second_date) {
                 showMessage('error', 'Please select Second date');
                 return false;
             }
-            time = document.getElementById('time').value;
+
+            var time_el = document.getElementById('time') || document.getElementById('in_time');
+            var time = time_el ? time_el.value : '';
 
             var formdata = $("#present_entry_form").serialize();
-            var data = "unit_id=" + unit_id + "&first_date=" + first_date + "&second_date=" + second_date + "&time=" + time + "&emp_id=" + emp_id + "&" + formdata; // Merge the data
+            var data = "unit_id=" + encodeURIComponent(unit_id) + "&first_date=" + encodeURIComponent(first_date) + "&second_date=" + encodeURIComponent(second_date) + "&time=" + encodeURIComponent(time) + "&emp_id=" + encodeURIComponent(emp_id) + "&" + formdata;
 
             loading_open();
             $.ajax({
@@ -682,7 +712,7 @@
                     loading_close();
                     showMessage('error', 'Shift Log Not Deleted');
                 }
-            })
+            });
         }
     </script>
 
@@ -705,6 +735,7 @@
             var desig = document.getElementById('desig').value;
             var status = document.getElementById('status').value;
             var searchi = document.getElementById('searchi').value;
+            var shift = document.getElementById('shift') ? document.getElementById('shift').value : '';
 
             url = hostname + "common/grid_emp_list/" + unit + "/" + dept + "/" + section + "/" + line + "/" + desig;
             $.ajax({
@@ -712,7 +743,8 @@
                 type: 'GET',
                 data: {
                     "status": status,
-                    "searchi": searchi
+                    "searchi": searchi,
+                    "shift": shift
                 },
                 contentType: "application/json",
                 dataType: "json",
@@ -741,68 +773,51 @@
             });
         }
 
+        function load_designations() {
+            $.ajax({
+                type: "POST",
+                url: hostname + "common/ajax_designation_by_unit/1",
+                dataType: "json",
+                success: function(func_data) {
+                    if (typeof func_data === 'string') {
+                        try { func_data = JSON.parse(func_data); } catch(e) {}
+                    }
+                    $('.desig').empty().append("<option value=''>-- Select Designation --</option>");
+                    $.each(func_data, function(id, name) {
+                        var opt = $('<option />');
+                        opt.val(id);
+                        opt.text(name);
+                        $('.desig').append(opt);
+                    });
+                }
+            });
+        }
+
         $(document).ready(function() {
             // select all item or deselect all item
             $("#select_all").click(function() {
                 $('input:checkbox').not(this).prop('checked', this.checked);
             });
 
-            //Designation dropdown
-            $('#line').change(function() {
-                $('.desig').addClass('form-control input-sm');
-                $(".desig > option").remove();
-                var id = $('#line').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_designation_by_line_id/" + id,
-                    success: function(func_data) {
-                        $('.desig').append("<option value=''>-- Select Designation --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.desig').append(opt);
-                        });
-                    }
-                });
-                // load employee
-                grid_emp_list();
-            });
-
-            //Line dropdown
+            // Load designation by unit on section change
             $('#section').change(function() {
-                $('.line').addClass('form-control input-sm');
-                $(".line > option").remove();
-                $(".desig > option").remove();
-                var id = $('#section').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_line_by_sec_id/" + id,
-                    success: function(func_data) {
-                        $('.line').append("<option value=''>-- Select Line --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.line').append(opt);
-                        });
-                    }
-                });
-                // load employee
+                load_designations();
                 grid_emp_list();
             });
 
-            //section dropdown
+            // section dropdown
             $('#dept').change(function() {
                 $('.section').addClass('form-control input-sm');
                 $(".section > option").remove();
-                $(".line > option").remove();
-                $(".desig > option").remove();
                 var id = $('#dept').val();
                 $.ajax({
                     type: "POST",
                     url: hostname + "common/ajax_section_by_dept_id/" + id,
+                    dataType: "json",
                     success: function(func_data) {
+                        if (typeof func_data === 'string') {
+                            try { func_data = JSON.parse(func_data); } catch(e) {}
+                        }
                         $('.section').append("<option value=''>-- Select Section --</option>");
                         $.each(func_data, function(id, name) {
                             var opt = $('<option />');
@@ -812,34 +827,13 @@
                         });
                     }
                 });
-                // load employee
+                load_designations();
                 grid_emp_list();
             });
 
-            //Department dropdown
-            $('#unit_id').change(function() {
-                $('.dept').addClass('form-control input-sm');
-                $(".dept > option").remove();
-                $(".section > option").remove();
-                $(".line > option").remove();
-                $(".desig > option").remove();
-                var id = $('#unit_id').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_department_by_unit_id/" + id,
-                    success: function(func_data) {
-                        $('.dept').append("<option value=''>-- Select Department --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.dept').append(opt);
-                        });
-                    }
-                });
-                // load employee
-                grid_emp_list();
-            });
+            // Initial load of designations and employee list
+            load_designations();
+            grid_emp_list();
         });
     </script>
 

@@ -84,15 +84,6 @@ for($i = 0 ; $i < $emp_id_count; $i++)
 				echo "<td >";
 				echo $values["sec_name"][$i];
 				echo "</td>";
-			echo "</tr>";
-			
-			echo "<tr>";
-				echo "<td>";
-				echo "<strong>Line :</strong>";
-				echo "</td>";
-				echo "<td>";
-				echo $values["line_name"][$i];
-				echo "</td>";
 				echo "<td>";
 				echo "<strong>Desig :</strong>";
 				echo "</td>";
@@ -206,7 +197,9 @@ for($i = 0 ; $i < $emp_id_count; $i++)
 		}	
 
 			if (empty($values[$emp_id]["in_time"][$k]) && empty($values[$emp_id]["out_time"][$k])) {
-				$values[$emp_id]["att_status"][$k] = "A";
+				if ($values[$emp_id]["present_status"][$k] != 'P' && $values[$emp_id]["present_status"][$k] != 'W' && $values[$emp_id]["present_status"][$k] != 'H' && $values[$emp_id]["present_status"][$k] != 'L') {
+					$values[$emp_id]["att_status"][$k] = "A";
+				}
 			}
 
 		?> 
@@ -254,7 +247,7 @@ for($i = 0 ; $i < $emp_id_count; $i++)
 		</tr>
 		<?php
 		/////////////////////New Add////////
-		if($values[$emp_id]["att_status"][$k] == "P")
+		if($values[$emp_id]["att_status"][$k] == "P" || $values[$emp_id]["att_status"][$k] == "OD")
 		{
 			$present_count++;
 		}

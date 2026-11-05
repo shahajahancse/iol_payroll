@@ -10,41 +10,143 @@ class Job_card_model extends CI_Model{
 	// start 9pm eot job card
 	function leave_per_emp($sStartDate, $sEndDate, $emp_id)
 	{
-		$this->db->select("start_date");
-		$this->db->where("start_date BETWEEN '$sStartDate' AND '$sEndDate'");
+		$this->db->select("leave_type, leave_start, leave_end, start_date");
+		$this->db->where("((leave_start <= '$sEndDate' AND leave_end >= '$sStartDate') OR (start_date BETWEEN '$sStartDate' AND '$sEndDate'))");
 		$this->db->where("emp_id = '$emp_id'");
+		$this->db->where("(status != 'rejected' AND status != 'returned' OR status IS NULL)");
 		$query = $this->db->get("pr_leave_trans");
 		$leave = array();
 		foreach ($query->result() as $row)
 		{
-			$leave[] = $row->start_date;
+			$start = !empty($row->leave_start) && $row->leave_start != '0000-00-00' ? $row->leave_start : $row->start_date;
+			$end   = !empty($row->leave_end) && $row->leave_end != '0000-00-00' ? $row->leave_end : $start;
+			$cur   = max(strtotime($sStartDate), strtotime($start));
+			$end_t = min(strtotime($sEndDate), strtotime($end));
+			while ($cur <= $end_t) {
+				$d = date('Y-m-d', $cur);
+				$leave[$d] = strtoupper(trim($row->leave_type));
+				$cur = strtotime('+1 day', $cur);
+			}
+		}
+		if ($this->db->table_exists('pr_maternity_entry_histry')) {
+			$ml_query = $this->db->where('emp_id', $emp_id)
+				->where("start_date <= '$sEndDate' AND end_date >= '$sStartDate'")
+				->get('pr_maternity_entry_histry');
+			foreach ($ml_query->result() as $mrow) {
+				$cur   = max(strtotime($sStartDate), strtotime($mrow->start_date));
+				$end_t = min(strtotime($sEndDate), strtotime($mrow->end_date));
+				while ($cur <= $end_t) {
+					$d = date('Y-m-d', $cur);
+					$leave[$d] = 'ML';
+					$cur = strtotime('+1 day', $cur);
+				}
+			}
 		}
 		return $leave;
 	}
 
+	function get_single_day_leaves($sStartDate, $sEndDate, $emp_id)
+	{
+		$this->db->select("leave_type, leave_start, leave_end, start_date, total_leave");
+		$this->db->where("((leave_start <= '$sEndDate' AND leave_end >= '$sStartDate') OR (start_date BETWEEN '$sStartDate' AND '$sEndDate'))");
+		$this->db->where("emp_id", $emp_id);
+		$this->db->where_in("LOWER(leave_type)", array('sl', 'cl'));
+		$this->db->where("(status = 'approved' OR status IS NULL)");
+		$query = $this->db->get("pr_leave_trans");
+		$single_leaves = array();
+		foreach ($query->result() as $row)
+		{
+			$start = !empty($row->leave_start) ? $row->leave_start : $row->start_date;
+			$end   = !empty($row->leave_end) ? $row->leave_end : $start;
+			$total = !empty($row->total_leave) ? $row->total_leave : 1;
+			if ($total == 1 || $start == $end) {
+				$single_leaves[$start] = strtoupper(trim($row->leave_type));
+			}
+		}
+		return $single_leaves;
+	}
+
+	function check_single_day_sl_cl($date, $emp_id)
+	{
+		$this->db->select("leave_type, leave_start, leave_end, start_date, total_leave");
+		$this->db->where("((leave_start <= '$date' AND leave_end >= '$date') OR start_date = '$date')");
+		$this->db->where("emp_id", $emp_id);
+		$this->db->where_in("LOWER(leave_type)", array('sl', 'cl'));
+		$this->db->where("(status = 'approved' OR status IS NULL)");
+		$query = $this->db->get("pr_leave_trans");
+		if ($query->num_rows() > 0) {
+			foreach ($query->result() as $row) {
+				$start = !empty($row->leave_start) ? $row->leave_start : $row->start_date;
+				$end   = !empty($row->leave_end) ? $row->leave_end : $start;
+				$total = !empty($row->total_leave) ? $row->total_leave : 1;
+				if ($total == 1 || $start == $end) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	function check_weekend($sStartDate, $sEndDate, $emp_id){
+		// Get employee's assigned weekend from pr_emp_com_info
+		$com_emp = $this->db->select("weekend")->where("emp_id", $emp_id)->get("pr_emp_com_info")->row();
+		$com_weekend_day = (!empty($com_emp) && !empty($com_emp->weekend)) ? strtolower(trim($com_emp->weekend)) : 'friday';
+
+		$weekend = array();
+
+		// Add replacement / manual work off from attn_work_off, but ignore Friday if employee weekend is NOT Friday
 		$this->db->select("work_off_date");
 		$this->db->where("work_off_date BETWEEN '$sStartDate' AND '$sEndDate'");
 		$this->db->where("emp_id = '$emp_id'");
 		$query = $this->db->get("attn_work_off");
-		$weekend = array();
 		foreach ($query->result() as $row){
+			$row_day = strtolower(date('l', strtotime($row->work_off_date)));
+			if ($row_day === 'friday' && $com_weekend_day !== 'friday') {
+				continue;
+			}
 			$weekend[] = $row->work_off_date;
 		}
+
+		// Add all days matching employee's designated weekend
+		$cur = strtotime($sStartDate);
+		$end = strtotime($sEndDate);
+		while ($cur <= $end) {
+			$cur_date = date('Y-m-d', $cur);
+			$cur_day = strtolower(date('l', $cur));
+			if ($cur_day === $com_weekend_day && !in_array($cur_date, $weekend)) {
+				$weekend[] = $cur_date;
+			}
+			$cur = strtotime('+1 day', $cur);
+		}
+
 		return $weekend;
 	}
 
 	function holiday_calculation($sStartDate, $sEndDate,$emp_id){
-		$this->db->select("work_off_date as start_date");
-		$this->db->where("work_off_date BETWEEN '$sStartDate' AND '$sEndDate'");
+		$this->db->select("from_date, to_date");
+		$this->db->where("from_date <= '$sEndDate' AND to_date >= '$sStartDate'");
 		$this->db->where("emp_id", $emp_id);
 		$query = $this->db->get("attn_holyday_off");
 		$holiday = array();
 		foreach ($query->result() as $row)
 		{
-			$holiday[] = $row->start_date;
+			$start = max(strtotime($sStartDate), strtotime($row->from_date));
+			$end   = min(strtotime($sEndDate), strtotime($row->to_date));
+			while ($start <= $end) {
+				$holiday[] = date('Y-m-d', $start);
+				$start = strtotime('+1 day', $start);
+			}
 		}
-		// dd($this->db->last_query());
+
+		$gov = $this->db->select('date as start_date')
+			->where("date BETWEEN '$sStartDate' AND '$sEndDate'")
+			->get('pr_gov_holiday');
+		foreach ($gov->result() as $r) {
+			if (!in_array($r->start_date, $holiday)) {
+				$holiday[] = $r->start_date;
+			}
+		}
+
 		return $holiday;
 	}
 
@@ -91,13 +193,22 @@ class Job_card_model extends CI_Model{
    function get_leave_type($shift_log_date,$emp_id){	
    		$this->db->select('leave_type');
 		$this->db->where('emp_id', $emp_id);
-	    $this->db->where("leave_start <=", $shift_log_date);
-        $this->db->where("leave_end >=", $shift_log_date);
+	    $this->db->where("((leave_start <= '$shift_log_date' AND leave_end >= '$shift_log_date') OR start_date = '$shift_log_date')");
+		$this->db->where("(status != 'rejected' AND status != 'returned' OR status IS NULL)");
 		$query = $this->db->get('pr_leave_trans');
 		$row = $query->row();
-		// dd($this->db->last_query());
-		$leave_type = $row->leave_type;
-		return $leave_type;
+		if (!empty($row) && !empty($row->leave_type)) {
+			return strtoupper(trim($row->leave_type));
+		}
+		if ($this->db->table_exists('pr_maternity_entry_histry')) {
+			$ml = $this->db->where('emp_id', $emp_id)
+				->where("start_date <= '$shift_log_date' AND end_date >= '$shift_log_date'")
+				->get('pr_maternity_entry_histry')->row();
+			if (!empty($ml)) {
+				return 'ML';
+			}
+		}
+		return '';
    }
 
 	function get_join_date($emp_id, $sStartDate, $sEndDate)
@@ -224,11 +335,222 @@ class Job_card_model extends CI_Model{
 			$end_date = $grid_seconddate;
 		}
 
-		$this->db->select();
-		$this->db->where("emp_id",$emp_id);
-		$this->db->where("shift_log_date BETWEEN '$start_date' AND '$end_date' ");
-		$this->db->order_by("shift_log_date");
-		$query = $this->db->get("pr_emp_shift_log")->result();
+		$this->db->select('
+						pr_emp_shift_log.*,
+						COALESCE(NULLIF(reg.remarks, ""), NULLIF(pr_emp_shift_log.remarks, "")) as remarks,
+						GREATEST(COALESCE(pr_emp_shift_log.is_waived, 0), COALESCE(reg.waive_deduction, 0)) as is_waived,
+						reg.reason_type as reg_reason,
+						reg.remarks as reg_remarks
+					');
+		$this->db->from('pr_emp_shift_log');
+		$this->db->join('pr_attn_regularization reg', 'reg.emp_id = pr_emp_shift_log.emp_id AND reg.att_date = pr_emp_shift_log.shift_log_date', 'left');
+		$this->db->where("pr_emp_shift_log.emp_id", $emp_id);
+		$this->db->where("pr_emp_shift_log.shift_log_date BETWEEN '$start_date' AND '$end_date' ");
+		$this->db->order_by("pr_emp_shift_log.shift_log_date");
+		$query = $this->db->get()->result();
+
+		// Sanitize remarks so only user-entered text is shown (no reason_type prefix, no waived text)
+		foreach ($query as $row) {
+			$clean = '';
+			if (!empty($row->reg_remarks)) {
+				$clean = trim($row->reg_remarks);
+			} elseif (!empty($row->remarks)) {
+				$clean = trim($row->remarks);
+				if (!empty($row->reg_reason) && stripos($clean, trim($row->reg_reason) . ':') === 0) {
+					$clean = trim(substr($clean, strlen(trim($row->reg_reason)) + 1));
+				} elseif (strpos($clean, ': ') !== false) {
+					$parts = explode(': ', $clean, 2);
+					if (!empty($parts[1])) {
+						$clean = trim($parts[1]);
+					}
+				}
+			}
+			if (!empty($clean)) {
+				$clean = preg_replace('/\s*\(waived\)\s*$/i', '', $clean);
+			}
+			$row->remarks = $clean;
+		}
+
+		$leaves = $this->leave_per_emp($start_date, $end_date, $emp_id);
+		$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+		foreach ($query as $row) {
+			$is_leave = false;
+			$leave_type = '';
+			if (isset($leaves[$row->shift_log_date])) {
+				$is_leave = true;
+				$leave_type = $leaves[$row->shift_log_date];
+			} elseif (in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+				$is_leave = true;
+				$leave_type = strtoupper(trim($row->present_status));
+				if ($leave_type == 'L') {
+					$lt = $this->get_leave_type($row->shift_log_date, $emp_id);
+					$leave_type = !empty($lt) ? $lt : 'L';
+				}
+			}
+
+			if ($is_leave) {
+				$row->present_status = $leave_type;
+				$row->in_time        = '00:00:00';
+				$row->out_time       = '00:00:00';
+				$row->ot             = 0;
+				$row->eot            = 0;
+				$row->com_ot         = 0;
+				$row->com_eot        = 0;
+				$row->late_status    = 0;
+				$row->deduction_hour = 0;
+			}
+		}
+
+		// Synchronize Outside Duty (OD) - approved or pending
+		$od_map = array();
+		if ($this->db->table_exists('pr_emp_od_dates')) {
+			$od_rows = $this->db->select('od_date')
+				->where('emp_id', $emp_id)
+				->where_in('status', array('approved', 'pending'))
+				->where("od_date >=", $start_date)
+				->where("od_date <=", $end_date)
+				->get('pr_emp_od_dates')
+				->result();
+			if (!empty($od_rows)) {
+				foreach ($od_rows as $odr) {
+					$od_map[$odr->od_date] = true;
+				}
+			}
+		}
+		$data['od_map'] = $od_map;
+
+		$existing_dates = array();
+		foreach ($query as $row) {
+			$existing_dates[$row->shift_log_date] = true;
+			if (isset($od_map[$row->shift_log_date]) || $row->present_status == 'OD') {
+				if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+					$row->present_status = 'OD';
+					$row->in_time        = '00:00:00';
+					$row->out_time       = '00:00:00';
+					$row->ot             = 0;
+					$row->com_ot         = 0;
+					$row->eot            = 0;
+					$row->com_eot        = 0;
+					$row->late_status    = 0;
+					$row->deduction_hour = 0;
+				}
+			}
+		}
+
+		$has_new_od = false;
+		foreach ($od_map as $od_date => $val) {
+			if (!isset($existing_dates[$od_date])) {
+				$dummy = new stdClass();
+				$dummy->in_time        = '00:00:00';
+				$dummy->out_time       = '00:00:00';
+				$dummy->shift_log_date = $od_date;
+				$dummy->schedule_id    = 1;
+				$dummy->ot             = 0;
+				$dummy->eot            = 0;
+				$dummy->com_ot         = 0;
+				$dummy->com_eot        = 0;
+				$dummy->ot_eot_4pm     = 0;
+				$dummy->ot_eot_12am    = 0;
+				$dummy->false_ot_4     = 0;
+				$dummy->false_ot_12    = 0;
+				$dummy->false_ot_all   = 0;
+				$dummy->late_status    = 0;
+				$dummy->present_status = 'OD';
+				$dummy->deduction_hour = 0;
+				$dummy->modify_eot     = 0;
+				$dummy->remarks        = '';
+				$dummy->is_waived      = 0;
+				$dummy->reg_reason     = null;
+				$dummy->reg_remarks    = null;
+				$dummy->shift_name     = 'Day';
+				$query[] = $dummy;
+				$has_new_od = true;
+			}
+		}
+		if ($has_new_od) {
+			usort($query, function($a, $b) {
+				return strcmp($a->shift_log_date, $b->shift_log_date);
+			});
+		}
+
+
+
+		// Missing out punch rule: If employee did not punch out (out_time is empty or 00:00:00), OT must be 0
+		foreach ($query as $row) {
+			if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+				$row->ot         = 0;
+				$row->eot        = 0;
+				$row->com_ot     = 0;
+				$row->com_eot    = 0;
+				$row->tot        = 0;
+				$row->modify_eot = 0;
+			}
+		}
+
+		// Synchronize Admin-approved OT from pr_daily_ot_approval into Job Card OT column
+		if ($this->db->table_exists('pr_daily_ot_approval')) {
+			$approvals = $this->db->select('ot_date, in_time, out_time, approved_ot_hours, status')
+				->where('emp_id', $emp_id)
+				->where("ot_date >=", $start_date)
+				->where("ot_date <=", $end_date)
+				->get('pr_daily_ot_approval')
+				->result();
+
+			$approval_map = array();
+			if (!empty($approvals)) {
+				foreach ($approvals as $app) {
+					$approval_map[$app->ot_date] = $app;
+				}
+			}
+
+			foreach ($query as $row) {
+				if (isset($approval_map[$row->shift_log_date])) {
+					$app = $approval_map[$row->shift_log_date];
+					if ($app->status === 'approved') {
+						$app_ot = (float)$app->approved_ot_hours;
+						$row->ot      = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
+						$row->eot     = 0;
+						$row->tot     = $row->ot;
+						$row->com_ot  = $row->ot;
+						$row->com_eot = 0;
+						// If shift log was marked Absent or missing punches but approval has punches, restore them
+						if (($row->in_time == '00:00:00' || empty($row->in_time)) && !empty($app->in_time) && $app->in_time != '00:00:00') {
+							$row->in_time = $app->in_time;
+						}
+						if (($row->out_time == '00:00:00' || empty($row->out_time)) && !empty($app->out_time) && $app->out_time != '00:00:00') {
+							$row->out_time = $app->out_time;
+						}
+						if (strtoupper(trim($row->present_status)) == 'A' || empty($row->present_status)) {
+							$row->present_status = 'P';
+						}
+					} else {
+						// Pending or Rejected: only Admin-approved OT is shown in Job Card
+						$row->ot      = 0;
+						$row->eot     = 0;
+						$row->tot     = 0;
+						$row->com_ot  = 0;
+						$row->com_eot = 0;
+					}
+				} else {
+					// If OT occurred in shift log but NOT approved in pr_daily_ot_approval, OT must be 0
+					$row->ot      = 0;
+					$row->eot     = 0;
+					$row->tot     = 0;
+					$row->com_ot  = 0;
+					$row->com_eot = 0;
+				}
+
+				// If out punch or in punch is missing / 00:00:00, OT must strictly be 0
+				if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+					$row->ot         = 0;
+					$row->eot        = 0;
+					$row->com_ot     = 0;
+					$row->com_eot    = 0;
+					$row->tot        = 0;
+					$row->modify_eot = 0;
+				}
+			}
+		}
 
 		$data['emp_data'] = $query;
 
@@ -290,17 +612,226 @@ class Job_card_model extends CI_Model{
 						pr_emp_shift_log.present_status,
 						pr_emp_shift_log.deduction_hour,
 						pr_emp_shift_log.modify_eot,
+						COALESCE(NULLIF(reg.remarks, ""), NULLIF(pr_emp_shift_log.remarks, "")) as remarks,
+						GREATEST(COALESCE(pr_emp_shift_log.is_waived, 0), COALESCE(reg.waive_deduction, 0)) as is_waived,
+						reg.reason_type as reg_reason,
+						reg.remarks as reg_remarks,
 						pr_emp_shift_schedule.sh_type as shift_name
 					');
 
 		$this->db->from('pr_emp_shift_log');
-		$this->db->from('pr_emp_shift_schedule');
+		$this->db->join('pr_emp_shift_schedule', 'pr_emp_shift_schedule.id = pr_emp_shift_log.schedule_id', 'left');
+		$this->db->join('pr_attn_regularization reg', 'reg.emp_id = pr_emp_shift_log.emp_id AND reg.att_date = pr_emp_shift_log.shift_log_date', 'left');
 		$this->db->where('pr_emp_shift_log.emp_id', $emp_id);
-		$this->db->where('pr_emp_shift_schedule.id = pr_emp_shift_log.schedule_id');
 		$this->db->where("pr_emp_shift_log.shift_log_date >=", $start_date);
 		$this->db->where("pr_emp_shift_log.shift_log_date <=", $end_date);
 		$this->db->order_by("pr_emp_shift_log.shift_log_date");
 		$query = $this->db->get()->result();
+
+		// Sanitize remarks so only user-entered text is shown (no reason_type prefix, no waived text)
+		foreach ($query as $row) {
+			$clean = '';
+			if (!empty($row->reg_remarks)) {
+				$clean = trim($row->reg_remarks);
+			} elseif (!empty($row->remarks)) {
+				$clean = trim($row->remarks);
+				if (!empty($row->reg_reason) && stripos($clean, trim($row->reg_reason) . ':') === 0) {
+					$clean = trim(substr($clean, strlen(trim($row->reg_reason)) + 1));
+				} elseif (strpos($clean, ': ') !== false) {
+					$parts = explode(': ', $clean, 2);
+					if (!empty($parts[1])) {
+						$clean = trim($parts[1]);
+					}
+				}
+			}
+			if (!empty($clean)) {
+				$clean = preg_replace('/\s*\(waived\)\s*$/i', '', $clean);
+			}
+			$row->remarks = $clean;
+		}
+
+		$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+		foreach ($query as $row) {
+			$is_leave = false;
+			$leave_type = '';
+
+			if (isset($data['leave'][$row->shift_log_date])) {
+				$is_leave = true;
+				$leave_type = $data['leave'][$row->shift_log_date];
+			} elseif (in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+				$is_leave = true;
+				$leave_type = strtoupper(trim($row->present_status));
+				if ($leave_type == 'L') {
+					$lt = $this->get_leave_type($row->shift_log_date, $emp_id);
+					$leave_type = !empty($lt) ? $lt : 'L';
+				}
+			}
+
+			if ($is_leave) {
+				$row->present_status = $leave_type;
+				$row->in_time        = '00:00:00';
+				$row->out_time       = '00:00:00';
+				$row->ot             = 0;
+				$row->eot            = 0;
+				$row->com_ot         = 0;
+				$row->com_eot        = 0;
+				$row->ot_eot_4pm     = 0;
+				$row->ot_eot_12am    = 0;
+				$row->late_status    = 0;
+				$row->deduction_hour = 0;
+			}
+		}
+
+		// Synchronize Outside Duty (OD) - approved or pending
+		$od_map = array();
+		if ($this->db->table_exists('pr_emp_od_dates')) {
+			$od_rows = $this->db->select('od_date')
+				->where('emp_id', $emp_id)
+				->where_in('status', array('approved', 'pending'))
+				->where("od_date >=", $start_date)
+				->where("od_date <=", $end_date)
+				->get('pr_emp_od_dates')
+				->result();
+			if (!empty($od_rows)) {
+				foreach ($od_rows as $odr) {
+					$od_map[$odr->od_date] = true;
+				}
+			}
+		}
+		$data['od_map'] = $od_map;
+
+		$existing_dates = array();
+		foreach ($query as $row) {
+			$existing_dates[$row->shift_log_date] = true;
+			if (isset($od_map[$row->shift_log_date]) || $row->present_status == 'OD') {
+				if (!in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
+					$row->present_status = 'OD';
+					$row->in_time        = '00:00:00';
+					$row->out_time       = '00:00:00';
+					$row->ot             = 0;
+					$row->com_ot         = 0;
+					$row->eot            = 0;
+					$row->com_eot        = 0;
+					$row->late_status    = 0;
+					$row->deduction_hour = 0;
+				}
+			}
+		}
+
+		$has_new_od = false;
+		foreach ($od_map as $od_date => $val) {
+			if (!isset($existing_dates[$od_date])) {
+				$dummy = new stdClass();
+				$dummy->in_time        = '00:00:00';
+				$dummy->out_time       = '00:00:00';
+				$dummy->shift_log_date = $od_date;
+				$dummy->schedule_id    = 1;
+				$dummy->ot             = 0;
+				$dummy->eot            = 0;
+				$dummy->com_ot         = 0;
+				$dummy->com_eot        = 0;
+				$dummy->ot_eot_4pm     = 0;
+				$dummy->ot_eot_12am    = 0;
+				$dummy->false_ot_4     = 0;
+				$dummy->false_ot_12    = 0;
+				$dummy->false_ot_all   = 0;
+				$dummy->late_status    = 0;
+				$dummy->present_status = 'OD';
+				$dummy->deduction_hour = 0;
+				$dummy->modify_eot     = 0;
+				$dummy->remarks        = '';
+				$dummy->is_waived      = 0;
+				$dummy->reg_reason     = null;
+				$dummy->reg_remarks    = null;
+				$dummy->shift_name     = 'Day';
+				$query[] = $dummy;
+				$has_new_od = true;
+			}
+		}
+		if ($has_new_od) {
+			usort($query, function($a, $b) {
+				return strcmp($a->shift_log_date, $b->shift_log_date);
+			});
+		}
+
+
+
+		// Missing out punch rule: If employee did not punch out (out_time is empty or 00:00:00), OT must be 0
+		foreach ($query as $row) {
+			if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+				$row->ot         = 0;
+				$row->eot        = 0;
+				$row->com_ot     = 0;
+				$row->com_eot    = 0;
+				$row->tot        = 0;
+				$row->modify_eot = 0;
+			}
+		}
+
+		// Synchronize Admin-approved OT from pr_daily_ot_approval into Job Card OT column
+		if ($this->db->table_exists('pr_daily_ot_approval')) {
+			$approvals = $this->db->select('ot_date, in_time, out_time, approved_ot_hours, status')
+				->where('emp_id', $emp_id)
+				->where("ot_date >=", $start_date)
+				->where("ot_date <=", $end_date)
+				->get('pr_daily_ot_approval')
+				->result();
+
+			$approval_map = array();
+			if (!empty($approvals)) {
+				foreach ($approvals as $app) {
+					$approval_map[$app->ot_date] = $app;
+				}
+			}
+
+			foreach ($query as $row) {
+				if (isset($approval_map[$row->shift_log_date])) {
+					$app = $approval_map[$row->shift_log_date];
+					if ($app->status === 'approved') {
+						$app_ot = (float)$app->approved_ot_hours;
+						$row->ot      = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
+						$row->eot     = 0;
+						$row->tot     = $row->ot;
+						$row->com_ot  = $row->ot;
+						$row->com_eot = 0;
+						// If shift log was marked Absent or missing punches but approval has punches, restore them
+						if (($row->in_time == '00:00:00' || empty($row->in_time)) && !empty($app->in_time) && $app->in_time != '00:00:00') {
+							$row->in_time = $app->in_time;
+						}
+						if (($row->out_time == '00:00:00' || empty($row->out_time)) && !empty($app->out_time) && $app->out_time != '00:00:00') {
+							$row->out_time = $app->out_time;
+						}
+						if (strtoupper(trim($row->present_status)) == 'A' || empty($row->present_status)) {
+							$row->present_status = 'P';
+						}
+					} else {
+						// Pending or Rejected: only Admin-approved OT is shown in Job Card
+						$row->ot      = 0;
+						$row->eot     = 0;
+						$row->tot     = 0;
+						$row->com_ot  = 0;
+						$row->com_eot = 0;
+					}
+				} else {
+					// If OT occurred in shift log but NOT approved in pr_daily_ot_approval, OT must be 0
+					$row->ot      = 0;
+					$row->eot     = 0;
+					$row->tot     = 0;
+					$row->com_ot  = 0;
+					$row->com_eot = 0;
+				}
+
+				// If out punch or in punch is missing / 00:00:00, OT must strictly be 0
+				if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+					$row->ot         = 0;
+					$row->eot        = 0;
+					$row->com_ot     = 0;
+					$row->com_eot    = 0;
+					$row->tot        = 0;
+					$row->modify_eot = 0;
+				}
+			}
+		}
 
 		$data['emp_data'] = $query;
 		// dd($data);

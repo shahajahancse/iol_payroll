@@ -29,37 +29,18 @@
                 <a class="btn btn-primary" href="<?= base_url(); ?>setting_con/line_wise_atn_desig"><<< Back </a>
             </div>
 
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Unit <span style="color: red;">*</span> </label>
-                    <select name="unit_id" id="unit_id" class="form-control input-sm">
-                        <option value="">Select Unit</option>
-                        <?php
-							foreach ($dept as $row) {
-								if($row['unit_id'] == $user_data->unit_name){
-								$select_data="selected";
-								}else{
-									continue;
-								}
-								echo '<option '.$select_data.'  value="'.$row['unit_id'].'">'.$row['unit_name'].
-								'</option>';
-							}
-						?>
-                    </select>
-                </div>
-            </div>
+            <input type="hidden" name="unit_id" id="unit_id" value="1">
             <!-- department -->
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Department </label>
                     <select class="form-control input-sm dept" id='dept' name='dept'>
-                        <?php if (!empty($user_data->unit_name)) {
-										$dpts = $this->db->where('unit_id', $user_data->unit_name)->get('emp_depertment'); ?>
+                        <?php 
+                            $dpts = $this->db->where('unit_id', 1)->get('emp_depertment'); ?>
                         <option value=''>Select Department</option>
                         <?php foreach ($dpts->result() as $key => $val) { ?>
                         <option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
-                        <?php } } ?>
-                        <option value=''>Select Department</option>
+                        <?php } ?>
                     </select>
                 </div>
             </div>
@@ -72,15 +53,8 @@
                     </select>
                 </div>
             </div>
-            <!-- line -->
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="control-label">Line </label>
-                    <select class="form-control input-sm line" id='line' name='line'>
-                        <option value=''></option>
-                    </select>
-                </div>
-            </div>
+            <!-- line (hidden) -->
+            <input type="hidden" class="line" id="line" name="line" value="0">
             <!-- Designation -->
             <div class="col-md-6">
                 <div class="form-group">
@@ -258,22 +232,20 @@
             grid_emp_list();
         });
 
-        //Line dropdown
+        // Load designation on section change
         $('#section').change(function() {
-            $('.line').addClass('form-control input-sm');
-            $(".line > option").remove();
+            $('.desig').addClass('form-control input-sm');
             $(".desig > option").remove();
-            var id = $('#section').val();
             $.ajax({
                 type: "POST",
-                url: hostname + "common/ajax_line_by_sec_id/" + id,
+                url: hostname + "common/ajax_designation_by_unit/1",
                 success: function(func_data) {
-                    $('.line').append("<option value=''>-- Select Line --</option>");
+                    $('.desig').append("<option value=''>-- Select Designation --</option>");
                     $.each(func_data, function(id, name) {
                         var opt = $('<option />');
                         opt.val(id);
                         opt.text(name);
-                        $('.line').append(opt);
+                        $('.desig').append(opt);
                     });
                 }
             });
@@ -281,11 +253,10 @@
             grid_emp_list();
         });
 
-        //Section dropdown
+        // Section dropdown on dept change
         $('#dept').change(function() {
             $('.section').addClass('form-control input-sm');
             $(".section > option").remove();
-            $(".line > option").remove();
             $(".desig > option").remove();
             var id = $('#dept').val();
             $.ajax({
@@ -301,34 +272,38 @@
                     });
                 }
             });
-            // load employee
-            grid_emp_list();
-        });
-
-        //Department dropdown
-        $('#unit_id').change(function() {
-            $('.dept').addClass('form-control input-sm');
-            $(".dept > option").remove();
-            $(".section > option").remove();
-            $(".line > option").remove();
-            $(".desig > option").remove();
-            var id = $('#unit_id').val();
             $.ajax({
                 type: "POST",
-                url: hostname + "common/ajax_department_by_unit_id/" + id,
+                url: hostname + "common/ajax_designation_by_unit/1",
                 success: function(func_data) {
-                    $('.dept').append("<option value=''>-- Select Department --</option>");
+                    $('.desig').append("<option value=''>-- Select Designation --</option>");
                     $.each(func_data, function(id, name) {
                         var opt = $('<option />');
                         opt.val(id);
                         opt.text(name);
-                        $('.dept').append(opt);
+                        $('.desig').append(opt);
                     });
                 }
             });
             // load employee
             grid_emp_list();
         });
+
+        // Initial load of designations and employee list
+        $.ajax({
+            type: "POST",
+            url: hostname + "common/ajax_designation_by_unit/1",
+            success: function(func_data) {
+                $('.desig').append("<option value=''>-- Select Designation --</option>");
+                $.each(func_data, function(id, name) {
+                    var opt = $('<option />');
+                    opt.val(id);
+                    opt.text(name);
+                    $('.desig').append(opt);
+                });
+            }
+        });
+        grid_emp_list();
     });
 </script>
 

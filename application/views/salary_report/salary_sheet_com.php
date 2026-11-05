@@ -80,6 +80,7 @@ $k = 0;
 	 $grand_total_tax_deduct		= 0;
 	 $grand_total_wages_with_stamp	= 0;
 	 $grand_total_sum				= 0;
+	 $grand_total_arrear_amount		= 0;
 
 for ( $counter = 1; $counter <= $page; $counter ++){
 ?>
@@ -144,7 +145,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
     <td rowspan="2"  width="15" height="20px"><div align="center"><strong>নং</strong></div></td>
     <td rowspan="2" width="25" height="20px"><div align="center"><strong>কার্ড নং</strong></div></td>
     <td rowspan="2" colspan="6" width="94" height="20px"><div align="center"><strong>নাম, পদবী, যোগদান, গ্রেড</strong></div></td>
-	<td rowspan="2" width="50" height="20px"><div align="center"><strong>লাইন</strong></div></td>
+	<td rowspan="2" width="50" height="20px"><div align="center"><strong>সেকশন</strong></div></td>
     <td rowspan="2" width="20" height="20px"> <div align="center"><strong>মূল বেতন</strong></div></td>
     <td rowspan="2" width="17" height="20px"><div align="center"><strong>বাড়ী ভাড়া</strong></div></td>
     <td rowspan="2" width="15" height="20px"><div align="center"><strong>চিকিৎসা ভাতা</strong></div></td>
@@ -226,6 +227,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
    $total_wages_with_stamp	= 0;
    $total_sum				= 0;
    $in_total_sum			= 0;
+   $total_arrear_amount		= 0;
 //    dd($value);
 
 	for($p=0; $p<=$per_page_row;$p++)
@@ -255,6 +257,9 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo '<br>';
 		echo "Grade: ";print_r ($value[$k]->gr_name);
 		echo '<br>';
+		if (!empty($value[$k]->arrear_amount) && $value[$k]->arrear_amount > 0) {
+			echo "<span style='font-size:10px; font-weight:bold; color:#0c74bf;'>বকেয়া: " . number_format($value[$k]->arrear_amount) . "</span><br>";
+		}
 		if($grid_status == 4)
 		{
 			$resign_date = $this->grid_model->get_resign_date_by_empid($value[$k]->emp_id);
@@ -266,7 +271,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo "</td>"; 
 			
 		echo "<td style='font-family:arial; font-size:10px;'>";
-		echo  $value[$k]->line_name_en;
+		echo  $value[$k]->sec_name_en;
 		echo "</td>";
 			
 		$basic_salary 				= $value[$k]->basic_sal;
@@ -390,7 +395,11 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo $ot_amount;
 		echo "</td>";
 	
-		$total_sum =  $net_wages + $att_bonus + $ot_amount; 
+		$arrear_amount 				= isset($value[$k]->arrear_amount) ? (float)$value[$k]->arrear_amount : 0;
+		$total_arrear_amount 		= $total_arrear_amount + $arrear_amount;
+		$grand_total_arrear_amount 	= $grand_total_arrear_amount + $arrear_amount;
+
+		$total_sum =  $net_wages + $att_bonus + $ot_amount + $arrear_amount; 
 		$in_total_sum = $in_total_sum  + $total_sum;
 		$grand_total_sum = $grand_total_sum + $total_sum;
 		echo "<td>";

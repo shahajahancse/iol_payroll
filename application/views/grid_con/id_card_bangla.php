@@ -117,16 +117,6 @@
 
     <div class="box" style="line-height:<?php echo  $unit_id == 1 ? "25px":''?>">
       <p class="box-top mt-2" style="font-family:the times roman;font-size:15px;text-align: center;margin-bottom:5px">
-        <?php
-          if($unit_id == 1){
-            // echo " Document Code : AJFL/HRAC(HR)/03/021 ";
-            // echo " Document Code : AJFL/HRAC(HR)/03/021 ";
-          }else if($unit_id == 2){
-            echo "Document Code : LSAL/HR/03/174";
-          }else if($unit_id == 4){
-            echo "Document Code : HGL/HRD/HR/03/051";
-          }
-        ?>
       </p>
       <?php
         if($unit_id == 1){

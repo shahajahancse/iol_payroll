@@ -122,9 +122,12 @@ if ( ! function_exists('check_acl_list'))
 	function check_acl_list($user_id, $acl_level = NULL)
 	{
 		$CI =& get_instance();
-		$CI->db->select("acl_id");
-		$CI->db->where('username_id',$user_id);
-		$query = $CI->db->get('member_acl_level')->result_array();
+		$CI->db->select("member_acl_level.acl_id");
+		$CI->db->from('member_acl_level');
+		$CI->db->join('member_acl_list', 'member_acl_list.id = member_acl_level.acl_id', 'inner');
+		$CI->db->where('member_acl_level.username_id', $user_id);
+		$CI->db->where('member_acl_list.status', 1);
+		$query = $CI->db->get()->result_array();
 
 	 	$data = array();
 		array_walk($query, function($entry) use (&$data) {

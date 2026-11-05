@@ -25,6 +25,7 @@ class Setting_con extends CI_Controller {
 		if ($this->session->userdata('logged_in') == false) {
             redirect("authentication");
         }
+		$this->db->where('status', 1);
 		$this->db->order_by('id', 'desc');
 		$this->data['data'] = $this->db->get('member_acl_list')->result();
         $this->data['username'] = $this->data['user_data']->id_number;
@@ -48,7 +49,7 @@ class Setting_con extends CI_Controller {
 	}
 
 	function acl_access_add(){
-		if ($this->db->insert('member_acl_list', array('acl_name' => $this->input->post('acl_name'), 'type' => $this->input->post('type')))) {
+		if ($this->db->insert('member_acl_list', array('acl_name' => $this->input->post('acl_name'), 'type' => $this->input->post('type'), 'status' => 1))) {
 			$this->session->set_flashdata('success', 'ACL Added Successfully');
 		}else{
 			$this->session->set_flashdata('failuer', 'ACL Added Failed');
@@ -96,23 +97,8 @@ class Setting_con extends CI_Controller {
         if ($this->session->userdata('logged_in') == false) {
             redirect("authentication");
         }
-		$id = $this->data['username'] = $this->data['user_data']->id;
-		$this->db->order_by('id', 'desc');
-		$this->db->where_in('type', [1,2,5]);
-		$this->data['access_list'] = $this->db->get('member_acl_list')->result();
-
-		$this->db->where('username_id', $id);
-		$level_list = $this->db->get('member_acl_level')->result();
-		$level_array = [];
-		foreach ($level_list as $key => $value) {
-			$level_array[] = $value->acl_id;
-		}
-		$this->data['level_array'] = $level_array;
-		$this->data['user_id'] = $id;
-
 		$this->data['users'] = $this->get_member();
-		// dd($this->data);
-        $this->data['title'] = 'User Access HRM';
+        $this->data['title'] = 'Left Menu Access';
         $this->data['username'] = $this->data['user_data']->id_number;
 		$this->data['subview'] = 'settings/left_menu_acl';
         $this->load->view('layout/template', $this->data);
@@ -189,7 +175,7 @@ class Setting_con extends CI_Controller {
 
 		$this->data['users'] = $this->get_member();
 		// dd($this->data['users']);
-        $this->data['title'] = 'User Access HRM';
+        $this->data['title'] = 'User Access Payroll';
         $this->data['username'] = $this->data['user_data']->id_number;
 		$this->data['subview'] = 'settings/user_acl_pr';
         $this->load->view('layout/template', $this->data);
@@ -208,7 +194,8 @@ class Setting_con extends CI_Controller {
 		$id = $this->input->post('id');
 		$type = $this->input->post('type');
 
-		$this->db->order_by('id', 'desc');
+		$this->db->where('status', 1);
+		$this->db->order_by('id', 'asc');
 		if ($type == 1) {
 			$this->db->where_in('type', [1,2,5]);
 		} else {
@@ -224,20 +211,33 @@ class Setting_con extends CI_Controller {
 		}
 		$this->data['level_array'] = $level_array;
 		$this->data['user_id'] = $id;
+		$this->data['type'] = $type;
 		echo $this->load->view('settings/chackbox_user_acl_hrm', $this->data, true);
 	}
 
 	public function check_level(){
 		$id = $this->input->post('id');
 		$user_id = $this->input->post('user_id');
+		$status = $this->input->post('status');
+
 		$this->db->where('username_id', $user_id);
 		$this->db->where('acl_id', $id);
 		$check = $this->db->get('member_acl_level')->num_rows();
-		if ($check > 0) {
-			$this->db->delete('member_acl_level', array('username_id' => $user_id, 'acl_id' => $id));
-		}else{
-			$this->db->insert('member_acl_level', array('username_id' => $user_id, 'acl_id' => $id));
+
+		if ($status !== null && $status !== '') {
+			if ($status == 1 && $check == 0) {
+				$this->db->insert('member_acl_level', array('username_id' => $user_id, 'acl_id' => $id));
+			} elseif ($status == 0 && $check > 0) {
+				$this->db->delete('member_acl_level', array('username_id' => $user_id, 'acl_id' => $id));
+			}
+		} else {
+			if ($check > 0) {
+				$this->db->delete('member_acl_level', array('username_id' => $user_id, 'acl_id' => $id));
+			} else {
+				$this->db->insert('member_acl_level', array('username_id' => $user_id, 'acl_id' => $id));
+			}
 		}
+		echo 'success';
 	}
 
 	public function report_setting(){
@@ -552,8 +552,20 @@ class Setting_con extends CI_Controller {
 			)
 		);
 
-		// Password optional in edit
-		if ($this->input->post('password')) {
+		$password_input = (string) $this->input->post('password');
+		$password_info = password_get_info($member->password);
+		$is_already_hashed = ($password_info['algo'] !== 0);
+
+		// If a new password is typed, or if existing password was not hashed and password was provided
+		$is_password_entered = false;
+		if (trim($password_input) !== '') {
+			if (!$is_already_hashed || $password_input !== $member->password) {
+				$is_password_entered = true;
+			}
+		}
+
+		// Password optional in edit, but if changing password, require at least 6 characters
+		if ($is_password_entered) {
 			$this->form_validation->set_rules(
 				'password',
 				'Password',
@@ -578,10 +590,10 @@ class Setting_con extends CI_Controller {
 				'status'    => $this->input->post('status', TRUE)
 			);
 
-			// Update password only if entered
-			if ($this->input->post('password')) {
+			// Update password hash if a new password was entered
+			if ($is_password_entered) {
 				$update_data['password'] = password_hash(
-					$this->input->post('password'),
+					$password_input,
 					PASSWORD_DEFAULT
 				);
 			}
@@ -633,7 +645,7 @@ class Setting_con extends CI_Controller {
         $this->db->join('pr_units', 'pr_units.unit_id = pr_emp_com_info.unit_id');
         $this->db->join('emp_line_num', 'emp_line_num.id = pr_emp_com_info.emp_line_id');
         $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_emp_com_info.emp_id', 'left');
-        $this->db->where('pr_emp_com_info.attn_sum_line_id IS NOT NULL');
+        $this->db->where('pr_emp_com_info.emp_line_id IS NOT NULL');
         $this->db->where('pr_emp_com_info.unit_id', $_SESSION['data']->unit_name);
         $this->data['pr_line'] = $this->db->get()->result_array();
 		// dd();
@@ -668,14 +680,14 @@ class Setting_con extends CI_Controller {
 		$emp_id = $_POST['spl'];
 
 		$this->db->where('emp_id', $emp_id);
-		$this->db->update('pr_emp_com_info', array('attn_sum_line_id' => $line_id));
+		$this->db->update('pr_emp_com_info', array('emp_line_id' => $line_id));
 		echo '1';
 	}
 
     function line_delete($id)
     {
         $this->db->where('emp_id', $id);
-        $this->db->update('pr_emp_com_info', array('attn_sum_line_id' =>null));
+        $this->db->update('pr_emp_com_info', array('emp_line_id' =>null));
         $this->session->set_flashdata('success', 'Record Deleted successfully!');
 		redirect(base_url('setting_con/line_wise_atn_desig'));
     }

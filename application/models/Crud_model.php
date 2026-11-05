@@ -694,8 +694,8 @@ class Crud_model extends CI_Model{
      function salgrd_add($fromArray){
 
         $comData = array(
-            'gr_name' => $fromArray['gr_name'],
-            'salary'  => $fromArray['salary'],
+            'gr_name'   => $fromArray['gr_name'],
+            'gr_salary' => $fromArray['salary'],
         );
         // print_r($comData);exit('obaydullah');
         $this->db->insert('pr_grade',$comData);
@@ -706,8 +706,8 @@ class Crud_model extends CI_Model{
         {
              $formArray = array();
 
-             $formArray['gr_name'] = $this->input->post('gr_name');
-             $formArray['salary'] = $this->input->post('salary');
+             $formArray['gr_name']   = $this->input->post('gr_name');
+             $formArray['gr_salary'] = $this->input->post('salary');
 
              $this->db->where('gr_id',$salgrdId);
              $this->db->update('pr_grade',$formArray);
@@ -781,7 +781,7 @@ class Crud_model extends CI_Model{
         $formArray['tiffin_break2'] = $this->input->post('tiffin_break2');
         $formArray['tiffin_minute2'] = $this->input->post('tiffin_minute2');
         $formArray['random_minute'] = $this->input->post('random_minute');
-        $formArray['of_day'] = json_encode($this->input->post('of_day'));
+        // $formArray['of_day'] = json_encode($this->input->post('of_day'));
         
         $this->db->where('id',$shiftscheduleId);
         $this->db->update('pr_emp_shift_schedule',$formArray);

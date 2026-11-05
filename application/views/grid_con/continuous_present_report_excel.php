@@ -52,7 +52,7 @@
 				<th style="padding:5px">Emp ID</th>
 				<th style="padding:5px">Name</th>
 				<th style="padding:5px">Designation</th>
-				<th style="padding:5px"> Line</th>
+				<th style="padding:5px"> Section</th>
 				<th style="padding:5px"> Emp Join Date</th>
 				<th style="padding:5px">Total <?php echo $status; ?></th>
 			</tr>
@@ -65,7 +65,7 @@
 						<td style="padding:2px 5px"> <?= $row["emp_id"] ?> </td>
 						<td style="padding:2px 5px"> <?= $row["name_en"] ?> </td>
 						<td style="padding:2px 5px"> <?= $row["desig_name"] ?> </td>
-						<td style="padding:2px 5px"> <?= $row["line_name_en"] ?> </td>
+						<td style="padding:2px 5px"> <?= $row["sec_name_en"] ?> </td>
 						<td style="padding:2px 5px"> <?= date('d M Y',strtotime($row["emp_join_date"])) ?> </td>
 						<td style="padding:2px 5px"> <?= $row["total"] ?> </td>
 					</tr>

@@ -1885,6 +1885,7 @@ class Grid_con extends CI_Controller {
 		//$month= "04";
 		//$date = "18";
 		//$status = "P";
+		// dd($_POST);
 		$grid_date = $this->input->post('firstdate');
 		list($date, $month, $year) = explode('-', trim($grid_date));
 		$status = $this->input->post('status');
@@ -1898,7 +1899,7 @@ class Grid_con extends CI_Controller {
 		//print_r($grid_emp_id);
 		$data["values"] = $this->Grid_model->grid_daily_actual_out_in_report($year, $month, $date, $status, $grid_emp_id);
 
-		$data["unit_id"]			= $unit_id;
+		$data["unit_id"]		= $unit_id;
 		$data["year"]			= $year;
 		$data["month"]			= $month;
 		$data["date"]			= $date;

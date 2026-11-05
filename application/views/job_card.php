@@ -71,14 +71,6 @@ for($i = 0; $i<$count;$i++){
 	echo "<td >";
 	echo $values["sec_name_en"][$i];
 	echo "</td>";
-	echo "</tr>";
-	echo "<tr>";
-	echo "<td>";
-	echo "<strong>Line :</strong>";
-	echo "</td>";
-	echo "<td>";
-	echo $values["line_name_en"][$i];
-	echo "</td>";
 	echo "<td>";
 	echo "<strong>Desig :</strong>";
 	echo "</td>";
@@ -160,7 +152,7 @@ for($i = 0; $i<$count;$i++){
 		echo $values[$emp_id]["att_status"][$k];
 		echo "</td>";
 		
-		if($values[$emp_id]["att_status"][$k] == "P"){
+		if($values[$emp_id]["att_status"][$k] == "P" || $values[$emp_id]["att_status"][$k] == "OD"){
 			$present_count++;
 		}
 		elseif($values[$emp_id]["att_status"][$k] == "A"){

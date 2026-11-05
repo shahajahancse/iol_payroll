@@ -49,13 +49,13 @@
                           <a data-toggle="dropdown" class="dropdown-toggle  pull-right "
                                 href="javascript:;" id="user-options" style="display: flex;align-items: center;gap: 7px;line-height: 15px;">
                                 <div>
-                                  Welcome <br> <b><?=$username?></b>
+                                  Welcome <br> <b><?= isset($username) ? $username : (isset($user_data->id_number) ? $user_data->id_number : '') ?></b>
                                 </div>
                                 <i class="fa fa-cog" style="font-size: 22px; color: #006ba3 !important;"></i>
                             </a>
                             <ul class="dropdown-menu  pull-right" role="menu" aria-labelledby="user-options">
-                                <li><a href="<?=base_url()?>change_password"><i
-                                            class="fa fa-lock"></i>&nbsp;&nbsp;Change Password</a></li>
+                                <!-- <li><a href="<?=base_url()?>change_password"><i
+                                            class="fa fa-lock"></i>&nbsp;&nbsp;Change Password</a></li> -->
 
                                 <li><a href="<?=base_url()?>logout_FE"><i class="fa fa-power-off"></i>&nbsp;&nbsp;Log
                                         Out</a></li>

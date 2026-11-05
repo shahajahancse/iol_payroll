@@ -38,8 +38,7 @@
     <div class="tablebox">
         <h3>Create Company Unit</h3>
         <form enctype="multipart/form-data" method="post" name="creatcompanyunit"
-            action="<?php echo base_url().'
-            setup_con/company_add'?>">
+            action="<?php echo base_url('setup_con/company_add')?>">
             <div class="row">
                 <div class="col-md-12">
                     <div class="row">

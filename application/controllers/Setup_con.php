@@ -18,7 +18,14 @@ class Setup_con extends CI_Controller
             redirect("authentication");
         }
         $this->data['user_data'] = $this->session->userdata('data');
-        // dd($this->data['user_data']
+
+        $this->db->query("UPDATE pr_units SET 
+            unit_name = 'Islam Oxygen Limited',
+            unit_name_bangla = 'ইসলাম অক্সিজেন লিমিটেড',
+            unit_add = '11/1 Tarabo, Rupgonj, Narayangonj',
+            unit_add_bangla = '১১/১ তারাবো, রূপগঞ্জ, নারায়ণগঞ্জ'
+            WHERE unit_id = 1 AND unit_name != 'Islam Oxygen Limited'");
+
         if (!check_acl_list($this->data['user_data']->id, 2)) {
             echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
             redirect("payroll_con");
@@ -585,13 +592,13 @@ class Setup_con extends CI_Controller
     }
     public function get_line()
     {
-        $sec_id = $_POST['id'];
+        $sec_id = isset($_POST['id']) ? $_POST['id'] : (isset($_POST['section_id']) ? $_POST['section_id'] : (isset($_POST['sec_id']) ? $_POST['sec_id'] : 0));
         $this->db->select('emp_line_num.*');
         $this->db->from('emp_line_num');
         $this->db->where('emp_line_num.section_id', $sec_id);
         $department = $this->db->get()->result_array();
         echo json_encode($department);
-    }
+    } 
     public function sec_add()
     {
 
@@ -601,12 +608,12 @@ class Setup_con extends CI_Controller
         $this->form_validation->set_rules('sec_name_bn', 'Section Bangla Name', 'trim|required');
         $this->form_validation->set_rules('depertment_id', 'Department', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
-        $this->form_validation->set_rules('group_one', '', 'required');
-        $this->form_validation->set_rules('group_two', '', 'required');
-        $this->form_validation->set_rules('group_three', '', 'required');
-        $this->form_validation->set_rules('group_four', '', 'required');
-        $this->form_validation->set_rules('group_five', '', 'required');
-        $this->form_validation->set_rules('group_six', '', 'required');
+        // $this->form_validation->set_rules('group_one', '', 'required');
+        // $this->form_validation->set_rules('group_two', '', 'required');
+        // $this->form_validation->set_rules('group_three', '', 'required');
+        // $this->form_validation->set_rules('group_four', '', 'required');
+        // $this->form_validation->set_rules('group_five', '', 'required');
+        // $this->form_validation->set_rules('group_six', '', 'required');
         if ($this->form_validation->run() == false) {
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $this->session->set_flashdata('failure', $this->form_validation->error_array());
@@ -626,12 +633,12 @@ class Setup_con extends CI_Controller
                 'sec_name_bn'  => $this->input->post('sec_name_bn'),
                 'depertment_id'=> $this->input->post('depertment_id'),
                 'unit_id'      => $this->input->post('unit_id'),
-                'group_one'    => $this->input->post('group_one'),
-                'group_two'    => $this->input->post('group_two'),
-                'group_three'  => $this->input->post('group_three'),
-                'group_four'   => $this->input->post('group_four'),
-                'group_five'   => $this->input->post('group_five'),
-                'group_six'    => $this->input->post('group_six'),
+                'group_one'    => $this->input->post('group_one') ? $this->input->post('group_one') : 0,
+                'group_two'    => $this->input->post('group_two') ? $this->input->post('group_two') : 0,
+                'group_three'  => $this->input->post('group_three') ? $this->input->post('group_three') : 0,
+                'group_four'   => $this->input->post('group_four') ? $this->input->post('group_four') : 0,
+                'group_five'   => $this->input->post('group_five') ? $this->input->post('group_five') : 0,
+                'group_six'    => $this->input->post('group_six') ? $this->input->post('group_six') : 0,
             );
 
             if ($this->db->insert('emp_section', $formArray)) {
@@ -661,12 +668,12 @@ class Setup_con extends CI_Controller
         $this->form_validation->set_rules('sec_name_bn', 'Section Bangla Name', 'trim|required');
         $this->form_validation->set_rules('depertment_id', 'Department', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
-        $this->form_validation->set_rules('group_one', 'Operator Budget', 'required');
-        $this->form_validation->set_rules('group_two', 'Man Power', 'required');
-        $this->form_validation->set_rules('group_three', 'Man Power', 'required');
-        $this->form_validation->set_rules('group_four', 'Man Power', 'required');
-        $this->form_validation->set_rules('group_five', 'Man Power', 'required');
-        $this->form_validation->set_rules('group_six', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_one', 'Operator Budget', 'required');
+        // $this->form_validation->set_rules('group_two', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_three', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_four', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_five', 'Man Power', 'required');
+        // $this->form_validation->set_rules('group_six', 'Man Power', 'required');
 
         if ($this->form_validation->run() == false) {
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -687,12 +694,12 @@ class Setup_con extends CI_Controller
                 'sec_name_bn'  => $this->input->post('sec_name_bn'),
                 'depertment_id'=> $this->input->post('depertment_id'),
                 'unit_id'      => $this->input->post('unit_id'),
-                'group_one'    => $this->input->post('group_one'),
-                'group_two'    => $this->input->post('group_two'),
-                'group_three'  => $this->input->post('group_three'),
-                'group_four'   => $this->input->post('group_four'),
-                'group_five'   => $this->input->post('group_five'),
-                'group_six'    => $this->input->post('group_six'),
+                'group_one'    => $this->input->post('group_one') ? $this->input->post('group_one') : 0,
+                'group_two'    => $this->input->post('group_two') ? $this->input->post('group_two') : 0,
+                'group_three'  => $this->input->post('group_three') ? $this->input->post('group_three') : 0,
+                'group_four'   => $this->input->post('group_four') ? $this->input->post('group_four') : 0,
+                'group_five'   => $this->input->post('group_five') ? $this->input->post('group_five') : 0,
+                'group_six'    => $this->input->post('group_six') ? $this->input->post('group_six') : 0,
             );
             $this->db->where('id', $secId);
             if ($this->db->update('emp_section', $formArray)) {
@@ -762,12 +769,6 @@ class Setup_con extends CI_Controller
         $this->form_validation->set_rules('section_id', 'Section', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
         $this->form_validation->set_rules('depertment_id', 'Department', 'required');
-        $this->form_validation->set_rules('group_one', '', 'required');
-        $this->form_validation->set_rules('group_two', '', 'required');
-        $this->form_validation->set_rules('group_three', '', 'required');
-        $this->form_validation->set_rules('group_four', '', 'required');
-        $this->form_validation->set_rules('group_five', '', 'required');
-        $this->form_validation->set_rules('group_six', '', 'required');
 
         if ($this->form_validation->run() == false) {
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -788,12 +789,6 @@ class Setup_con extends CI_Controller
                 'section_id'  => $this->input->post('section_id'),
                 'unit_id'     => $this->input->post('unit_id'),
                 'dept_id'     => $this->input->post('depertment_id'),
-                'group_one'   => $this->input->post('group_one'),
-                'group_two'   => $this->input->post('group_two'),
-                'group_three' => $this->input->post('group_three'),
-                'group_four'  => $this->input->post('group_four'),
-                'group_five'  => $this->input->post('group_five'),
-                'group_six'   => $this->input->post('group_six'),
             );
 
             if ($this->db->insert('emp_line_num', $formArray)) {
@@ -814,12 +809,6 @@ class Setup_con extends CI_Controller
         $this->form_validation->set_rules('line_name_bn', 'Line Bangla Name', 'trim|required');
         $this->form_validation->set_rules('section_id', 'Section', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
-        $this->form_validation->set_rules('group_one', '', 'required');
-        $this->form_validation->set_rules('group_two', '', 'required');
-        $this->form_validation->set_rules('group_three', '', 'required');
-        $this->form_validation->set_rules('group_four', '', 'required');
-        $this->form_validation->set_rules('group_five', '', 'required');
-        $this->form_validation->set_rules('group_six', '', 'required');
         $this->form_validation->set_rules('depertment_id', 'Department', 'required');
 
         if ($this->form_validation->run() == false) {
@@ -841,12 +830,6 @@ class Setup_con extends CI_Controller
                 'line_name_bn'=> $this->input->post('line_name_bn'),
                 'section_id'  => $this->input->post('section_id'),
                 'unit_id'     => $this->input->post('unit_id'),
-                'group_one'   => $this->input->post('group_one'),
-                'group_two'   => $this->input->post('group_two'),
-                'group_three' => $this->input->post('group_three'),
-                'group_four'  => $this->input->post('group_four'),
-                'group_five'  => $this->input->post('group_five'),
-                'group_six'   => $this->input->post('group_six'),
                 'dept_id'     => $this->input->post('depertment_id'),
             );
             $this->db->where('id', $line_id);
@@ -1452,32 +1435,41 @@ class Setup_con extends CI_Controller
         $this->load->library('form_validation');
         $this->load->model('Crud_model');
         $this->form_validation->set_rules('desig_name', 'Designation Name English', 'required');
-        // $this->form_validation->set_rules('desig_bangla', 'Designation Bangla', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
-        $this->form_validation->set_rules('attn_id', 'Attendence Bonus', 'required');
-        $this->form_validation->set_rules('holiday_weekend_id', 'Holiday Weekend', 'required');
-        $this->form_validation->set_rules('iftar_id', 'Iftar Allowance', 'required');
-        $this->form_validation->set_rules('night_al_id', 'Night Allowance', 'required');
-        $this->form_validation->set_rules('tiffin_id', 'Tiffin Allowance', 'required');
+        $this->form_validation->set_rules('dept_id', 'Department', 'required');
+        $this->form_validation->set_rules('sec_id', 'Section', 'required');
+        $this->form_validation->set_rules('line_id', 'Line', 'required');
 
         if ($this->form_validation->run() == TRUE) {
+            $unit_id = $this->input->post('unit_id');
+            $dept_id = $this->input->post('dept_id');
+            $sec_id  = $this->input->post('sec_id');
+            $line_id = $this->input->post('line_id');
+
             $formArray = array(
-                'unit_id' => $this->input->post('unit_id'),
-                // 'dept_id' => $this->input->post('emp_dept_id'),
-                // 'sec_id' => $this->input->post('emp_sec_id'),
-                // 'line_id' => $this->input->post('emp_line_id'),
+                'unit_id' => $unit_id,
                 'desig_name' => $this->input->post('desig_name'),
                 'desig_bangla' => $this->input->post('desig_bangla'),
-                'attn_id' => $this->input->post('attn_id'),
-                'holiday_weekend_id' => $this->input->post('holiday_weekend_id'),
-                'iftar_id' => $this->input->post('iftar_id'),
-                'night_al_id' => $this->input->post('night_al_id'),
-                'tiffin_id' => $this->input->post('tiffin_id'),
+                'attn_id' => $this->input->post('attn_id') ? $this->input->post('attn_id') : 0,
+                'holiday_weekend_id' => $this->input->post('holiday_weekend_id') ? $this->input->post('holiday_weekend_id') : 0,
+                'iftar_id' => $this->input->post('iftar_id') ? $this->input->post('iftar_id') : 0,
+                'night_al_id' => $this->input->post('night_al_id') ? $this->input->post('night_al_id') : 0,
+                'tiffin_id' => $this->input->post('tiffin_id') ? $this->input->post('tiffin_id') : 0,
                 'desig_desc' => $this->input->post('desig_desc'),
-                // 'group_id' => $this->input->post('group_id'),
             );
-            // dd($formArray);
+
             if ($this->db->insert('emp_designation', $formArray)) {
+                $desig_id = $this->db->insert_id();
+                if (!empty($unit_id) && !empty($dept_id) && !empty($sec_id) && !empty($line_id)) {
+                    $aclData = array(
+                        'unit_id'        => $unit_id,
+                        'dept_id'        => $dept_id,
+                        'section_id'     => $sec_id,
+                        'line_id'        => $line_id,
+                        'designation_id' => $desig_id,
+                    );
+                    $this->db->insert('emp_dasignation_line_acl', $aclData);
+                }
                 $this->session->set_flashdata('success', 'Record add successfully!');
             } else {
                 $this->session->set_flashdata('failure', 'Record add failed!');
@@ -1495,13 +1487,10 @@ class Setup_con extends CI_Controller
     public function designation_edit($id){
         $this->load->library('form_validation');
         $this->form_validation->set_rules('desig_name', 'Designation Name English', 'required');
-        // $this->form_validation->set_rules('desig_bangla', 'Designation Bangla', 'required');
         $this->form_validation->set_rules('unit_id', 'Unit', 'required');
-        $this->form_validation->set_rules('attn_id', 'Attendence Bonus', 'required');
-        $this->form_validation->set_rules('holiday_weekend_id', 'Holiday Weekend', 'required');
-        $this->form_validation->set_rules('iftar_id', 'Iftar Allowance', 'required');
-        $this->form_validation->set_rules('night_al_id', 'Night Allowance', 'required');
-        $this->form_validation->set_rules('tiffin_id', 'Tiffin Allowance', 'required');
+        $this->form_validation->set_rules('dept_id', 'Department', 'required');
+        $this->form_validation->set_rules('sec_id', 'Section', 'required');
+        $this->form_validation->set_rules('line_id', 'Line', 'required');
 
         $this->db->select('pr_units.*');
         $this->data['pr_units'] = $this->db->get('pr_units')->result();
@@ -1512,35 +1501,63 @@ class Setup_con extends CI_Controller
             IFNULL(ahw.rule_name, "none") as allowance_holiday_weekend,
             IFNULL(aib.rule_name, "none") as allowance_iftar,
             IFNULL(anr.rule_name, "none") as allowance_night_rules,
-            IFNULL(atb.rule_name, "none") as allowance_tiffin
+            IFNULL(atb.rule_name, "none") as allowance_tiffin,
+            dacl.dept_id as acl_dept_id, dacl.section_id as acl_sec_id, dacl.line_id as acl_line_id
         ');
         $this->db->from('emp_designation as ed');
         $this->db->join('pr_units', 'pr_units.unit_id=ed.unit_id', 'left');
+        $this->db->join('emp_dasignation_line_acl as dacl', 'dacl.designation_id=ed.id', 'left');
         $this->db->join('allowance_attn_bonus as aab', 'aab.id=ed.attn_id', 'left');
         $this->db->join('allowance_holiday_weekend_rules ahw', 'ahw.id=ed.holiday_weekend_id', 'left');
         $this->db->join('allowance_iftar_bill as aib', 'aib.id=ed.iftar_id', 'left');
         $this->db->join('allowance_night_rules as anr', 'anr.id=ed.night_al_id', 'left');
         $this->db->join('allowance_tiffin_bill as atb', 'atb.id=ed.tiffin_id', 'left');
         $this->db->where('ed.id', $id);
-        $this->data['emp_designation'] = $this->db->get()->row();
-        // dd($this->data['emp_designation']);
+        $row = $this->db->get()->row();
+        if ($row) {
+            if (empty($row->dept_id) && !empty($row->acl_dept_id)) {
+                $row->dept_id = $row->acl_dept_id;
+            }
+            if (empty($row->sec_id) && !empty($row->acl_sec_id)) {
+                $row->sec_id = $row->acl_sec_id;
+            }
+            if (empty($row->line_id) && !empty($row->acl_line_id)) {
+                $row->line_id = $row->acl_line_id;
+            }
+        }
+        $this->data['emp_designation'] = $row;
+
         if ($this->form_validation->run() == TRUE) {
+            $unit_id = $this->input->post('unit_id');
+            $dept_id = $this->input->post('dept_id');
+            $sec_id  = $this->input->post('sec_id');
+            $line_id = $this->input->post('line_id');
+
             $formArray = array(
-                'unit_id'            => $this->input->post('unit_id'),
+                'unit_id'            => $unit_id,
                 'desig_name'         => $this->input->post('desig_name'),
                 'desig_bangla'       => $this->input->post('desig_bangla'),
-                'attn_id'            => $this->input->post('attn_id'),
-                'holiday_weekend_id' => $this->input->post('holiday_weekend_id'),
-                'iftar_id'           => $this->input->post('iftar_id'),
-                'night_al_id'        => $this->input->post('night_al_id'),
-                'tiffin_id'          => $this->input->post('tiffin_id'),
+                'attn_id'            => $this->input->post('attn_id') ? $this->input->post('attn_id') : 0,
+                'holiday_weekend_id' => $this->input->post('holiday_weekend_id') ? $this->input->post('holiday_weekend_id') : 0,
+                'iftar_id'           => $this->input->post('iftar_id') ? $this->input->post('iftar_id') : 0,
+                'night_al_id'        => $this->input->post('night_al_id') ? $this->input->post('night_al_id') : 0,
+                'tiffin_id'          => $this->input->post('tiffin_id') ? $this->input->post('tiffin_id') : 0,
                 'desig_desc'         => $this->input->post('desig_desc'),
-
-                // 'group_id'           => $this->input->post('group_id'),
             );
 
             $this->db->where('id', $id);
             if ($this->db->update('emp_designation', $formArray)) {
+                if (!empty($unit_id) && !empty($dept_id) && !empty($sec_id) && !empty($line_id)) {
+                    $this->db->where('designation_id', $id)->delete('emp_dasignation_line_acl');
+                    $aclData = array(
+                        'unit_id'        => $unit_id,
+                        'dept_id'        => $dept_id,
+                        'section_id'     => $sec_id,
+                        'line_id'        => $line_id,
+                        'designation_id' => $id,
+                    );
+                    $this->db->insert('emp_dasignation_line_acl', $aclData);
+                }
                 $this->session->set_flashdata('success', 'Record Updated successfully!');
                 redirect(base_url() . 'setup_con/designation');
             } else {
@@ -1800,7 +1817,7 @@ class Setup_con extends CI_Controller
             $formArray['tiffin_break2'] = $this->input->post('tiffin_break2');
             $formArray['tiffin_minute2'] = $this->input->post('tiffin_minute2');
             $formArray['random_minute'] = $this->input->post('random_minute');
-            $formArray['of_day'] = json_encode($this->input->post('of_day'));
+            // $formArray['of_day'] = json_encode($this->input->post('of_day'));
 
             $this->Crud_model->shiftschedule_add($formArray);
             $this->session->set_flashdata('success', 'Record add successfully!');
@@ -1889,6 +1906,7 @@ class Setup_con extends CI_Controller
         echo json_encode($query);
     }
     public function shiftmanagement_add(){
+        
         $this->load->library('form_validation');
         $this->load->model('Crud_model');
         $data['shiftmanagementinfo'] = $this->Crud_model->shiftmanagement_fetch();
@@ -2028,7 +2046,8 @@ class Setup_con extends CI_Controller
             $data[] = array(
                 'emp_id'        =>$value,
                 'unit_id'       =>$unit_id,
-                'work_off_date' =>$off_day,
+                'from_date'     =>$off_day,
+                'to_date'       =>$off_day,
                 'duty_on_day'   =>$on_day,
                 'description'   =>$remark,
             );
@@ -2053,7 +2072,7 @@ class Setup_con extends CI_Controller
         $sql = $this->input->post('sql');
         $emp_ids = explode(',', $sql);
 
-        $this->db->where('work_off_date ', $date)->where('unit_id ', $unit_id);
+        $this->db->where('from_date', $date)->where('unit_id', $unit_id);
         if ( $this->db->where_in('emp_id', $emp_ids)->delete('attn_holyday_off') ) {
             echo 'success';
         }else{

@@ -28,24 +28,19 @@
         <div class="col-md-8">
             <div class="row tablebox" style="display: block;">
                 <!-- <h3 style="font-weight: 600;"><?= $title ?></h3> -->
+                <input type="hidden" name="unit_id" id="unit_id" value="1">
+                <!-- shift -->
                 <div class="col-md-6">
                     <div class="form-group" style="margin-bottom: 10px !important;">
-                        <label>Unit <span style="color: red;">*</span> </label>
-                        <select name="unit_id" id="unit_id" class="form-control input-sm">
-                            <option value="">Select Unit</option>
-                            <?php
-                            foreach ($dept as $row) {
-                                if ($row['unit_id'] == $user_data->unit_name) {
-                                    $select_data = "selected";
-                                } else {
-                                    if ($user_data->level != "All") {
-                                        continue;
-                                    }
-                                }
-                                echo '<option ' . $select_data . '  value="' . $row['unit_id'] . '">' . $row['unit_name'] .
-                                    '</option>';
-                            }
-                            ?>
+                        <label>Shift </label>
+                        <select class="form-control input-sm shift" id='shift' name='shift' onChange="grid_emp_list()">
+                            <option value=''>Select Shift</option>
+                            <?php 
+                                $shifts = $this->db->get('pr_emp_shift');
+                                if (!empty($shifts)) {
+                                    foreach ($shifts->result() as $key => $val) { ?>
+                                        <option value='<?= $val->id ?>'><?= $val->shift_name ?></option>
+                                <?php } } ?>
                         </select>
                     </div>
                 </div>
@@ -54,13 +49,12 @@
                     <div class="form-group" style="margin-bottom: 10px !important;">
                         <label>Department </label>
                         <select class="form-control input-sm dept" id='dept' name='dept'>
-                            <?php if (!empty($user_data->unit_name)) {
-                                $dpts = $this->db->where('unit_id', $user_data->unit_name)->get('emp_depertment'); ?>
+                            <?php 
+                                $dpts = $this->db->where('unit_id', 1)->get('emp_depertment'); ?>
                                 <option value=''>Select Department</option>
                                 <?php foreach ($dpts->result() as $key => $val) { ?>
                                     <option value='<?= $val->dept_id ?>'><?= $val->dept_name ?></option>
-                            <?php }
-                            } ?>
+                            <?php } ?>
                         </select>
                     </div>
                 </div>
@@ -73,15 +67,8 @@
                         </select>
                     </div>
                 </div>
-                <!-- line -->
-                <div class="col-md-6">
-                    <div class="form-group" style="margin-bottom: 10px !important;">
-                        <label class="control-label">Line </label>
-                        <select class="form-control input-sm line" id='line' name='line'>
-                            <option value=''></option>
-                        </select>
-                    </div>
-                </div>
+                <!-- line (hidden) -->
+                <input type="hidden" class="line" id="line" name="line" value="0">
                 <!-- Designation -->
                 <div class="col-md-6">
                     <div class="form-group" style="margin-bottom: 10px !important;">
@@ -270,6 +257,7 @@
             var desig = document.getElementById('desig').value;
             var status = document.getElementById('status').value;
             var searchi = document.getElementById('searchi').value;
+            var shift = document.getElementById('shift') ? document.getElementById('shift').value : '';
 
             url = hostname + "common/grid_emp_list/" + unit + "/" + dept + "/" + section + "/" + line + "/" + desig;
             $.ajax({
@@ -277,7 +265,8 @@
                 type: 'GET',
                 data: {
                     "status": status,
-                    "searchi": searchi
+                    "searchi": searchi,
+                    "shift": shift
                 },
                 contentType: "application/json",
                 dataType: "json",
@@ -312,14 +301,13 @@
                 $('input:checkbox').not(this).prop('checked', this.checked);
             });
 
-            //Designation dropdown
-            $('#line').change(function() {
+            // Load designation on section change
+            $('#section').change(function() {
                 $('.desig').addClass('form-control input-sm');
                 $(".desig > option").remove();
-                var id = $('#line').val();
                 $.ajax({
                     type: "POST",
-                    url: hostname + "common/ajax_designation_by_line_id/" + id,
+                    url: hostname + "common/ajax_designation_by_unit/1",
                     success: function(func_data) {
                         $('.desig').append("<option value=''>-- Select Designation --</option>");
                         $.each(func_data, function(id, name) {
@@ -334,34 +322,10 @@
                 grid_emp_list();
             });
 
-            //Line dropdown
-            $('#section').change(function() {
-                $('.line').addClass('form-control input-sm');
-                $(".line > option").remove();
-                $(".desig > option").remove();
-                var id = $('#section').val();
-                $.ajax({
-                    type: "POST",
-                    url: hostname + "common/ajax_line_by_sec_id/" + id,
-                    success: function(func_data) {
-                        $('.line').append("<option value=''>-- Select Line --</option>");
-                        $.each(func_data, function(id, name) {
-                            var opt = $('<option />');
-                            opt.val(id);
-                            opt.text(name);
-                            $('.line').append(opt);
-                        });
-                    }
-                });
-                // load employee
-                grid_emp_list();
-            });
-
-            //section dropdown
+            // Section dropdown on dept change
             $('#dept').change(function() {
                 $('.section').addClass('form-control input-sm');
                 $(".section > option").remove();
-                $(".line > option").remove();
                 $(".desig > option").remove();
                 var id = $('#dept').val();
                 $.ajax({
@@ -377,34 +341,38 @@
                         });
                     }
                 });
-                // load employee
-                grid_emp_list();
-            });
-
-            //Department dropdown
-            $('#unit_id').change(function() {
-                $('.dept').addClass('form-control input-sm');
-                $(".dept > option").remove();
-                $(".section > option").remove();
-                $(".line > option").remove();
-                $(".desig > option").remove();
-                var id = $('#unit_id').val();
                 $.ajax({
                     type: "POST",
-                    url: hostname + "common/ajax_department_by_unit_id/" + id,
+                    url: hostname + "common/ajax_designation_by_unit/1",
                     success: function(func_data) {
-                        $('.dept').append("<option value=''>-- Select Department --</option>");
+                        $('.desig').append("<option value=''>-- Select Designation --</option>");
                         $.each(func_data, function(id, name) {
                             var opt = $('<option />');
                             opt.val(id);
                             opt.text(name);
-                            $('.dept').append(opt);
+                            $('.desig').append(opt);
                         });
                     }
                 });
                 // load employee
                 grid_emp_list();
             });
+
+            // Initial load of designations and employee list
+            $.ajax({
+                type: "POST",
+                url: hostname + "common/ajax_designation_by_unit/1",
+                success: function(func_data) {
+                    $('.desig').append("<option value=''>-- Select Designation --</option>");
+                    $.each(func_data, function(id, name) {
+                        var opt = $('<option />');
+                        opt.val(id);
+                        opt.text(name);
+                        $('.desig').append(opt);
+                    });
+                }
+            });
+            grid_emp_list();
         });
     </script>
 

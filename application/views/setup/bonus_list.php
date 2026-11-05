@@ -88,7 +88,7 @@
                         <tr>
                             <td><?php echo @++$i; ?></td>
                             <td><?php echo $pr_bonus_rule['unit_name'] ?></td>
-                            <td><?php echo ($pr_bonus_rule['emp_type'] == 1) ? "Worker" : "Staff" ?></td>
+                            <td><?php echo ($pr_bonus_rule['emp_type'] == 1) ? "Office" : "Factory" ?></td>
                             <td><?php echo $pr_bonus_rule['bonus_first_month'] ?></td>
                             <td><?php echo $pr_bonus_rule['bonus_second_month'] ?></td>
                             <td><?php echo $pr_bonus_rule['bonus_amount'] ?></td>

@@ -78,7 +78,7 @@ $k = 0;
 <th>Emp ID</th>
 <th>Name</th>
 <th style="margin:0px;padding:0px;">Designation</th>
-<th>Line</th>
+<th>Section</th>
 <th>Date of Birth</th>
 <th>Joining Date</th>
 <th>Left Date</th>
@@ -212,7 +212,7 @@ $k = 0;
 	echo "</td>";
 	
 	echo "<td >";
-	echo $values["line_name"][$k];
+	echo $values["sec_name"][$k];
 	echo "</td>";
 	
 	

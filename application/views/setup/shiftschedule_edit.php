@@ -32,7 +32,7 @@
             <option value="">Select Unit</option>
             <?php
             foreach ($allUnit as  $row){?>
-              <option value="<?=$row['unit_id']?>"<?php if($row['unit_id']==$pr_emp_shift_schedule->unit_id){echo 'selected';}?>><?=$row['unit_name']?></option>">Select Unit</option>
+              <option value="<?=$row['unit_id']?>"<?php if($row['unit_id']==$pr_emp_shift_schedule->unit_id){echo 'selected';}?>><?=$row['unit_name']?></option>
             <?php } ?>
           </select>
         </div>
@@ -143,7 +143,7 @@
         <?php echo form_error('random_minute');?>
       </div>
 
-      <div class="form-group">
+      <!-- <div class="form-group">
           <label> Off Days <i class="hrsale-asterisk"><span style="color:red">*</span></i></label>
           <select multiple="multiple" class="select22 sinput-sm" name="of_day[]" data-plugin="select_hrm" data-placeholder="select one" required >
               <option value="Fri">Friday</option>
@@ -154,7 +154,8 @@
               <option value="Wed">Wednesday</option>
               <option value="Thu">Thursday</option>
           </select>
-      </div>
+      </div> -->
+      <input type="hidden" name="of_day[]" value="Fri">
       <style>
           .sinput-sm {
               height: 40px !important;

@@ -51,7 +51,7 @@ for($counter = 1; $counter <= $page,$counter <= $page2; $counter ++)
 	<tr height="70px">
 		<td style="text-align:center;width: 70%;padding-left:150px;">
 		<?php $this->load->view("head_english");?><span style="font-size:13px; font-weight:bold; text-align: center;">
-			<?= ($type=='section')?'Section':'Line' ?> Change Report from 
+			Section Change Report from 
 			<?php 
 				$year= trim(substr($start_date,0,4));
 				$month = trim(substr($start_date,5,2));
@@ -107,7 +107,7 @@ $section=array();
     <th style="background:;">Emp ID</th>
     <th>Name</th>
     <th>Designation</th> 
-	<th>Line</th> 
+	<th>Section</th> 
     <th>Grade</th> 
     <th>Pre. Sal.</th>
     <th>Increment</th>
@@ -133,7 +133,7 @@ $section=array();
 	echo "</td>";
 	
 	echo "<td style='text-align:left; padding:5px;'>";
-	echo $values["new_line"][$k];
+	echo $values["new_section"][$k];
 	echo "</td>";
 	
 	$grade_name = $this->db->where('gr_id',$values["new_grade"][$k])->get('pr_grade')->row()->gr_name;

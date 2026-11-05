@@ -14,6 +14,14 @@ class Emp_info_con extends CI_Controller {
 			redirect("authentication");
 		}
 		$this->data['user_data'] = $this->session->userdata('data');
+
+		$this->db->query("UPDATE pr_units SET 
+			unit_name = 'Islam Oxygen Limited',
+			unit_name_bangla = 'ইসলাম অক্সিজেন লিমিটেড',
+			unit_add = '11/1 Tarabo, Rupgonj, Narayangonj',
+			unit_add_bangla = '১১/১ তারাবো, রূপগঞ্জ, নারায়ণগঞ্জ'
+			WHERE unit_id = 1 AND unit_name != 'Islam Oxygen Limited'");
+
 		if (!check_acl_list($this->data['user_data']->id,1)) {
 			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
 			redirect("payroll_con");
@@ -51,10 +59,10 @@ class Emp_info_con extends CI_Controller {
 		} else {
 			$this->db->select('emp_id');
 			$this->db->where('unit_id', $unit_id);
-			$this->db->order_by('emp_id', 'desc');
+			$this->db->order_by('CAST(emp_id AS UNSIGNED)', 'desc', FALSE);
 			$this->db->limit(1);
 			$query = $this->db->get('pr_emp_com_info');
-			echo $query->row()->emp_id;
+			echo ($query->num_rows() > 0) ? $query->row()->emp_id : '';
 		}
 	}
 
@@ -64,14 +72,18 @@ class Emp_info_con extends CI_Controller {
 		// dd("BSA");
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('unit_id', 'Unit', 'trim|required');
-		if($this->input->post('pi_save')) {
+		if($this->input->post('submit_type') == 'save') {
 			$this->form_validation->set_rules('emp_id', 'Employee ID', 'trim|required|is_unique[pr_emp_com_info.emp_id]');
 		}
 		$this->form_validation->set_rules('proxi_id', 'Punch ID', 'trim');  //|is_unique[pr_emp_com_info.proxi_id]
 		$this->form_validation->set_rules('name_en', 'Employee Name', 'trim|required');
 		$this->form_validation->set_rules('name_bn', 'Employee Bangla Name', 'trim|required');
-		$this->form_validation->set_rules('mother_name', 'Employee Mother\'s Name', 'trim|required');
-		$this->form_validation->set_rules('father_name', 'Employee Father\'s Name', 'trim|required');
+		$this->form_validation->set_rules('father_name_en', 'Employee Father\'s Name (English)', 'trim|required');
+		$this->form_validation->set_rules('father_name', 'Employee Father\'s Name (Bangla)', 'trim');
+		$this->form_validation->set_rules('mother_name_en', 'Employee Mother\'s Name (English)', 'trim|required');
+		$this->form_validation->set_rules('mother_name', 'Employee Mother\'s Name (Bangla)', 'trim');
+		$this->form_validation->set_rules('spouse_name_en', 'Employee Spouse Name (English)', 'trim');
+		$this->form_validation->set_rules('spouse_name', 'Employee Spouse Name (Bangla)', 'trim');
 		$this->form_validation->set_rules('emp_dob', 'Date of Birth', 'trim|required');
 		$this->form_validation->set_rules('gender', 'Employee Gender', 'trim|required');
 		$this->form_validation->set_rules('marital_status', 'Marital Status', 'trim|required');
@@ -81,13 +93,46 @@ class Emp_info_con extends CI_Controller {
 		$this->form_validation->set_rules('nid_dob_check', 'NID or DOB Status', 'trim|required');
 		$this->form_validation->set_rules('personal_mobile', 'Personal Mobile', 'trim|required');
 		$this->form_validation->set_rules('bank_bkash_no', 'Bank Account', 'trim|required');
+		$this->form_validation->set_rules('emp_per_shift', 'Emp Permanent Shift', 'trim');
+
+		$this->form_validation->set_error_delimiters("","");
+
+		if ($this->input->is_ajax_request()) {
+			if ($this->form_validation->run() == FALSE) {
+				echo json_encode([
+					'status' => false,
+					'message' => strip_tags(validation_errors()),
+					'errors' => $this->form_validation->error_array()
+				]);
+				return;
+			}
+
+			if ($this->input->post('submit_type') == 'save') {
+				$res = $this->Processdb->insert_emp_info();
+				if (is_array($res)) {
+					echo json_encode($res);
+				} else {
+					echo json_encode(['status' => true, 'message' => 'Inserted Successfully.']);
+				}
+				return;
+			} elseif ($this->input->post('submit_type') == 'edit') {
+				$res = $this->Processdb->updatedb1();
+				if (is_array($res)) {
+					echo json_encode($res);
+				} else {
+					echo json_encode(['status' => true, 'message' => 'Updated Successfully.']);
+				}
+				return;
+			} else {
+				echo json_encode(['status' => false, 'message' => 'Invalid submit type.']);
+				return;
+			}
+		}
 
 		if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$this->form_validation->run()) {
 			$this->load->view('empInfo/personal_info');
 		}
 
-
-		$this->form_validation->set_error_delimiters("","");
 		if ($this->form_validation->run() == TRUE) {
 			if($this->input->post('submit_type') == 'save') {
 				$this->Processdb->insert_emp_info();
@@ -99,8 +144,6 @@ class Emp_info_con extends CI_Controller {
 				echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Error Occurred'); window.location='personal_info';</SCRIPT>";
 			}
 		} else {
-			// dd($this->form_validation->error_array());
-
 			redirect(base_url('emp_info_con/personal_info'));
 		}
 	}
@@ -123,8 +166,9 @@ class Emp_info_con extends CI_Controller {
 	}
 
 	function get_salary_by_grade_id() {
-		$this->db->select('salary');
-	 echo	$this->db->where('gr_id', $_POST['grade_id'])->get('pr_grade')->row()->salary;
+		$this->db->select('gr_salary');
+		$row = $this->db->where('gr_id', $_POST['grade_id'])->get('pr_grade')->row();
+		echo $row ? $row->gr_salary : 0;
 	}
 
 	function get_employees_info(){
@@ -494,6 +538,149 @@ class Emp_info_con extends CI_Controller {
 		}
 	}
 
+    public function employee_list() {
+        if ($this->session->userdata('logged_in') == false) {
+            redirect("authentication");
+        }
+        $this->data['user_data']  = $this->session->userdata('data');
+        $this->data['username']   = !empty($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : '';
+        $this->data['user_unit']  = !empty($this->data['user_data']->unit_name) ? $this->data['user_data']->unit_name : '';
+        $this->data['user_level'] = !empty($this->data['user_data']->level) ? $this->data['user_data']->level : '';
+
+        // Dropdown options for filters
+        $this->data['units']        = $this->db->select('unit_id, unit_name')->get('pr_units')->result();
+        $this->data['departments']  = $this->db->select('dept_id, dept_name')->order_by('dept_name', 'ASC')->get('emp_depertment')->result();
+        $this->data['sections']     = $this->db->select('id as sec_id, sec_name_en as sec_name')->order_by('sec_name_en', 'ASC')->get('emp_section')->result();
+        $this->data['designations'] = $this->db->select('id, desig_name')->where('hide_status', 1)->order_by('desig_name', 'ASC')->get('emp_designation')->result();
+        $this->data['shifts']       = $this->db->select('id, shift_name')->order_by('shift_name', 'ASC')->get('pr_emp_shift')->result();
+
+        $this->data['title']   = 'Employee List';
+        $this->data['subview'] = 'empInfo/employee_list';
+        $this->load->view('layout/template', $this->data);
+    }
+
+    public function get_employee_list_ajax() {
+        if ($this->session->userdata('logged_in') == false) {
+            echo json_encode(array());
+            return;
+        }
+
+        $unit_id     = $this->input->get_post('unit_id');
+        $dept_id     = $this->input->get_post('dept_id');
+        $sec_id      = $this->input->get_post('sec_id');
+        $desig_id    = $this->input->get_post('desig_id');
+        $status      = $this->input->get_post('status');
+        $shift_id    = $this->input->get_post('shift_id');
+        $search      = $this->input->get_post('search');
+
+        $this->db->select('
+            com.id as com_id,
+            com.emp_id,
+            com.proxi_id,
+            com.gross_sal,
+            com.emp_join_date,
+            com.emp_cat_id,
+            com.emp_shift,
+            com.emp_per_shift,
+            sh.shift_name as current_shift_name,
+            psh.shift_name as per_shift_name,
+            per.name_en,
+            per.name_bn,
+            per.personal_mobile,
+            u.unit_name,
+            d.dept_name,
+            s.sec_name_en as sec_name,
+            deg.desig_name
+        ');
+        $this->db->from('pr_emp_com_info as com');
+        $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+        $this->db->join('pr_units as u', 'u.unit_id = com.unit_id', 'left');
+        $this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+        $this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+        $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+        $this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+        $this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+
+        if (!empty($unit_id)) {
+            $this->db->where('com.unit_id', $unit_id);
+        }
+        if (!empty($dept_id)) {
+            $this->db->where('com.emp_dept_id', $dept_id);
+        }
+        if (!empty($sec_id)) {
+            $this->db->where('com.emp_sec_id', $sec_id);
+        }
+        if (!empty($desig_id)) {
+            $this->db->where('com.emp_desi_id', $desig_id);
+        }
+        if (!empty($status)) {
+            $this->db->where('com.emp_cat_id', $status);
+        }
+        if (!empty($shift_id)) {
+            $this->db->where('com.emp_shift', $shift_id);
+        }
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('com.emp_id', $search);
+            $this->db->or_like('com.proxi_id', $search);
+            $this->db->or_like('per.name_en', $search);
+            $this->db->or_like('per.name_bn', $search);
+            $this->db->or_like('per.personal_mobile', $search);
+            $this->db->group_end();
+        }
+
+        $this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
+        $employees = $this->db->get()->result();
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($employees);
+    }
+
+    public function get_employee_details() {
+        if ($this->session->userdata('logged_in') == false) {
+            echo json_encode(array('status' => false, 'message' => 'Unauthorized'));
+            return;
+        }
+
+        $emp_id = $this->input->get_post('emp_id');
+        if (empty($emp_id)) {
+            echo json_encode(array('status' => false, 'message' => 'Employee ID is required'));
+            return;
+        }
+
+        $this->db->select('
+            com.*,
+            per.*,
+            u.unit_name,
+            d.dept_name,
+            s.sec_name_en as sec_name,
+            deg.desig_name,
+            l.line_name_en,
+            g.gr_name,
+            sh.shift_name as current_shift_name,
+            psh.shift_name as per_shift_name
+        ');
+        $this->db->from('pr_emp_com_info as com');
+        $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
+        $this->db->join('pr_units as u', 'u.unit_id = com.unit_id', 'left');
+        $this->db->join('emp_depertment as d', 'd.dept_id = com.emp_dept_id', 'left');
+        $this->db->join('emp_section as s', 's.id = com.emp_sec_id', 'left');
+        $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+        $this->db->join('emp_line_num as l', 'l.id = com.emp_line_id', 'left');
+        $this->db->join('pr_grade as g', 'g.gr_id = com.emp_sal_gra_id', 'left');
+        $this->db->join('pr_emp_shift as sh', 'sh.id = com.emp_shift', 'left');
+        $this->db->join('pr_emp_shift as psh', 'psh.id = com.emp_per_shift', 'left');
+        $this->db->where('com.emp_id', $emp_id);
+        $emp = $this->db->get()->row();
+
+        if ($emp) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(array('status' => true, 'data' => $emp));
+        } else {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(array('status' => false, 'message' => 'Employee not found'));
+        }
+    }
 
 }
 

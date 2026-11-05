@@ -49,7 +49,7 @@
             <th>Date of Birth</th>
             <th>Joining Date</th>
             <th>Designation</th>
-            <th>Line</th>
+            <th>Section</th>
             <th>Grade</th>
             <th>OT Entitle</th>
             <th>Att.Bonus</th>
@@ -86,7 +86,7 @@
 		echo "</td>";
 
 		echo "<td style='white-space:nowrap'>";
-		echo $values["line_name"][$k];
+		echo $values["sec_name_en"][$k];
 		echo "</td>";
 
 		echo "<td  style='text-align:center'>";
@@ -154,7 +154,7 @@
             <th>Date of Date</th>
             <th>Joining Date</th>
             <th>Designation</th>
-            <th>Line</th>
+            <th>Section</th>
             <th>Grade</th>
             <th>OT Entitle</th>
             <th>Att.Bonus</th>

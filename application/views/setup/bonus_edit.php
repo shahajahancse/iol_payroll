@@ -41,8 +41,8 @@
                             <label>Employee Type <span style="color:red">*</span> </label>
                                 <select name="emp_type" class="form-control" required>
                                     <option value="">Select Employee Type</option>
-                                    <option <?= ($row->emp_type==1)?'selected':'' ?> value="1">Worker</option>
-                                    <option <?= ($row->emp_type==2)?'selected':'' ?> value="2">Staff</option>
+                                    <option <?= ($row->emp_type==1)?'selected':'' ?> value="1">Office</option>
+                                    <option <?= ($row->emp_type==2)?'selected':'' ?> value="2">Factory</option>
                                 </select>
                             <?=(isset($failuer['emp_type'])) ? '<div class="alert alert-failuer">' . $failuer['emp_type'] . '</div>' : ''; ?>
                         </div>

@@ -62,28 +62,18 @@
 						echo "</td>";
 					echo "</tr>";
 					echo "<tr>";
-						echo "<td>";
-						echo "<strong>Line :</strong>";
-						echo "</td>";
-						echo "<td>";
-						echo $value->line_name_en;
-						echo "</td>";
 						echo "<td >";
 						echo "<strong>Dept :</strong>";
 						echo "</td>";
 						echo "<td >";
 						echo $value->dept_name;
 						echo "</td>";
-					echo "</tr>";
-					echo "<tr>";
 						echo "<td>";
 						echo "<strong>DOJ :</strong>";
 						echo "</td>";
 						echo "<td>";
 						echo date("d-M-Y", strtotime($value->emp_join_date));
 						echo "</td>";
-
-
 					echo "</tr>";
 
 					// echo "<tr>";
@@ -119,37 +109,77 @@
 							$extra_ot_hour = $row->com_eot;
 						}
 
-						if($row->present_status == 'L'){
-							$leave_type = $this->job_card_model->get_leave_type($row->shift_log_date,$value->emp_id);
+						$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
+						if(in_array(strtoupper(trim($row->present_status)), $leave_codes) || (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date]))){
+							$leave_type = (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date])) ? $emp_data['leave'][$row->shift_log_date] : $this->job_card_model->get_leave_type($row->shift_log_date,$value->emp_id);
 							$att_status_count = "Leave";
-							$att_status = $leave_type;
+							$att_status = !empty($leave_type) ? $leave_type : $row->present_status;
 							$row->in_time = "00:00:00";
 							$row->out_time = "00:00:00";
 							$extra_ot_hour = 0;
 						}
-						elseif(in_array($row->shift_log_date,$emp_data['holiday'])){
-							$att_status = "Holiday";
-							$att_status_count = "Holiday";
+						elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))) {
+							// No Punch Policy: always P, every day present
+							$att_status = "P";
+							$att_status_count = "P";
 							$row->in_time = "00:00:00";
 							$row->out_time = "00:00:00";
-							$row->com_ot =0;
+							$row->com_ot = 0;
 							$extra_ot_hour = 0;
 						}
-						elseif($row->present_status == 'W') {
-							$att_status = "Work Off";
-							$att_status_count = "Work Off";
+						elseif(in_array($row->shift_log_date,$emp_data['holiday']) || $row->present_status == 'H'){
+							$has_punch = (!empty($row->in_time) && $row->in_time != '00:00:00') || (!empty($row->out_time) && $row->out_time != '00:00:00');
+							if (!$has_punch) {
+								$att_status = "Holiday";
+								$att_status_count = "Holiday";
+								$row->in_time = "00:00:00";
+								$row->out_time = "00:00:00";
+								$row->com_ot = 0;
+								$extra_ot_hour = 0;
+							} else {
+								$att_status = ($row->present_status == 'P') ? "P" : "Holiday";
+								$att_status_count = $att_status;
+							}
+						}
+						elseif(in_array($row->shift_log_date, $emp_data['weekend']) || $row->present_status == 'W') {
+							$has_punch = (!empty($row->in_time) && $row->in_time != '00:00:00') || (!empty($row->out_time) && $row->out_time != '00:00:00');
+							if (!$has_punch) {
+								$att_status = "Work Off";
+								$att_status_count = "Work Off";
+								$row->in_time = "00:00:00";
+								$row->out_time = "00:00:00";
+								$row->com_ot = 0;
+								$extra_ot_hour = 0;
+							} else {
+								$att_status = ($row->present_status == 'P') ? "P" : "Work Off";
+								$att_status_count = $att_status;
+							}
+						}
+						elseif($row->present_status == 'OD' || (isset($emp_data['od_map']) && isset($emp_data['od_map'][$row->shift_log_date]))){
+							$att_status = "OD";
+							$att_status_count = "P";
 							$row->in_time = "00:00:00";
 							$row->out_time = "00:00:00";
-							$row->com_ot =0;
+							$row->com_ot = 0;
 							$extra_ot_hour = 0;
 						}
 						elseif($row->in_time !='00:00:00' and $row->out_time !='00:00:00'){
 							$att_status = "P";
 							$att_status_count = "P";
 						}
+						elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('single', 'single punch', 'single_punch', 'single-punch')) && ($row->in_time !='00:00:00' or $row->out_time !='00:00:00')){
+							// Single punch shift only: show P instead of P(Error)
+							$att_status = "P";
+							$att_status_count = "P";
+						}
 						elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
+							// Other shifts: show P(Error) as normal
 							$att_status = "P(Error)";
 							$att_status_count = "P(Error)";
+						}
+						elseif($row->present_status == 'P'){
+							$att_status = "P";
+							$att_status_count = "P";
 						}
 						else{
 							$att_status = "A";
@@ -253,7 +283,7 @@
 							echo $att_status;
 							echo "&nbsp;</td>";
 
-							if($att_status == "P"){
+							if($att_status == "P" || $att_status == "OD"){
 								$present_count++;
 							}
 							elseif($att_status == "A"){
@@ -271,28 +301,51 @@
 							elseif($att_status == "Holiday"){
 								$holiday_count++;
 							}
-							if($row->late_status == 1){
+							$user_remark = '';
+							if (!empty($row->reg_remarks)) {
+								$user_remark = trim($row->reg_remarks);
+							} elseif (!empty($row->remarks)) {
+								$user_remark = trim($row->remarks);
+								if (!empty($row->reg_reason) && stripos($user_remark, trim($row->reg_reason) . ':') === 0) {
+									$user_remark = trim(substr($user_remark, strlen(trim($row->reg_reason)) + 1));
+								} elseif (strpos($user_remark, ': ') !== false) {
+									$parts = explode(': ', $user_remark, 2);
+									if (!empty($parts[1])) {
+										$user_remark = trim($parts[1]);
+									}
+								}
+							}
+							if (!empty($user_remark)) {
+								$user_remark = preg_replace('/\s*\(waived\)\s*$/i', '', $user_remark);
+							}
+
+							if (!empty($user_remark)) {
+								$remark = $user_remark;
+							} elseif ($att_status_count != "Leave" && !in_array($att_status, $leave_codes) && $row->late_status == 1) {
 								$remark = "Late";
-								$late_count++;
-							} else{
+								if (empty($row->is_waived)) {
+									$late_count++;
+								}
+							} else {
 								$remark = "";
 							}
-							echo "<td>&nbsp;";
-							if($row->com_ot == 0){
-								echo $row->com_ot;
-							}else{
-								echo $row->com_ot;
+							if (empty($row->out_time) || $row->out_time == '00:00:00' || empty($row->in_time) || $row->in_time == '00:00:00') {
+								$disp_ot = 0;
+							} else {
+								$disp_ot = max(0, $row->com_ot);
 							}
+							echo "<td>&nbsp;";
+							echo $disp_ot;
 							echo "&nbsp;</td>";
-							$total_ot_hour = $total_ot_hour + $row->com_ot + $extra_ot_hour;
-							$total_ot = $total_ot + $row->com_ot;
+							$total_ot_hour = $total_ot_hour + $disp_ot + $extra_ot_hour;
+							$total_ot = $total_ot + $disp_ot;
 
 							echo "<td>&nbsp;";
 							echo $extra_ot_hour;
 							echo "&nbsp;</td>";
 
 							echo "<td>&nbsp;";
-							echo $extra_ot_hour + $row->com_ot;
+							echo $extra_ot_hour + $disp_ot;
 							echo "&nbsp;</td>";
 
 							echo "<td>&nbsp;";

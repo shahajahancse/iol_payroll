@@ -1,3 +1,36 @@
+<style>
+.badge-leave-status {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    text-align: center;
+    line-height: 1.2;
+}
+.badge-status-approved {
+    background-color: #dcfce7 !important;
+    color: #15803d !important;
+    border: 1px solid #86efac !important;
+}
+.badge-status-pending {
+    background-color: #fef3c7 !important;
+    color: #b45309 !important;
+    border: 1px solid #fde68a !important;
+}
+.badge-status-rejected {
+    background-color: #fee2e2 !important;
+    color: #b91c1c !important;
+    border: 1px solid #fca5a5 !important;
+}
+.badge-status-returned {
+    background-color: #f3e8ff !important;
+    color: #7e22ce !important;
+    border: 1px solid #d8b4fe !important;
+}
+</style>
 
 <div class="content">
     <nav class="navbar navbar-default" style="padding:15px;">
@@ -7,7 +40,7 @@
                 <div class="col-md-2">
                     <label style="visibility:hidden;">Action</label>
                     <a class="btn btn-info btn-block" href="<?= base_url('entry_system_con/leave_transation') ?>">
-                        Add Leave
+                        <i class="fa fa-plus"></i> Add
                     </a>
                 </div>
 
@@ -67,6 +100,29 @@
                 </div>
 
             </div>
+
+            <!-- Export and Quick Actions Toolbar -->
+            <div class="row" style="margin-top: 10px; padding-top: 12px; border-top: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                <div class="col-sm-6" style="margin-bottom: 5px;">
+                    <span style="font-size: 13px; font-weight: 600; color: #334155;">
+                        <i class="fa fa-list-alt text-primary" style="margin-right: 5px;"></i> Leave Management Records
+                    </span>
+                    <span style="font-size: 11px; color: #64748b; margin-left: 8px;">
+                        (Export respects active filter selections)
+                    </span>
+                </div>
+                <div class="col-sm-6 text-right" style="margin-bottom: 5px;">
+                    <button type="button" class="btn btn-success btn-sm" onclick="exportLeaveReport('excel')" style="font-weight: 600; margin-right: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <i class="fa fa-file-excel-o" style="margin-right: 4px;"></i> Export Excel (.xls)
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="exportLeaveReport('pdf')" style="font-weight: 600; margin-right: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <i class="fa fa-file-pdf-o" style="margin-right: 4px;"></i> Export PDF / Print
+                    </button>
+                    <button type="button" class="btn btn-default btn-sm" onclick="resetLeaveFilters()" title="Reset Filters" style="border: 1px solid #cbd5e1; color: #475569;">
+                        <i class="fa fa-refresh"></i> Reset
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -98,6 +154,7 @@
                         <th>End Date</th>
                         <th>Total Day</th>
                         <th>Unit name</th>
+                        <th>Status</th>
                         <th <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(!in_array(10,$acl)) {echo '';} else { echo 'style="display:none;"';}?> >Delete</th>
                     </tr>
                 </thead>
@@ -132,6 +189,37 @@
         $('#tbody').empty();
         get_data(params);
     }
+
+    function exportLeaveReport(format) {
+        var from_date = $('#from_date').val() || '';
+        var to_date   = $('#to_date').val() || '';
+        var month     = $('#month').val() || '';
+        var year      = $('#year').val() || '';
+        var emp_id    = $('#emp_id').val() || '';
+
+        var params = new URLSearchParams({
+            from_date: from_date,
+            to_date: to_date,
+            month: month,
+            year: year,
+            emp_id: emp_id
+        });
+
+        if (format === 'excel') {
+            window.location.href = "<?= base_url('entry_system_con/export_leave_excel') ?>?" + params.toString();
+        } else if (format === 'pdf') {
+            window.open("<?= base_url('entry_system_con/export_leave_pdf') ?>?" + params.toString(), '_blank');
+        }
+    }
+
+    function resetLeaveFilters() {
+        $('#from_date').val('');
+        $('#to_date').val('');
+        $('#month').val('');
+        $('#year').val('');
+        $('#emp_id').val('');
+        filtering_data(0);
+    }
 </script>
 
 <script>
@@ -165,17 +253,28 @@
                 var obj = JSON.parse(data)
 
                 obj.forEach(element => {
+                    let st = (element.status && element.status !== '') ? element.status.toLowerCase() : 'approved';
+                    let stBadge = '<span class="badge-leave-status badge-status-approved"><i class="fa fa-check-circle" style="margin-right:3px;"></i>Approved</span>';
+                    if (st === 'pending') {
+                        stBadge = '<span class="badge-leave-status badge-status-pending"><i class="fa fa-clock-o" style="margin-right:3px;"></i>Pending Admin</span>';
+                    } else if (st === 'rejected') {
+                        stBadge = '<span class="badge-leave-status badge-status-rejected"><i class="fa fa-times-circle" style="margin-right:3px;"></i>Rejected</span>';
+                    } else if (st === 'returned') {
+                        stBadge = '<span class="badge-leave-status badge-status-returned"><i class="fa fa-reply" style="margin-right:3px;"></i>Returned</span>';
+                    }
+
                     $('#tbody').append(`<tr>
                     <td>${++i}</td>
                     <td>${element.user_name}</td>
                     <td>${element.emp_id}</td>
-                    <td title="${element.leave_descrip}" ><a>${element.leave_type}</a></td>
+                    <td title="${element.leave_descrip}" ><a>${element.leave_type.toUpperCase()}</a></td>
                     <td>${element.leave_start}</td>
                     <td>${element.leave_end}</td>
                     <td>${element.total_leave}</td>
                     <td>${element.unit_name}</td>
+                    <td>${stBadge}</td>
                     <td>
-                        <a   <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(in_array(130,$acl)) {echo '';} else { echo 'style="display:none;"';}?>   href="<?=base_url('entry_system_con/emp_leave_del/')?>${element.id}" class="btn btn-danger" role="button">Delete</a>
+                        <a   <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(in_array(130,$acl)) {echo '';} else { echo 'style="display:none;"';}?>   href="<?=base_url('entry_system_con/emp_leave_del/')?>${element.id}" class="btn btn-danger btn-xs" role="button">Delete</a>
                     </td>
                 </tr>`)
                 });

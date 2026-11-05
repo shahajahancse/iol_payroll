@@ -32,7 +32,6 @@
 
 				<th style="padding:4px">Department</th>
 				<th style="padding:4px">Section</th>
-				<th style="padding:4px">Line</th>
 				<th style="padding:4px">Designation</th>
 
 				<th style="padding:4px">prev. Salary</th>
@@ -53,7 +52,6 @@
 					<td style="text-align:left;   padding:2px"><?php echo date('d-m-Y', strtotime($r->emp_join_date)) ?></td>
 					<td style="text-align:left;   padding:2px"><?php echo $r->dept_bangla?></td>
 					<td style="text-align:left;   padding:2px"><?php echo $r->sec_name_bn?></td>
-					<td style="text-align:left;   padding:2px"><?php echo $r->line_name_bn?></td>
 					<td style="text-align:left;   padding:2px"><?php echo $r->desig_bangla?></td>
 					<td style="text-align:left;   padding:2px">
 					<?php

@@ -29,7 +29,7 @@
 				<th style="padding:2px 10px;">ID</th>
 				<th style="padding:4px;">Emp Name</th>
 				<th style="padding:4px">Designation</th>
-				<th style="padding:4px">Line</th>
+				<th style="padding:4px">Section</th>
 				<th style="padding:4px">Shift</th>
 				<?php if ($status == "P") { ?>
 				<th style="padding:4px">In Time</th>
@@ -50,7 +50,7 @@
 				foreach ($values as $key => $row) {
 					if ($emp_sec != $row->emp_sec_id) {
 					echo "<tr bgcolor='#CCCCCC'>";
-					echo "<td colspan='17' style='font-size:16px; font-weight:bold;'>Line :".$row->sec_name_en."</td>";
+					echo "<td colspan='17' style='font-size:16px; font-weight:bold;'>Section :".$row->sec_name_en."</td>";
 					echo "</tr>";
 					}
 				?>
@@ -60,7 +60,7 @@
 					<td style="text-align:center; padding:2px"><?php echo $row->emp_id?></td>
 					<td style="text-align:left;   padding:2px"><?php echo $row->name_en?></td>
 					<td style="text-align:left;   padding:2px"><?php echo $row->desig_name?></td>
-					<td style="text-align:left;   padding:2px"><?php echo $row->line_name_en?></td>
+					<td style="text-align:left;   padding:2px"><?php echo $row->sec_name_en?></td>
 					<td style="text-align:left;   padding:2px"><?php echo $row->shift_name?></td>
 					<?php if ($status == "P") { ?>
 					<td style="text-align:center; padding:2px"><?php echo $row->in_time; ?> </td>

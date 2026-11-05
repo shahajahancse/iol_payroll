@@ -23,6 +23,28 @@ class Dashboard extends CI_Controller {
 		echo json_encode($return_data);
 	}
 
+	function get_card_details(){
+		$type = $this->input->get_post('type');
+		$extra_id = $this->input->get_post('extra_id');
+		$report_date = $this->input->get_post('report_date');
+		if (empty($report_date)) {
+			$report_date = date("Y-m-d");
+		}
+		$unit_id = !empty($this->session->userdata('data')->unit_name) ? $this->session->userdata('data')->unit_name : null;
+
+		$results = $this->Mars_model->get_dashboard_card_details($type, $report_date, $unit_id, $extra_id);
+
+		header('Content-Type: application/json; charset=utf-8');
+		echo json_encode(array(
+			'status' => true,
+			'type' => $type,
+			'extra_id' => $extra_id,
+			'report_date' => $report_date,
+			'total' => count($results),
+			'data' => $results
+		));
+	}
+
 	function get_bar_chart_data(){
         $data = $this->get_last_12_month_summary();
         echo json_encode($data);

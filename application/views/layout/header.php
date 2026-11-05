@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <link rel="icon" type="image/ico" href="<?=base_url()?>awedget/assets/img/loopdot.png" />
 
-    <title>Hr | Payroll</title>
+    <title><?= isset($title) ? $title . ' | Islam Oxygen Limited' : 'Islam Oxygen Limited | HR & Payroll' ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta content="Mysoftheaven (BD) Ltd." name="author" />
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -57,6 +57,7 @@
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <!-- <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script> -->
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="<?=base_url()?>js/common.js" type="text/javascript"></script>
     <!-- new -->
 
 
@@ -152,6 +153,42 @@
 
     .page-sidebar .page-sidebar-wrapper>ul>li>ul.sub-menu li>ul.sub-menu>li>a {
         color: #683091;
+    }
+
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li>ul.sub-menu {
+        display: none !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 50px !important;
+        margin-top: 0 !important;
+        margin-left: 0 !important;
+        width: 220px !important;
+        background-color: #ffffff !important;
+        border: 1px solid #dcdcdc !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.18) !important;
+        border-radius: 0 4px 4px 0 !important;
+        padding: 5px 0 !important;
+        z-index: 1000 !important;
+    }
+
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li:hover>ul.sub-menu {
+        display: block !important;
+    }
+
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li>ul.sub-menu>li>a {
+        padding: 9px 15px !important;
+        color: #333333 !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        text-shadow: none !important;
+        background: transparent !important;
+        display: block !important;
+    }
+
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li>ul.sub-menu>li>a:hover,
+    .page-sidebar.mini .page-sidebar-wrapper>ul>li>ul.sub-menu>li.active>a {
+        background-color: #006ba3 !important;
+        color: #ffffff !important;
     }
 
     </style>

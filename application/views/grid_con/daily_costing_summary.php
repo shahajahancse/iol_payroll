@@ -28,7 +28,7 @@
         <thead>
           <tr>
             <th style="padding:5px">SL</th>
-            <th style="padding:5px">Line</th>
+            <th style="padding:5px">Section</th>
             <th style="padding:5px">Emp</th>
             <th style="padding:5px">Gross Sal</th>
             <th style="padding:5px">Per Day Salary</th>
@@ -57,7 +57,7 @@
           ?>
             <tr>
               <td style="padding:5px;text-align:center"><?php echo $sl++; ?></td>
-              <td style="padding:5px;text-align:center"><?php echo $item->line_name_en; ?></td>
+              <td style="padding:5px;text-align:center"><?php echo isset($item->sec_name_en) ? $item->sec_name_en : $item->line_name_en; ?></td>
               <td style="padding:5px;text-align:center"><?php echo $item->present_emp;@$total_emp +=$item->present_emp ?></td>
               <td style="padding:5px;text-align:center"><?php echo $item->present_gross_salary; @$total_gross_salary +=$item->present_gross_salary?></td>
               <td style="padding:5px;text-align:center"><?php echo round($item->present_gross_salary / $num_of_days); @$perday_salary += round($item->present_gross_salary / $num_of_days)?></td>

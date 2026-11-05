@@ -10,14 +10,16 @@ class Entry_system_con extends CI_Controller
         $this->load->model('Attn_process_model');
         $this->load->helper('url');
 
-        if ($this->session->userdata('logged_in') == false) {
-            redirect("authentication");
-        }
-        $this->data['user_data'] = $this->session->userdata('data');
-        if (!check_acl_list($this->data['user_data']->id, 3)) {
-            echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
-            redirect("payroll_con");
-            exit;
+        if (!is_cli()) {
+            if ($this->session->userdata('logged_in') == false) {
+                redirect("authentication");
+            }
+            $this->data['user_data'] = $this->session->userdata('data');
+            if (!check_acl_list($this->data['user_data']->id, 3)) {
+                echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
+                redirect("payroll_con");
+                exit;
+            }
         }
     }
 
@@ -750,117 +752,273 @@ class Entry_system_con extends CI_Controller
         $this->data['subview'] = 'entry_system/shift_change';
         $this->load->view('layout/template', $this->data);
     }
+
+    //-------------------------------------------------------------------------------------------------------
+    // Running Shift Change – change emp_shift in pr_emp_com_info (no date range)
+    //-------------------------------------------------------------------------------------------------------
+    public function running_shift_change()
+    {
+        if ($this->session->userdata('logged_in') == false) {
+            redirect("authentication");
+        }
+        $this->data['employees'] = array();
+        $this->db->select('pr_units.*');
+        $this->data['dept'] = $this->db->get('pr_units')->result_array();
+        if (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name != 'All') {
+            $this->data['employees'] = $this->get_emp_by_unit($this->data['user_data']->unit_name)->result();
+        }
+
+        $this->db->select('emp_depertment.*, pr_units.unit_name');
+        $this->db->from('emp_depertment');
+        $this->db->join('pr_units', 'pr_units.unit_id = emp_depertment.unit_id', 'left');
+        if (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name != 'All') {
+            $this->db->where('emp_depertment.unit_id', $this->data['user_data']->unit_name);
+        }
+        $this->data['departments'] = $this->db->get()->result();
+
+        $this->data['title']    = 'Emp Shift Change';
+        $this->data['username'] = $this->data['user_data']->id_number;
+        $this->data['subview']  = 'entry_system/running_shift_change';
+        $this->load->view('layout/template', $this->data);
+    }
+
+    // AJAX: update emp_shift / emp_per_shift in pr_emp_com_info – no date, no shift_log
+    public function running_shift_change_save()
+    {
+        $emp_ids     = $this->input->post('emp_ids');      // array
+        $shift_id    = $this->input->post('shift_id');     // int
+        $change_type = $this->input->post('change_type');    // 'running', 'permanent', or 'both'
+
+        if (empty($emp_ids) || empty($shift_id)) {
+            echo json_encode(['status' => 'error', 'msg' => 'Missing data']);
+            return;
+        }
+
+        $shift = $this->db->where('id', $shift_id)->get('pr_emp_shift')->row();
+        if (!$shift) {
+            echo json_encode(['status' => 'error', 'msg' => 'Shift not found']);
+            return;
+        }
+
+        $update_data = [];
+        if ($change_type == 'permanent') {
+            $update_data['emp_per_shift'] = $shift->id;
+            $msg = 'Permanent shift updated successfully';
+        } elseif ($change_type == 'both') {
+            $update_data['emp_shift']     = $shift->id;
+            $update_data['emp_per_shift'] = $shift->id;
+            $msg = 'Running & Permanent shift updated successfully';
+        } else {
+            $update_data['emp_shift']     = $shift->id;
+            $msg = 'Running shift updated successfully';
+        }
+
+        $this->db->where_in('emp_id', $emp_ids)
+                 ->update('pr_emp_com_info', $update_data);
+
+        echo json_encode(['status' => 'success', 'msg' => $msg]);
+    }
+
+
     public function present_entry()
     {
-        $sql         = $_POST['emp_id'];
-        $unit_id     = $_POST['unit_id'];
-        $first_date  = date('Y-m-d', strtotime($_POST['first_date']));
-        $second_date = date('Y-m-d', strtotime($_POST['second_date']));
-        $in_time     = date('H:i:s', strtotime($_POST['in_time']));
-        $out_time    = date('H:i:s', strtotime($_POST['out_time']));
+        $sql         = isset($_POST['emp_id']) ? $_POST['emp_id'] : '';
+        $unit_id     = isset($_POST['unit_id']) ? $_POST['unit_id'] : '';
+        $first_date  = !empty($_POST['first_date']) ? date('Y-m-d', strtotime($_POST['first_date'])) : '';
+        $second_date = !empty($_POST['second_date']) ? date('Y-m-d', strtotime($_POST['second_date'])) : '';
+        $in_time_raw  = isset($_POST['in_time']) ? trim($_POST['in_time']) : '';
+        $out_time_raw = isset($_POST['out_time']) ? trim($_POST['out_time']) : '';
 
-        if($in_time == '00:00:00' && $out_time == '00:00:00') {
-            echo 'Please enter at least In Time or Out Time';
-            exit;
+        if (empty($first_date) || empty($second_date)) {
+            echo 'Please select date range';
+            return;
         }
-        $emp_ids     = explode(',', $sql);
-        $mm = array();
 
-        // final process check
-		$slm = date("Y-m-01", strtotime($first_date));
-		$check = $this->db->where('unit_id', $unit_id)->where('block_month',$slm)->get('pay_salary_block');
-		if ($check->num_rows() > 0) {
-			echo "Sorry! This Month Already Final Processed";
-			return false; exit();
-		}
-		// final process check end
+        if (empty($in_time_raw) && empty($out_time_raw)) {
+            echo 'Please enter at least In Time or Out Time';
+            return;
+        }
+
+        $in_time  = (!empty($in_time_raw) && $in_time_raw != '00:00:00') ? date('H:i:s', strtotime($in_time_raw)) : '00:00:00';
+        $out_time = (!empty($out_time_raw) && $out_time_raw != '00:00:00') ? date('H:i:s', strtotime($out_time_raw)) : '00:00:00';
+
+        if ($in_time == '00:00:00' && $out_time == '00:00:00') {
+            echo 'Please enter at least In Time or Out Time';
+            return;
+        }
+
+        if (empty($sql)) {
+            echo 'Please select employee Id';
+            return;
+        }
+
+        $emp_ids = array_filter(array_map('trim', explode(',', $sql)));
+        if (empty($emp_ids)) {
+            echo 'Please select employee Id';
+            return;
+        }
+
+        // final process check for all months in date range
+        $start_m = date("Y-m-01", strtotime($first_date));
+        $end_m   = date("Y-m-01", strtotime($second_date));
+        $check_m = $start_m;
+        while ($check_m <= $end_m) {
+            $check = $this->db->where('unit_id', $unit_id)->where('block_month', $check_m)->get('pay_salary_block');
+            if ($check && $check->num_rows() > 0) {
+                echo "Sorry! Month " . date('F Y', strtotime($check_m)) . " Already Final Processed";
+                return;
+            }
+            $check_m = date("Y-m-01", strtotime('+1 month', strtotime($check_m)));
+        }
+
+        $this->load->model('Attn_process_model');
         $emp_data = $this->Attn_process_model->get_all_employee($emp_ids, 1);
+        if (!$emp_data || $emp_data->num_rows() == 0) {
+            echo 'No valid employee found';
+            return;
+        }
 
-        while ($first_date <= $second_date) {
-            $data = array();
+        $curr_date = $first_date;
+        $inserted_count = 0;
+
+        while ($curr_date <= $second_date) {
+            $att_table = "att_" . date("Y_m", strtotime($curr_date));
+            $this->Attn_process_model->attn_month_table_check($att_table);
+
             foreach ($emp_data->result() as $rows) {
-                $com_id         = $rows->id;
-                $emp_id         = $rows->emp_id;
-                $proxi_id       = $rows->proxi_id;
-                $shift_id       = $rows->shift_id;
-                $schedule_id    = $rows->schedule_id;
+                $emp_id       = $rows->emp_id;
+                $proxi_id     = !empty($rows->proxi_id) ? $rows->proxi_id : $emp_id;
+                $shift_id     = $rows->shift_id;
+                $schedule_id  = $rows->schedule_id;
 
-                $emp_shift = $this->Attn_process_model->emp_shift_check_process($emp_id,$shift_id,$schedule_id,$first_date);
+                $emp_shift = $this->Attn_process_model->emp_shift_check_process($emp_id, $shift_id, $schedule_id, $curr_date);
                 $schedule  = $this->Attn_process_model->get_emp_schedule($emp_shift->schedule_id);
-                $out_end   = $schedule[0]["out_end"];
-                // dd($schedule);
 
-                // in time insert here
-                if (strtotime($in_time) <= strtotime($out_end)) {
-                    $date = date('Y-m-d', strtotime($first_date . ' + 1 days'));
-                } else {
-                    $date = $first_date;
-                }
-                $data = array(
-                    'date_time'       => $date ." ".$in_time,
-                    'proxi_id'        => $proxi_id,
-                    'device_id'       => 0,
-                    'monitor_con'     => 2
-                );
+                // IN time punch: always on shift date $curr_date
                 if ($in_time != '00:00:00') {
-                    $mm = $this->insert_attn_process($data, $first_date, $unit_id, $rows->emp_id, $proxi_id);
+                    $in_dt = $curr_date . " " . $in_time;
+                    $this->insert_attn_punch($att_table, $proxi_id, $emp_id, $in_dt, 1);
+                    $inserted_count++;
                 }
 
-                // out time insert here
-                $date = $first_date;
-                if (strtotime($out_time) <= strtotime('11:59:59')) {
-                    $date = date('Y-m-d', strtotime($first_date . ' + 1 days'));
-                } else {
-                    $date = $first_date;
-                }
-                $data1 = array(
-                    'date_time'       => $date ." ".$out_time,
-                    'proxi_id'        => $proxi_id,
-                    'device_id'       => 0,
-                    'monitor_con'     => 2
-                );
+                // OUT time punch: check if overnight/crosses midnight
                 if ($out_time != '00:00:00') {
-                    $mm = $this->insert_attn_process($data1, $first_date, $unit_id, $rows->emp_id, $proxi_id);
+                    $is_night_schedule = false;
+                    if (!empty($schedule) && isset($schedule[0]['in_start']) && isset($schedule[0]['out_start'])) {
+                        if (strtotime($schedule[0]['out_start']) < strtotime($schedule[0]['in_start']) ||
+                            (isset($schedule[0]['out_end']) && strtotime($schedule[0]['out_end']) < strtotime($schedule[0]['out_start']))) {
+                            $is_night_schedule = true;
+                        }
+                    }
+
+                    // Rule: If out time is less than 08:00:01, auto add 1 day
+                    $is_next_day = false;
+                    if (strtotime($out_time) < strtotime('08:00:01')) {
+                        $is_next_day = true;
+                    } elseif ($in_time != '00:00:00' && strtotime($out_time) < strtotime($in_time)) {
+                        $is_next_day = true;
+                    } elseif ($is_night_schedule && strtotime($out_time) <= strtotime('12:00:00')) {
+                        $is_next_day = true;
+                    }
+
+                    $out_date = $is_next_day ? date('Y-m-d', strtotime($curr_date . ' + 1 days')) : $curr_date;
+                    $out_att_table = "att_" . date("Y_m", strtotime($out_date));
+                    if ($out_att_table != $att_table) {
+                        $this->Attn_process_model->attn_month_table_check($out_att_table);
+                    }
+
+                    // If out punch is on next day, clean up any accidental same-day manual out punch on $curr_date
+                    if ($is_next_day) {
+                        $this->db->where('proxi_id', $proxi_id)
+                                 ->where('device_id', 0)
+                                 ->where('monitor_con', 2)
+                                 ->like('date_time', $curr_date)
+                                 ->delete($att_table);
+                        if (!empty($emp_id) && $emp_id != $proxi_id) {
+                            $this->db->where('proxi_id', $emp_id)
+                                     ->where('device_id', 0)
+                                     ->where('monitor_con', 2)
+                                     ->like('date_time', $curr_date)
+                                     ->delete($att_table);
+                        }
+                    }
+
+                    $out_dt = $out_date . " " . $out_time;
+                    $this->insert_attn_punch($out_att_table, $proxi_id, $emp_id, $out_dt, 2);
+                    $inserted_count++;
                 }
             }
-            $first_date = date('Y-m-d', strtotime('+1 days'. $first_date));
-		}
 
-        if (!empty($mm) && $mm['massage'] == 1) {
+            // Run attendance process for this date so shift_log is properly populated with status, in/out, OT, etc.
+            $this->Attn_process_model->attn_process($curr_date, $unit_id, $emp_ids);
+
+            // DIRECTLY GUARANTEE EXACT MANUAL TIMES IN pr_emp_shift_log TABLE
+            $this->Attn_process_model->update_shift_log_manual_times($emp_ids, $curr_date, $in_time, $out_time, $unit_id);
+
+            $curr_date = date('Y-m-d', strtotime('+1 day', strtotime($curr_date)));
+        }
+
+        if ($inserted_count > 0) {
             echo 'success';
         } else {
             echo 'Record Not Inserted';
         }
     }
 
-    function insert_attn_process($data, $date, $unit_id, $emp_id, $proxi_id) {
+    public function insert_attn_punch($att_table, $proxi_id, $emp_id, $datetime, $monitor_con = 2)
+    {
         $this->load->model('Attn_process_model');
-        $att_table = "att_". date("Y_m", strtotime($date));
-        //dd($att_table);
-        if (!$this->db->table_exists($att_table)){
-            $this->db->query('CREATE TABLE IF NOT EXISTS `'.$att_table.'`(
-                    `att_id` int(11) NOT NULL AUTO_INCREMENT,
-                    `device_id` int(11) NOT NULL,
-                    `proxi_id` varchar(30) NOT NULL,
-                    `date_time` datetime NOT NULL,
-                    PRIMARY KEY (`att_id`),
-                    KEY `device_id` (`device_id`,`proxi_id`,`date_time`)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;'
-            );
+        $this->Attn_process_model->attn_month_table_check($att_table);
+
+        if (!$this->db->field_exists('monitor_con', $att_table)) {
+            $this->db->query('ALTER TABLE `' . $att_table . '` ADD `monitor_con` int(2) DEFAULT 1;');
         }
-        //dd($data);
-        if (!empty($data)) {
-            $check = $this->db->where('proxi_id', $proxi_id)->like('date_time', $data['date_time'])->get($att_table)->row();
-            if (empty($check)) {
-                $this->db->insert($att_table, $data);
-            }
+
+        $date_part = date('Y-m-d', strtotime($datetime));
+        // Remove older manual entry for this date and monitor_con to avoid duplicates
+        $this->db->where('proxi_id', $proxi_id)
+                 ->where('device_id', 0)
+                 ->where('monitor_con', $monitor_con)
+                 ->like('date_time', $date_part)
+                 ->delete($att_table);
+
+        if (!empty($emp_id) && $emp_id != $proxi_id) {
+            $this->db->where('proxi_id', $emp_id)
+                     ->where('device_id', 0)
+                     ->where('monitor_con', $monitor_con)
+                     ->like('date_time', $date_part)
+                     ->delete($att_table);
+        }
+
+        $data = array(
+            'device_id'   => 0,
+            'proxi_id'    => $proxi_id,
+            'date_time'   => $datetime,
+            'monitor_con' => $monitor_con
+        );
+        $this->db->insert($att_table, $data);
+
+        if (!empty($emp_id) && $emp_id != $proxi_id) {
+            $data_emp = array(
+                'device_id'   => 0,
+                'proxi_id'    => $emp_id,
+                'date_time'   => $datetime,
+                'monitor_con' => $monitor_con
+            );
+            $this->db->insert($att_table, $data_emp);
+        }
+
+        return array('massage' => 1);
+    }
+
+    function insert_attn_process($data, $date, $unit_id, $emp_id, $proxi_id) {
+        $att_table = "att_" . date("Y_m", strtotime($date));
+        $datetime  = isset($data['date_time']) ? $data['date_time'] : '';
+        $monitor_con = isset($data['monitor_con']) ? $data['monitor_con'] : 2;
+        if (!empty($datetime)) {
+            $this->insert_attn_punch($att_table, $proxi_id, $emp_id, $datetime, $monitor_con);
         }
         return array('massage' => 1);
-
-        // if ($this->Attn_process_model->attn_process($date, $unit_id, array($emp_id))) {
-        //     return array('massage' => 1);
-        // } else {
-        //     return array('massage' => 0);
-        // }
     }
 
     public function log_sheet()
@@ -896,17 +1054,11 @@ class Entry_system_con extends CI_Controller
                     emp_designation.desig_name,
                 ');
         $this->db->from('pr_emp_com_info');
-        $this->db->from('pr_emp_per_info');
-        $this->db->from('emp_depertment');
-        $this->db->from('emp_section');
-        $this->db->from('emp_line_num');
-        $this->db->from('emp_designation');
-
-        $this->db->where('pr_emp_com_info.emp_dept_id = emp_depertment.dept_id');
-        $this->db->where('pr_emp_com_info.emp_sec_id = emp_section.id');
-        $this->db->where('pr_emp_com_info.emp_line_id = emp_line_num.id');
-        $this->db->where('pr_emp_com_info.emp_desi_id = emp_designation.id');
-        $this->db->where('pr_emp_per_info.emp_id = pr_emp_com_info.emp_id');
+        $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_emp_com_info.emp_id', 'left');
+        $this->db->join('emp_depertment', 'emp_depertment.dept_id = pr_emp_com_info.emp_dept_id', 'left');
+        $this->db->join('emp_section', 'emp_section.id = pr_emp_com_info.emp_sec_id', 'left');
+        $this->db->join('emp_line_num', 'emp_line_num.id = pr_emp_com_info.emp_line_id', 'left');
+        $this->db->join('emp_designation', 'emp_designation.id = pr_emp_com_info.emp_desi_id', 'left');
         $this->db->where_in('pr_emp_com_info.emp_id', $emp_id);
         $row = $this->db->get()->row();
         $this->data['row'] = $row;
@@ -974,11 +1126,16 @@ class Entry_system_con extends CI_Controller
                 $data = array();
             }
 
-            if (strtotime($out_time[$key]) <= strtotime($out_end) && strtotime($out_time[$key]) <= strtotime('12:00:00')) {
-                $dd = date('Y-m-d', strtotime($d . ' + 1 days'));
-            } else {
-                $dd = $d;
+            $is_night_sched = (!empty($schedule) && isset($schedule[0]['out_start']) && isset($schedule[0]['in_start']) && (strtotime($schedule[0]['out_start']) < strtotime($schedule[0]['in_start']) || (isset($schedule[0]['out_end']) && strtotime($schedule[0]['out_end']) < strtotime($schedule[0]['out_start']))));
+            $is_next_day = false;
+            if (!empty($out_time[$key]) && $out_time[$key] != '00:00:00' && strtotime($out_time[$key]) < strtotime('08:00:01')) {
+                $is_next_day = true;
+            } elseif (!empty($in_time[$key]) && $in_time[$key] != '00:00:00' && !empty($out_time[$key]) && $out_time[$key] != '00:00:00' && strtotime($out_time[$key]) < strtotime($in_time[$key])) {
+                $is_next_day = true;
+            } elseif (!empty($out_time[$key]) && $out_time[$key] != '00:00:00' && $is_night_sched && strtotime($out_time[$key]) <= strtotime('12:00:00')) {
+                $is_next_day = true;
             }
+            $dd = $is_next_day ? date('Y-m-d', strtotime($d . ' + 1 days')) : $d;
 
             if (!empty($out_time[$key]) && $out_time[$key] != '00:00:00') {
                 $data1 = array(
@@ -991,6 +1148,11 @@ class Entry_system_con extends CI_Controller
                 $data1 = array();
             }
             $mm = $this->update_attn_log($data, $data1, $d, $emp_id, $unit_id, $proxi_id);
+
+            // DIRECTLY GUARANTEE EXACT MANUAL TIMES IN pr_emp_shift_log TABLE
+            $cur_in  = (!empty($in_time[$key]) && $in_time[$key] != '00:00:00') ? $in_time[$key] : '';
+            $cur_out = (!empty($out_time[$key]) && $out_time[$key] != '00:00:00') ? $out_time[$key] : '';
+            $this->Attn_process_model->update_shift_log_manual_times(array($emp_id), $d, $cur_in, $cur_out, $unit_id);
         }
 
         if (!empty($mm) && $mm['massage'] == 1) {
@@ -1009,22 +1171,73 @@ class Entry_system_con extends CI_Controller
                     `device_id` int(11) NOT NULL,
                     `proxi_id` varchar(30) NOT NULL,
                     `date_time` datetime NOT NULL,
+                    `monitor_con` int(2) DEFAULT 1,
                     PRIMARY KEY (`att_id`),
                     KEY `device_id` (`device_id`,`proxi_id`,`date_time`)) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;'
             );
+        } else {
+            if (!$this->db->field_exists('monitor_con', $att_table)) {
+                $this->db->query('ALTER TABLE `'.$att_table.'` ADD `monitor_con` int(2) DEFAULT 1;');
+            }
         }
 
         if (!empty($data)) {
-            $check = $this->db->where('proxi_id', $proxi_id)->like('date_time', $data['date_time'])->get($att_table)->row();
-            if (empty($check)) {
-                $this->db->insert($att_table, $data);
+            $this->db->where('proxi_id', $proxi_id)
+                     ->where('device_id', 0)
+                     ->where('monitor_con', 1)
+                     ->like('date_time', $date)
+                     ->delete($att_table);
+            $this->db->insert($att_table, $data);
+            if (!empty($emp_id) && $emp_id != $proxi_id) {
+                $data_emp = $data;
+                $data_emp['proxi_id'] = $emp_id;
+                $this->db->where('proxi_id', $emp_id)
+                         ->where('device_id', 0)
+                         ->where('monitor_con', 1)
+                         ->like('date_time', $date)
+                         ->delete($att_table);
+                $this->db->insert($att_table, $data_emp);
             }
         }
 
         if (!empty($data1)) {
-            $check1 = $this->db->where('proxi_id', $proxi_id)->like('date_time', $data1['date_time'])->get($att_table)->row();
-            if (empty($check1)) {
-                $this->db->insert($att_table, $data1);
+            $out_d = date('Y-m-d', strtotime($data1['date_time']));
+            $out_att_table = "att_" . date("Y_m", strtotime($out_d));
+            $this->Attn_process_model->attn_month_table_check($out_att_table);
+
+            if ($out_d != $date) {
+                $att_table = "att_" . date("Y_m", strtotime($date));
+                if ($this->db->table_exists($att_table)) {
+                    $this->db->where('proxi_id', $proxi_id)
+                             ->where('device_id', 0)
+                             ->where('monitor_con', 2)
+                             ->like('date_time', $date)
+                             ->delete($att_table);
+                    if (!empty($emp_id) && $emp_id != $proxi_id) {
+                        $this->db->where('proxi_id', $emp_id)
+                                 ->where('device_id', 0)
+                                 ->where('monitor_con', 2)
+                                 ->like('date_time', $date)
+                                 ->delete($att_table);
+                    }
+                }
+            }
+
+            $this->db->where('proxi_id', $proxi_id)
+                     ->where('device_id', 0)
+                     ->where('monitor_con', 2)
+                     ->like('date_time', $out_d)
+                     ->delete($out_att_table);
+            $this->db->insert($out_att_table, $data1);
+            if (!empty($emp_id) && $emp_id != $proxi_id) {
+                $data1_emp = $data1;
+                $data1_emp['proxi_id'] = $emp_id;
+                $this->db->where('proxi_id', $emp_id)
+                         ->where('device_id', 0)
+                         ->where('monitor_con', 2)
+                         ->like('date_time', $out_d)
+                         ->delete($out_att_table);
+                $this->db->insert($out_att_table, $data1_emp);
             }
         }
 
@@ -1096,37 +1309,66 @@ class Entry_system_con extends CI_Controller
         }
 
         $this->db->where("shift_log_date BETWEEN '$first_date' and '$second_date' ")->where_in('emp_id', $emp_ids);
-        if ($this->db->where('unit_id', $unit_id)->delete('pr_emp_shift_log')) {
-            echo 'success';
-        } else {
-            echo 'Record Not Deleted';
+        $this->db->where('unit_id', $unit_id)->delete('pr_emp_shift_log');
+
+        $this->load->model('Attn_process_model');
+        foreach ($emp_ids as $emp_id) {
+            $cur = $first_date;
+            while (strtotime($cur) <= strtotime($second_date)) {
+                $this->Attn_process_model->attn_process($cur, $unit_id, array($emp_id));
+                $cur = date('Y-m-d', strtotime($cur . ' + 1 day'));
+            }
         }
+        echo 'success';
     }
 
     public function log_delete()
     {
-        $sql         = $_POST['emp_id'];
-        $unit_id     = $_POST['unit_id'];
+        $sql         = isset($_POST['emp_id']) ? $_POST['emp_id'] : '';
+        $unit_id     = isset($_POST['unit_id']) ? $_POST['unit_id'] : '';
         $first_date  = date('Y-m-d', strtotime($_POST['first_date']));
         $second_date = date('Y-m-d', strtotime($_POST['second_date']));
         $emp_ids     = explode(',', $sql);
+        // dd($_POST);
+
+        if (empty($sql)) {
+            echo "Please select employee Id";
+            return;
+        }
 
         // final process check
-		$slm = date("Y-m-01", strtotime($first_date));
-		$check = $this->db->where('unit_id', $unit_id)->where('block_month',$slm)->get('pay_salary_block');
-		if ($check->num_rows() > 0) {
-			echo "Sorry! This Month Already Final Processed";
-			return false; exit();
-		}
-		// final process check end
-
-        // $com_ids    = $this->get_com_emp_id($emp_ids);
-        $this->db->where("shift_log_date BETWEEN '$first_date' and '$second_date' ")->where_in('emp_id', $emp_ids);
-        if ($this->db->where('unit_id', $unit_id)->delete('pr_emp_shift_log')) {
-            echo 'success';
-        } else {
-            echo 'Shift Log Not Deleted';
+        $slm = date("Y-m-01", strtotime($first_date));
+        $check = $this->db->where('unit_id', $unit_id)->where('block_month',$slm)->get('pay_salary_block');
+        if ($check && $check->num_rows() > 0) {
+            echo "Sorry! This Month Already Final Processed";
+            return false; exit();
         }
+        // final process check end
+
+        $att_table = "att_" . date("Y_m", strtotime($first_date));
+
+        foreach ($emp_ids as $key => $emp_id) {
+            $first  = $first_date . ' 00:00:00';
+            $second = $second_date . ' 23:59:59';
+            if ($this->db->table_exists($att_table)) {
+                $this->db->where("date_time BETWEEN '$first' and '$second' ");
+                $this->db->where('proxi_id', $emp_id)->delete($att_table);
+            }
+        }
+
+        $this->db->where("shift_log_date BETWEEN '$first_date' and '$second_date' ")->where_in('emp_id', $emp_ids);
+        $this->db->where('unit_id', $unit_id)->delete('pr_emp_shift_log');
+        // dd($this->db->last_query());
+        $this->load->model('Attn_process_model');
+        foreach ($emp_ids as $emp_id) {
+            $cur = $first_date;
+            while (strtotime($cur) <= strtotime($second_date)) {
+                $this->Attn_process_model->attn_process($cur, $unit_id, array($emp_id));
+                $cur = date('Y-m-d', strtotime($cur . ' + 1 day'));
+            }
+        }
+
+        echo 'success';
     }
 
     public function eot_modify_entry()
@@ -1697,14 +1939,12 @@ class Entry_system_con extends CI_Controller
     // CRUD for holiday
     //-------------------------------------------------------------------------------------
     public function holiday_list(){
-        // $date = date("Y-m-d", strtotime('-8 month', strtotime(date("Y-m-d"))));
-        // $this->db->select('attn_holyday_off.*, pr_units.unit_name, pr_emp_per_info.name_en as user_name');
-        // $this->db->from('attn_holyday_off');
-        // $this->db->join('pr_units', 'pr_units.unit_id = attn_holyday_off.unit_id');
-        // $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = attn_holyday_off.emp_id');
-        // $this->db->where('pr_units.unit_id', $this->data['user_data']->unit_name);
-        // $this->db->where('attn_holyday_off.work_off_date >=', $date);
-        // $this->data['results'] = $this->db->order_by('attn_holyday_off.work_off_date', 'DESC')->get()->result();
+        $this->data['employees'] = array();
+        $this->db->select('pr_units.*');
+        $this->data['dept'] = $this->db->get('pr_units')->result_array();
+        if (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name != 'All') {
+            $this->data['employees'] = $this->get_emp_by_unit($this->data['user_data']->unit_name)->result();
+        }
 
         $this->data['title'] = 'Holiday List';
         $this->data['username'] = $this->data['user_data']->id_number;
@@ -1712,6 +1952,13 @@ class Entry_system_con extends CI_Controller
         $this->load->view('layout/template', $this->data);
     }
     public function holiday_list_ajax(){
+        if (!$this->db->field_exists('from_date', 'attn_holyday_off')) {
+            $this->db->query("ALTER TABLE `attn_holyday_off` ADD `from_date` DATE NULL AFTER `emp_id`");
+        }
+        if (!$this->db->field_exists('to_date', 'attn_holyday_off')) {
+            $this->db->query("ALTER TABLE `attn_holyday_off` ADD `to_date` DATE NULL AFTER `from_date`");
+        }
+
         $offset = $this->input->post('offset');
         $limit = $this->input->post('limit');
         $deptSearch = $this->input->post('deptSearch');
@@ -1722,21 +1969,22 @@ class Entry_system_con extends CI_Controller
         $this->db->join('pr_units', 'pr_units.unit_id = attn_holyday_off.unit_id');
         $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = attn_holyday_off.emp_id');
         $this->db->where('pr_units.unit_id', $this->data['user_data']->unit_name);
-        $this->db->where('attn_holyday_off.work_off_date >=', $date);
-
-            $this->db->limit($limit, $offset);
-
+        $this->db->where('attn_holyday_off.to_date >=', $date);
 
         if (!empty($deptSearch) && $deptSearch != '') {
             $this->db->group_start();
-            $this->db->like('attn_holyday_off.work_off_date', $deptSearch);
+            $this->db->like('attn_holyday_off.from_date', $deptSearch);
+            $this->db->or_like('attn_holyday_off.to_date', $deptSearch);
             $this->db->or_like('pr_units.unit_name', $deptSearch);
             $this->db->or_like('pr_emp_per_info.name_en', $deptSearch);
             $this->db->or_like('pr_emp_per_info.emp_id', $deptSearch);
             $this->db->group_end();
         }
 
-        $this->data['results'] = $this->db->order_by('attn_holyday_off.work_off_date', 'DESC')->get()->result();
+        $this->db->order_by('attn_holyday_off.id', 'DESC');
+        $this->db->limit($limit, $offset);
+
+        $this->data['results'] = $this->db->get()->result();
         echo json_encode($this->data['results']);
 
     }
@@ -1745,51 +1993,92 @@ class Entry_system_con extends CI_Controller
         if ($this->session->userdata('logged_in') == false) {
             redirect("authentication");
         }
-        $this->data['employees'] = array();
-        $this->db->select('pr_units.*');
-        $this->data['dept'] = $this->db->get('pr_units')->result_array();
-        if (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name != 'All') {
-            $this->data['employees'] = $this->get_emp_by_unit($this->data['user_data']->unit_name)->result();
-        }
-
-        $this->data['title'] = 'Holiday Add';
-        $this->data['username'] = $this->data['user_data']->id_number;
-        $this->data['subview'] = 'entry_system/emp_holiday_add';
-        $this->load->view('layout/template', $this->data);
+        $this->holiday_list();
     }
     public function holiday_add_ajax(){
-        $date         = date("Y-m-d", strtotime($this->input->post('date')));
+        if (!$this->db->field_exists('from_date', 'attn_holyday_off')) {
+            $this->db->query("ALTER TABLE `attn_holyday_off` ADD `from_date` DATE NULL AFTER `emp_id`");
+        }
+        if (!$this->db->field_exists('to_date', 'attn_holyday_off')) {
+            $this->db->query("ALTER TABLE `attn_holyday_off` ADD `to_date` DATE NULL AFTER `from_date`");
+        }
+
+        $from_date_post = $this->input->post('from_date') ? $this->input->post('from_date') : $this->input->post('date');
+        $to_date_post   = $this->input->post('to_date') ? $this->input->post('to_date') : $from_date_post;
+
+        if (empty($from_date_post)) {
+            echo 'error';
+            return;
+        }
+
+        $from_date = date("Y-m-d", strtotime($from_date_post));
+        $to_date   = date("Y-m-d", strtotime($to_date_post));
+
+        if (strtotime($to_date) < strtotime($from_date)) {
+            $to_date = $from_date;
+        }
+
         $description  = $this->input->post('description');
         $sql          = $this->input->post('sql');
         $unit_id      = $this->input->post('unit_id');
-        $emp_ids      = explode(',', $sql);
+        $emp_ids      = array_filter(explode(',', $sql));
 
-        // dd($_POST);
+        if (empty($emp_ids)) {
+            echo 'error';
+            return;
+        }
 
-        $this->db->where('work_off_date <=', date("Y-m-d", strtotime('-25 month', strtotime($date))));
+        // Cleanup old records (>25 months)
+        $this->db->where('to_date <=', date("Y-m-d", strtotime('-25 month', strtotime($from_date))));
+        $this->db->delete('attn_holyday_off');
+
+        // Delete overlapping holiday records for these employees
+        $this->db->where_in('emp_id', $emp_ids);
+        $this->db->group_start();
+        $this->db->where('from_date <=', $to_date);
+        $this->db->where('to_date >=', $from_date);
+        $this->db->group_end();
         $this->db->delete('attn_holyday_off');
 
         $data = [];
         foreach ($emp_ids as $value) {
             $data[] = array(
-                'work_off_date' => $date,
-                'emp_id' => $value,
-                'unit_id' => $unit_id,
+                'unit_id'     => $unit_id,
+                'emp_id'      => $value,
+                'from_date'   => $from_date,
+                'to_date'     => $to_date,
                 'description' => $description,
             );
         }
-        $this->db->where('work_off_date', $date)->where_in('emp_id', $emp_ids);
-        $this->db->delete('attn_holyday_off');
-        if ( $this->db->insert_batch('attn_holyday_off', $data)) {
+
+        if (!empty($data)) {
+            $chunks = array_chunk($data, 500);
+            foreach ($chunks as $chunk) {
+                $this->db->insert_batch('attn_holyday_off', $chunk);
+            }
             echo 'success';
-        }else{
+        } else {
             echo 'error';
         }
     }
-    public function emp_holiday_del($id){
+    public function emp_holiday_del($id = null){
+        if ($this->input->is_ajax_request()) {
+            $id = $this->input->post('id');
+            $this->db->where('id', $id);
+            if ($this->db->delete('attn_holyday_off')) {
+                echo 'success';
+            } else {
+                echo 'error';
+            }
+            return;
+        }
+
         $this->db->where('id', $id);
-        $this->db->delete('attn_holyday_off');
-        $this->session->set_flashdata('success', 'Record Deleted successfully!');
+        if ($this->db->delete('attn_holyday_off')) {
+            $this->session->set_flashdata('success', 'Record Deleted successfully!');
+        } else {
+            $this->session->set_flashdata('failuer', 'Record Not Found!');
+        }
         redirect(base_url('entry_system_con/holiday_list'));
     }
 
@@ -1919,12 +2208,12 @@ class Entry_system_con extends CI_Controller
             'emp_dept_id' => $pr_emp_com_info->emp_dept_id,
             'emp_sec_id' => $pr_emp_com_info->emp_sec_id,
             'emp_line_id' => $pr_emp_com_info->emp_line_id,
-            'attn_sum_line_id' => $pr_emp_com_info->attn_sum_line_id,
             'emp_desi_id' => $pr_emp_com_info->emp_desi_id,
             'emp_sal_gra_id' => $pr_emp_com_info->emp_sal_gra_id,
             'emp_cat_id' => $pr_emp_com_info->emp_cat_id,
             'proxi_id' => $pr_emp_com_info->proxi_id,
             'emp_shift' => $pr_emp_com_info->emp_shift,
+            'weekend' => isset($pr_emp_com_info->weekend) ? $pr_emp_com_info->weekend : 'Friday',
             'gross_sal' => $pr_emp_com_info->gross_sal,
             'com_gross_sal' => $pr_emp_com_info->com_gross_sal,
             'ot_entitle' => $pr_emp_com_info->ot_entitle,
@@ -2079,15 +2368,14 @@ class Entry_system_con extends CI_Controller
         $leave_end = date("Y-m-d", strtotime($to_date));
         $total_leave = date_diff(date_create($leave_start), date_create($leave_end))->format('%a') + 1;
 
-        // Check for duplicate entry
+        // Check for duplicate / overlapping entry
         $duplicate_check = $this->db->where('emp_id', $emp_id)
-                        ->where('leave_start', $leave_start)
-                        ->where('leave_end', $leave_end)
-                        ->where('leave_type', $leave_type)
+                        ->where("((leave_start <= '{$leave_end}' AND leave_end >= '{$leave_start}'))")
+                        ->where_in('status', array('pending', 'approved'))
                         ->get('pr_leave_trans')
                         ->num_rows();
         if ($duplicate_check > 0) {
-            echo "Duplicate leave entry found";
+            echo "An active or pending leave entry already exists for this date range";
             exit();
         }
 
@@ -2156,16 +2444,32 @@ class Entry_system_con extends CI_Controller
         }
         // dd($balance);
 
+        $user_id = isset($this->data['user_data']->id) ? $this->data['user_data']->id : (isset($this->session->userdata('data')->id) ? $this->session->userdata('data')->id : null);
+        $user_name = isset($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : (isset($this->session->userdata('data')->id_number) ? $this->session->userdata('data')->id_number : 'HR');
+        $history = array(
+            array(
+                'action' => 'submitted',
+                'by_id' => $user_id,
+                'by_name' => $user_name,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'note' => 'Leave request submitted by HR (Pending Admin Approval)'
+            )
+        );
+
         $formArray = array(
-            'emp_id'            => $emp_id,
-            'unit_id'           => $unit_id,
-            'start_date'        => $apply_date,
-            'leave_type'        => $leave_type,
-            'leave_start'       => $leave_start,
-            'leave_end'         => $leave_end,
-            'total_leave'       => $total_leave,
-            'leave_descrip'     => $reason,
-            'add_on_vacation'   => $add_on_vacation,
+            'emp_id'               => $emp_id,
+            'unit_id'              => $unit_id,
+            'start_date'           => $apply_date,
+            'leave_type'           => $leave_type,
+            'leave_start'          => $leave_start,
+            'leave_end'            => $leave_end,
+            'total_leave'          => $total_leave,
+            'status'               => 'pending',
+            'leave_descrip'        => $reason,
+            'add_on_vacation'      => $add_on_vacation,
+            'applied_by'           => $user_id,
+            'applied_at'           => date('Y-m-d H:i:s'),
+            'modification_history' => json_encode($history),
         );
         if ($this->db->insert('pr_leave_trans', $formArray)) {
             echo "success";
@@ -2226,6 +2530,7 @@ class Entry_system_con extends CI_Controller
         $this->db->where('emp_id', $emp_id);
         $this->db->where('leave_start >=', $first_date);
         $this->db->where('leave_end <=', $last_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $value = $this->db->get('pr_leave_trans')->row();
 
         $this->db->select("
@@ -2234,6 +2539,7 @@ class Entry_system_con extends CI_Controller
         $this->db->where('emp_id', $emp_id);
         $this->db->where('leave_start >=', $first_date);
         $this->db->where('leave_start <=', $last_date);
+        $this->db->where("(status = 'approved' OR status IS NULL)");
         $met = $this->db->get('pr_leave_trans')->row();
 
         if (!empty($met)) {
@@ -2324,6 +2630,220 @@ class Entry_system_con extends CI_Controller
         $this->db->delete('pr_leave_trans');
         $this->session->set_flashdata('success', 'Record Deleted successfully!');
         redirect(base_url('entry_system_con/leave_list'));
+    }
+
+    /**
+     * Helper to retrieve all filtered leave records without pagination limit for export
+     */
+    private function get_filtered_leave_records($filters = array())
+    {
+        $from_date  = !empty($filters['from_date'])  ? trim($filters['from_date'])  : '';
+        $to_date    = !empty($filters['to_date'])    ? trim($filters['to_date'])    : '';
+        $month      = !empty($filters['month'])      ? trim($filters['month'])      : '';
+        $year       = !empty($filters['year'])       ? trim($filters['year'])       : '';
+        $emp_id     = !empty($filters['emp_id'])     ? trim($filters['emp_id'])     : '';
+        $dept_id    = !empty($filters['dept_id'])    ? trim($filters['dept_id'])    : '';
+        $leave_type = !empty($filters['leave_type']) ? trim($filters['leave_type']) : '';
+        $status     = !empty($filters['status'])     ? trim($filters['status'])     : '';
+        $unit_id    = !empty($filters['unit_id'])    ? trim($filters['unit_id'])    : '';
+
+        $this->db->select("
+            pr_leave_trans.*,
+            pr_units.unit_name,
+            pr_emp_per_info.name_en,
+            pr_emp_per_info.name_bn,
+            pr_emp_per_info.name_en as user_name,
+            emp_depertment.dept_name,
+            emp_designation.desig_name
+        ");
+        $this->db->from('pr_leave_trans');
+        $this->db->join('pr_units', 'pr_units.unit_id = pr_leave_trans.unit_id', 'left');
+        $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_leave_trans.emp_id', 'left');
+        $this->db->join('pr_emp_com_info', 'pr_emp_com_info.emp_id = pr_leave_trans.emp_id', 'left');
+        $this->db->join('emp_depertment', 'emp_depertment.dept_id = pr_emp_com_info.emp_dept_id', 'left');
+        $this->db->join('emp_designation', 'emp_designation.id = pr_emp_com_info.emp_desi_id', 'left');
+
+        // Scoped unit logic
+        if (!empty($unit_id) && $unit_id !== 'All') {
+            $this->db->where('pr_leave_trans.unit_id', $unit_id);
+        } elseif (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name !== 'All') {
+            $this->db->where('pr_leave_trans.unit_id', $this->data['user_data']->unit_name);
+        }
+
+        // Date range
+        if (!empty($from_date) && !empty($to_date) && $from_date <= $to_date) {
+            $this->db->where('pr_leave_trans.leave_start >=', $from_date);
+            $this->db->where('pr_leave_trans.leave_end <=', $to_date);
+        } elseif (!empty($from_date)) {
+            $this->db->where('pr_leave_trans.leave_start >=', $from_date);
+        } elseif (!empty($to_date)) {
+            $this->db->where('pr_leave_trans.leave_end <=', $to_date);
+        }
+
+        // Month filter (YYYY-MM)
+        if (!empty($month)) {
+            $this->db->where("DATE_FORMAT(pr_leave_trans.leave_start, '%Y-%m') =", $month);
+        }
+
+        // Year filter
+        if (!empty($year)) {
+            $this->db->where('YEAR(pr_leave_trans.leave_start)', $year);
+        }
+
+        // Employee filter (ID or Name)
+        if (!empty($emp_id)) {
+            $this->db->group_start();
+            $this->db->like('pr_leave_trans.emp_id', $emp_id);
+            $this->db->or_like('pr_emp_per_info.name_en', $emp_id);
+            $this->db->group_end();
+        }
+
+        // Department filter
+        if (!empty($dept_id)) {
+            $this->db->where('pr_emp_com_info.emp_dept_id', $dept_id);
+        }
+
+        // Leave type filter
+        if (!empty($leave_type)) {
+            $this->db->where('pr_leave_trans.leave_type', $leave_type);
+        }
+
+        // Status filter
+        if (!empty($status) && strtolower($status) !== 'all') {
+            $this->db->where('pr_leave_trans.status', $status);
+        }
+
+        $this->db->order_by('pr_leave_trans.leave_start', 'DESC');
+        $this->db->order_by('pr_leave_trans.id', 'DESC');
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Export Leave List to Excel (.xls)
+     */
+    public function export_leave_excel()
+    {
+        $filters = array(
+            'from_date'  => $this->input->get_post('from_date'),
+            'to_date'    => $this->input->get_post('to_date'),
+            'month'      => $this->input->get_post('month'),
+            'year'       => $this->input->get_post('year'),
+            'emp_id'     => $this->input->get_post('emp_id'),
+            'dept_id'    => $this->input->get_post('dept_id'),
+            'leave_type' => $this->input->get_post('leave_type'),
+            'status'     => $this->input->get_post('status'),
+            'unit_id'    => $this->input->get_post('unit_id'),
+        );
+
+        $records = $this->get_filtered_leave_records($filters);
+
+        // Build filter summary string
+        $summary_parts = array();
+        if (!empty($filters['from_date']) && !empty($filters['to_date'])) {
+            $summary_parts[] = "Date: " . date('d-M-Y', strtotime($filters['from_date'])) . " to " . date('d-M-Y', strtotime($filters['to_date']));
+        } elseif (!empty($filters['from_date'])) {
+            $summary_parts[] = "From: " . date('d-M-Y', strtotime($filters['from_date']));
+        } elseif (!empty($filters['to_date'])) {
+            $summary_parts[] = "To: " . date('d-M-Y', strtotime($filters['to_date']));
+        }
+        if (!empty($filters['month'])) {
+            $summary_parts[] = "Month: " . date('F Y', strtotime($filters['month'] . '-01'));
+        }
+        if (!empty($filters['year'])) {
+            $summary_parts[] = "Year: " . $filters['year'];
+        }
+        if (!empty($filters['emp_id'])) {
+            $summary_parts[] = "Emp ID: " . $filters['emp_id'];
+        }
+        if (!empty($filters['status']) && strtolower($filters['status']) !== 'all') {
+            $summary_parts[] = "Status: " . ucfirst($filters['status']);
+        }
+        if (!empty($filters['leave_type'])) {
+            $summary_parts[] = "Type: " . strtoupper($filters['leave_type']);
+        }
+        $filter_summary = !empty($summary_parts) ? implode(' | ', $summary_parts) : 'All Records';
+
+        $unit_id = !empty($filters['unit_id']) ? $filters['unit_id'] : (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name !== 'All' ? $this->data['user_data']->unit_name : null);
+        $company_info = null;
+        if (!empty($unit_id)) {
+            $company_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row();
+        }
+        if (empty($company_info)) {
+            $company_info = $this->db->get('company_infos')->row();
+        }
+
+        $data = array(
+            'records'        => $records,
+            'filters'        => $filters,
+            'filter_summary' => $filter_summary,
+            'company_info'   => $company_info,
+        );
+
+        $this->load->view('entry_system/leave_list_excel', $data);
+    }
+
+    /**
+     * Export Leave List to PDF Report Preview (Print / Save as PDF)
+     */
+    public function export_leave_pdf()
+    {
+        $filters = array(
+            'from_date'  => $this->input->get_post('from_date'),
+            'to_date'    => $this->input->get_post('to_date'),
+            'month'      => $this->input->get_post('month'),
+            'year'       => $this->input->get_post('year'),
+            'emp_id'     => $this->input->get_post('emp_id'),
+            'dept_id'    => $this->input->get_post('dept_id'),
+            'leave_type' => $this->input->get_post('leave_type'),
+            'status'     => $this->input->get_post('status'),
+            'unit_id'    => $this->input->get_post('unit_id'),
+        );
+
+        $records = $this->get_filtered_leave_records($filters);
+
+        // Build filter summary string
+        $summary_parts = array();
+        if (!empty($filters['from_date']) && !empty($filters['to_date'])) {
+            $summary_parts[] = "Date: " . date('d-M-Y', strtotime($filters['from_date'])) . " to " . date('d-M-Y', strtotime($filters['to_date']));
+        } elseif (!empty($filters['from_date'])) {
+            $summary_parts[] = "From: " . date('d-M-Y', strtotime($filters['from_date']));
+        } elseif (!empty($filters['to_date'])) {
+            $summary_parts[] = "To: " . date('d-M-Y', strtotime($filters['to_date']));
+        }
+        if (!empty($filters['month'])) {
+            $summary_parts[] = "Month: " . date('F Y', strtotime($filters['month'] . '-01'));
+        }
+        if (!empty($filters['year'])) {
+            $summary_parts[] = "Year: " . $filters['year'];
+        }
+        if (!empty($filters['emp_id'])) {
+            $summary_parts[] = "Emp ID: " . $filters['emp_id'];
+        }
+        if (!empty($filters['status']) && strtolower($filters['status']) !== 'all') {
+            $summary_parts[] = "Status: " . ucfirst($filters['status']);
+        }
+        if (!empty($filters['leave_type'])) {
+            $summary_parts[] = "Type: " . strtoupper($filters['leave_type']);
+        }
+        $filter_summary = !empty($summary_parts) ? implode(' | ', $summary_parts) : 'All Records';
+
+        $unit_id = !empty($filters['unit_id']) ? $filters['unit_id'] : (!empty($this->data['user_data']->unit_name) && $this->data['user_data']->unit_name !== 'All' ? $this->data['user_data']->unit_name : null);
+        $company_info = null;
+        if (!empty($unit_id)) {
+            $company_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row();
+        }
+        if (empty($company_info)) {
+            $company_info = $this->db->get('company_infos')->row();
+        }
+
+        $data = array(
+            'records'        => $records,
+            'filters'        => $filters,
+            'filter_summary' => $filter_summary,
+            'company_info'   => $company_info,
+        );
+
+        $this->load->view('entry_system/leave_list_pdf_report', $data);
     }
     //--------------------------------------------------------------------------------------
     // Leave end
@@ -2880,14 +3400,18 @@ class Entry_system_con extends CI_Controller
                     pr_emp_com_info.unit_id,
                     pr_emp_per_info.name_en,
                     pr_emp_per_info.name_bn,
+                    shft.shift_name,
+                    pshft.shift_name as per_shift_name
                 ');
         $this->db->from('pr_emp_com_info');
-        $this->db->join('emp_designation as deg', 'deg.id = pr_emp_com_info.emp_desi_id', 'left');
+        $this->db->join('emp_designation as deg', 'deg.id = pr_emp_com_info.emp_desi_id AND deg.hide_status = 1', 'left');
         $this->db->join('pr_units', 'pr_units.unit_id = pr_emp_com_info.unit_id', 'left');
         $this->db->join('pr_emp_per_info', 'pr_emp_per_info.emp_id = pr_emp_com_info.emp_id', 'left');
-        $this->db->where('deg.hide_status', 1);
+        $this->db->join('pr_emp_shift as shft', 'shft.id = pr_emp_com_info.emp_shift', 'left');
+        $this->db->join('pr_emp_shift as pshft', 'pshft.id = pr_emp_com_info.emp_per_shift', 'left');
         $this->db->where('pr_units.unit_id', $unit);
         $this->db->where('pr_emp_com_info.emp_cat_id', 1);
+        $this->db->order_by('CAST(pr_emp_com_info.emp_id AS UNSIGNED)', 'ASC');
         // dd($this->db->get()->result());
         return $this->db->get();
     }

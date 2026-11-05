@@ -44,8 +44,8 @@
                             <label>Employee Type <span style="color:red">*</span> </label>
                                 <select name="emp_type" class="form-control" required>
                                     <option value="">Select Employee Type</option>
-                                    <option value="1">Worker</option>
-                                    <option value="2">Staff</option>
+                                    <option value="1">Office</option>
+                                    <option value="2">Factory</option>
                                 </select>
                             <?=(isset($failuer['emp_type'])) ? '<div class="alert alert-failuer">' . $failuer['emp_type'] . '</div>' : ''; ?>
                         </div>

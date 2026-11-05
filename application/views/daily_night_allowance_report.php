@@ -82,7 +82,6 @@ Daily Night Allowance Report of <?php echo "$start_date"; ?></span>
 <th>Department</th> 
 <th>Section</th> 
 <th>Designation</th> 
-<th>Line</th> 
 <th>Out Time</th> 
 <th>Night Bill</th> 
 <th width="120">Signature</th> 
@@ -131,10 +130,6 @@ if($counter == $page)
 	echo $values["desig_name"][$k];
 	echo "</td>";
 
-	echo "<td align='right' style='padding-right:5px;'>";
-	echo $values["line_name"][$k];
-	echo "</td>";
-
 	$out_time = date('h:i:s A', strtotime($values["out_time"][$k]));
 	echo "<td width='80' style='text-align:center;' >";
 	echo $out_time;
@@ -155,7 +150,7 @@ if($counter == $page)
 }
 		echo "<tr style='font-weight:bold; background-color:#CCC;'>";
 
-		echo "<td colspan='8' align='center'>";
+		echo "<td colspan='7' align='center'>";
 		echo "Page Total";
 		echo "</td>";
 		

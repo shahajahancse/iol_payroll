@@ -213,25 +213,7 @@ function englishToBengaliMonth($englishMonth) {
         <!-- < ?php dd($values)?> -->
     <div class="container w-75">
 
-    <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-        <div class="d-flex flex-row justify-content-between">
-            <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :03.10.2020</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Version # 00</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/008</p>
-        </div>
-        <?php } else if($unit_id == 2){?>
-        <div class="d-flex flex-row justify-content-between">
-            <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-01-2020</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Version # 00</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;"> Document Code : LSAL/HR/03/084</p>
-        </div>
-        <?php }else if($unit_id == 4){?>
-        <div class="d-flex flex-row justify-content-between">
-            <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :15.01.2022</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Version # 00</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/052</p>
-        </div>
-    <?php }?>
+    <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
             <div class="mt-3">
                 <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
                 <div class="d-flex">
@@ -451,25 +433,7 @@ function englishToBengaliMonth($englishMonth) {
 
     <div class="voucher-container">
 
-        <?php $unit_id= $this->session->userdata('data')->unit_name; if($unit_id ==1){?>
-        <div class="d-flex flex-row justify-content-between">
-            <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :03.10.2020</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Version # 00</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : AJFL/HRAC(HR)/03/008</p>
-        </div>
-        <?php } else if($unit_id == 2){?>
-        <div class="d-flex flex-row justify-content-between">
-            <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :01-01-2020</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Version # 00</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;"> Document Code : LSAL/HR/03/084</p>
-        </div>
-        <?php }else if($unit_id == 4){?>
-        <div class="d-flex flex-row justify-content-between">
-            <p style="font-family: Arial, Helvetica, sans-serif;">Effective Date :15.01.2022</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Version # 00</p>
-            <p style="font-family: Arial, Helvetica, sans-serif;">Document Code : HGL/HRD/HR/03/052</p>
-        </div>
-    <?php }?>
+        <?php $unit_id= $this->session->userdata('data')->unit_name; ?>
     <div class="mt-3">
         <?php  $com_info = $this->db->where('unit_id', $unit_id)->get('company_infos')->row(); ?>
         <div class="d-flex">

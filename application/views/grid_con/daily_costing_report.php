@@ -35,7 +35,7 @@ $num_of_days = date("t",strtotime($grid_date));
 <th style="padding:4px;">Emp ID</th>
 <th style="padding:4px;">Employee Name</th>
 <th style="padding:4px;">Designation</th>
-<th style="padding:4px;">Line</th>
+<th style="padding:4px;">Section</th>
 <th style="padding:4px;">Status</th>
 <th style="padding:4px;">Gross Sal</th>
 <th style="padding:4px;">Per Day Salary</th>
@@ -64,7 +64,7 @@ $count = count($values["emp_id"]);
 for($i=0; $i<$count; $i++ ){
 	if($line_name !=$values["line_name"][$i]){
 	echo "<tr bgcolor='#CCCCCC'>";
-	echo "<td colspan='17' style='font-size:16px; font-weight : bold;'>Line :".$values["line_name"][$i]."</td>";
+	echo "<td colspan='17' style='font-size:16px; font-weight : bold;'>Section :".$values["line_name"][$i]."</td>";
 	echo "</tr>";
 	}
 

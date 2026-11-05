@@ -97,7 +97,7 @@
             <?php echo date("d/m/Y",strtotime($date)); ?>
         </span>
         <br><br>
-        <table border="1" cellpadding="0" cellspacing="0" style="font-size:12px; width:700px; margin-bottom:20px;" id='report-data'>
+        <table border="1" cellpadding="0" cellspacing="0" style="font-size:12px; width:850px; margin-bottom:20px;" id='report-data'>
             <?php $this->load->model('Grid_model'); $i=1;
 			$groupedData = array();
 			foreach ($values as $employee) {
@@ -117,7 +117,8 @@
                 <th style="padding-left:10px;padding-right:10px;">ID</th>
                 <th style="padding:0 4px;">Employee Name</th>
                 <th style="">Designation</th>
-                <th style="padding:0 4px">Line</th>
+                <th style="padding:0 4px">Section</th>
+                <th style="padding:0 4px">Per Shift</th>
                 <th style="">Shift</th>
                 <?php if($daily_status == 4){?>
                 	<th style="padding:0 4px">In Time</th>
@@ -142,13 +143,12 @@
 
 				<!-- < php if($daily_status != 8){?> -->
 					<!-- <th style="padding:0 4px">Status</th> -->
-				<?php  if($daily_status != 8) { ?>
+				<?php  if($daily_status != 8 && $daily_status != 2) { ?>
 					<th style="padding:0 4px">Status</th>
 				<?php } ?>
 
                 <?php if($daily_status == 2){?>
 					<th>Mobile</th>
-					<th>Remark</th>
                 <?php }?>
                 <?php if($daily_status == 2 || $daily_status == 4){?>
                 	<th>Sign</th>
@@ -156,7 +156,7 @@
             </tr>
 
             <?php 	foreach ($employees as $key=>$employee) {
-				$emp_num_rows = $this->Grid_model->attendance_check_for_absent($employee['emp_id'],$date);
+				$emp_num_rows = ($daily_status == 2) ? '' : $this->Grid_model->attendance_check_for_absent($employee['emp_id'],$date);
 				//dd($emp_num_rows);
 
 				?>
@@ -165,7 +165,8 @@
                 <td style="text-align:center;padding:0 4px"><?php echo $employee['emp_id']?></td>
                 <td style="text-align:center"><?php echo $employee['name_en']?></td>
                 <td style="text-align:center"><?php echo $employee['desig_name']?></td>
-                <td style="text-align:center;padding:0 4px"><?php echo $employee['line_name_en']?></td>
+                <td style="text-align:center;padding:0 4px"><?php echo $employee['sec_name_en']?></td>
+                <td style="text-align:center;padding:0 4px"><?php echo !empty($employee['emp_per_shift']) ? $employee['emp_per_shift'] : ''; ?></td>
                 <td style="text-align:center;"><?php echo $employee['shift_name']?></td>
 
 				<?php if($daily_status == 4){?>
@@ -174,18 +175,28 @@
 					</td>
                 <?php }?>
 
-                <?php if($daily_status==1 || $daily_status== 5 || $daily_status==6 || $daily_status==7 || $daily_status==8){?>
+                <?php if($daily_status==1 || $daily_status== 5 || $daily_status==6 || $daily_status==7 || $daily_status==8){
+					$is_single_or_nopunch = isset($employee['shift_name']) && in_array(strtolower(trim($employee['shift_name'])), array('single', 'single punch', 'single_punch', 'no punch', 'nopunch', 'no_punch'));
+				?>
 					<td style="text-align:center; padding:0 4px">
-						<?php echo $employee['in_time'] !='00:00:00' ? date('h:i:s A',strtotime($employee['in_time'])) : "P(ERROR)"?>
+						<?php 
+						if (!empty($employee['in_time']) && $employee['in_time'] !='00:00:00') {
+							echo date('h:i:s A',strtotime($employee['in_time']));
+						} else {
+							echo $is_single_or_nopunch ? "" : "P(ERROR)";
+						}
+						?>
 					</td>
 					<td style="text-align:center; padding:0 4px">
 					<?php
-					//dd($daily_status);
-					if ($daily_status==5 &&  $employee['ot']>=2) {
-						//dd($employee['ot']);
-						$text= ($employee['out_time'] !='00:00:00')? date('7:i:s A',strtotime($employee['out_time'])) : "P(ERROR)";
-					}else{
-						$text= ($employee['out_time'] !='00:00:00')? date('h:i:s A',strtotime($employee['out_time'])) : "P(ERROR)";
+					if (!empty($employee['out_time']) && $employee['out_time'] !='00:00:00') {
+						if ($daily_status==5 && $employee['ot']>=2) {
+							$text = date('7:i:s A',strtotime($employee['out_time']));
+						} else {
+							$text = date('h:i:s A',strtotime($employee['out_time']));
+						}
+					} else {
+						$text = $is_single_or_nopunch ? "" : "P(ERROR)";
 					}
 					?>
 
@@ -208,7 +219,7 @@
                 </td>
                 <?php }?>
 
-				<?php if($daily_status != 8){?>
+				<?php if($daily_status != 8 && $daily_status != 2){?>
 					<td style="text-align:center">
 						<?php
 							if($daily_status == 3){
@@ -216,21 +227,15 @@
 									( $employee['leave_type'] =='sl'? 'Sick Leave':
 									( $employee['leave_type'] =='ml'? 'Maternity Leave':
 									( $employee['leave_type'] =='el'? 'Earn Leave': 'Leave'))));
-							}else if($daily_status == 2){
-								echo  $emp_num_rows;
 							}
-							// else{
-								// echo  $daily_status != 4 ? $employee['present_status'] : "P(Late)";
-							// }
 						?>
 					</td>
-				<?php } else { ?>
+				<?php } elseif($daily_status == 8) { ?>
 					<td style="padding-top:30px;padding-left:80px"> </td>
 				<?php } ?>
 
                 <?php if($daily_status == 2){?>
 					<td style="padding:0 4px"><?php echo $employee['personal_mobile']?></td>
-					<td style="padding-top:30px;padding-left:80px"></td>
                 <?php }?>
                 <?php if($daily_status == 2 || $daily_status == 4){?>
                 	<td style="padding-top:30px;padding-left:80px"> </td>
@@ -238,7 +243,7 @@
             </tr>
             <?php } } ?>
             <tr style="border:none;font-size:14px;white-space:nowrap">
-                <td colspan="10" style="padding:0 4px">
+                <td colspan="12" style="padding:0 4px">
                     <?php echo "<style='float:left;'>Total : " . count($values)?>
                 </td>
             </tr>

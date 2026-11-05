@@ -9,6 +9,23 @@ class Processdb extends CI_Model{
 		/* Standard Libraries */
 		$this->load->model('log_model');
 		$this->load->model('common_model');
+
+		if (!$this->db->field_exists('weekend', 'pr_emp_com_info')) {
+			$this->db->query("ALTER TABLE `pr_emp_com_info` ADD `weekend` VARCHAR(20) NULL DEFAULT 'Friday' AFTER `emp_shift`");
+		}
+		if (!$this->db->field_exists('emp_per_shift', 'pr_emp_com_info')) {
+			$this->db->query("ALTER TABLE `pr_emp_com_info` ADD `emp_per_shift` INT(11) NULL DEFAULT NULL AFTER `emp_shift`");
+			$this->db->query("UPDATE `pr_emp_com_info` SET `emp_per_shift` = `emp_shift` WHERE `emp_per_shift` IS NULL");
+		}
+		if (!$this->db->field_exists('father_name_en', 'pr_emp_per_info')) {
+			$this->db->query("ALTER TABLE `pr_emp_per_info` ADD `father_name_en` VARCHAR(255) NULL AFTER `father_name`");
+		}
+		if (!$this->db->field_exists('mother_name_en', 'pr_emp_per_info')) {
+			$this->db->query("ALTER TABLE `pr_emp_per_info` ADD `mother_name_en` VARCHAR(255) NULL AFTER `mother_name`");
+		}
+		if (!$this->db->field_exists('spouse_name_en', 'pr_emp_per_info')) {
+			$this->db->query("ALTER TABLE `pr_emp_per_info` ADD `spouse_name_en` VARCHAR(255) NULL AFTER `spouse_name`");
+		}
 	}
 
 	//==================================Employee Information Insert==============================
@@ -25,8 +42,11 @@ class Processdb extends CI_Model{
 		$this->db->where('emp_id', $this->input->post('emp_id'));
 		$query = $this->db->get('pr_emp_com_info');
 		if($query->num_rows() > 0) {
+			if ($this->input->is_ajax_request()) {
+				return array('status' => false, 'message' => 'Employee ID already exists.');
+			}
 			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Employee ID already exists.'); window.location='personal_info';</SCRIPT>";
-			return ;
+			return array('status' => false, 'message' => 'Employee ID already exists.');
 		}
 
 		$ejd = date("Y-m-d", strtotime($this->input->post('emp_join_date')));
@@ -35,23 +55,25 @@ class Processdb extends CI_Model{
 			'unit_id'			=> $this->input->post('unit_id'),
 			'emp_dept_id'  		=> $this->input->post('emp_dept_id'),
 			'emp_sec_id' 		=> $this->input->post('emp_sec_id'),
-			'emp_line_id' 		=> $this->input->post('emp_line_id'),
+			'emp_line_id' 		=> $this->input->post('emp_line_id') ? $this->input->post('emp_line_id') : 1,
 			'emp_desi_id'  		=> $this->input->post('emp_desi_id'),
 			'emp_type'  		=> $this->input->post('emp_type'),
 			'emp_sal_gra_id'  	=> $this->input->post('emp_sal_gra_id'),
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
-			'gross_sal'			=> $this->input->post('gross_sal'),
-			'com_gross_sal'		=> $this->input->post('gross_sal'),
+			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : null,
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
+			'gross_sal'			=> $this->input->post('gross_sal') ? $this->input->post('gross_sal') : ($this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : 0),
+			'com_gross_sal'		=> $this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : ($this->input->post('gross_sal') ? $this->input->post('gross_sal') : 0),
 			'monitor_con'		=> 2,
 
-			'ot_entitle'		=> $this->input->post('ot_entitle'),
-			'com_ot_entitle'    => $this->input->post('com_ot_entitle'),
-			'lunch'				=> $this->input->post('lunch'),
-			'transport'			=> $this->input->post('transport'),
-			'salary_draw'		=> $this->input->post('salary_draw'),
-			'salary_type'		=> $this->input->post('salary_type'),
+			'ot_entitle'		=> $this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : ($this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : 1),
+			'com_ot_entitle'    => $this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : ($this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : 1),
+			'lunch'				=> $this->input->post('lunch') ? $this->input->post('lunch') : 1,
+			'transport'			=> $this->input->post('transport') ? $this->input->post('transport') : 1,
+			'salary_draw'		=> $this->input->post('salary_draw') ? $this->input->post('salary_draw') : 1,
+			'salary_type'		=> $this->input->post('salary_type') ? $this->input->post('salary_type') : 1,
 			'emp_join_date'		=> $ejd,
 			'hight'		=> $this->input->post('hight'),
 			'symbol'		=> $this->input->post('symbol'),
@@ -63,7 +85,9 @@ class Processdb extends CI_Model{
 			'name_en' 			=> $this->input->post('name_en'),
 			'name_bn' 			=> $this->input->post('name_bn'),
 			'father_name' 		=> $this->input->post('father_name'),
+			'father_name_en' 	=> $this->input->post('father_name_en'),
 			'mother_name' 		=> $this->input->post('mother_name'),
+			'mother_name_en' 	=> $this->input->post('mother_name_en'),
 			'per_village'		=> $this->input->post('per_village'),
 			'per_village_bn'	=> $this->input->post('per_village_bn'),
 
@@ -80,6 +104,7 @@ class Processdb extends CI_Model{
 			'pre_thana'			=> $this->input->post('pre_thana'),
 			'pre_district'		=> $this->input->post('pre_district'),
 			'spouse_name' 		=> $this->input->post('spouse_name'),
+			'spouse_name_en' 	=> $this->input->post('spouse_name_en'),
 
 			'emp_dob' 			=> $dob,
 			'gender' 			=> $this->input->post('gender'),
@@ -129,12 +154,15 @@ class Processdb extends CI_Model{
 			// dd($per_data);
 
 			$img ="";
-			if($_FILES["img_source"]["name"] != '')
+			if(isset($_FILES["img_source"]) && $_FILES["img_source"]["name"] != '')
 			{
 				$imgs = explode('.', $_FILES["img_source"]["name"]);
 				$ext = end($imgs);
 
 				$config['upload_path']    = './uploads/photo';
+				if (!is_dir($config['upload_path'])) {
+					mkdir($config['upload_path'], 0777, true);
+				}
 				$config['allowed_types']  = 'jpg|png|jpeg';
 				$config['file_name'] 	  =  $id .'.'. $ext;
 				$config['max_size']	 	  = '4000';
@@ -145,7 +173,9 @@ class Processdb extends CI_Model{
 				if ( ! $this->upload->do_upload('img_source'))
 				{
 					$error = array('error' => $this->upload->display_errors());
-					echo $error["error"];
+					if (!$this->input->is_ajax_request()) {
+						echo $error["error"];
+					}
 				}
 				else
 				{
@@ -155,12 +185,15 @@ class Processdb extends CI_Model{
 
 			}
 			$signature="";
-			if($_FILES["signature"]["name"] != '')
+			if(isset($_FILES["signature"]) && $_FILES["signature"]["name"] != '')
 			{
 				$imgs = explode('.', $_FILES["signature"]["name"]);
 				$ext = end($imgs);
 
-				$config['upload_path']    = './uploads/photo';
+				$config['upload_path']    = './uploads/emp_signature';
+				if (!is_dir($config['upload_path'])) {
+					mkdir($config['upload_path'], 0777, true);
+				}
 				$config['allowed_types']  = 'jpg|png|jpeg';
 				$config['file_name'] 	  =  $id .'.'. $ext;
 				$config['max_size']	 	  = '4000';
@@ -171,7 +204,9 @@ class Processdb extends CI_Model{
 				if (!$this->upload->do_upload('signature'))
 				{
 					$error = array('error' => $this->upload->display_errors());
-					echo $error["error"];
+					if (!$this->input->is_ajax_request()) {
+						echo $error["error"];
+					}
 				}
 				else
 				{
@@ -187,10 +222,17 @@ class Processdb extends CI_Model{
 			// dd($per_data);
 			$this->db->insert('pr_emp_per_info', $per_data);
 
+			if ($this->input->is_ajax_request()) {
+				return array('status' => true, 'message' => 'Inserted Successfully.');
+			}
 			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Inserted Successfully.'); window.location='personal_info';</SCRIPT>";
+			return array('status' => true, 'message' => 'Inserted Successfully.');
 		} else {
-		  echo "FAILED" ;
-		  return ;
+			if ($this->input->is_ajax_request()) {
+				return array('status' => false, 'message' => 'Failed to insert data.');
+			}
+			echo "FAILED" ;
+			return array('status' => false, 'message' => 'Failed to insert data.');
 		}
 	}
 
@@ -217,7 +259,7 @@ class Processdb extends CI_Model{
 			'unit_id'			=> $this->input->post('unit_id'),
 			'emp_dept_id'  		=> $this->input->post('emp_dept_id'),
 			'emp_sec_id' 		=> $this->input->post('emp_sec_id'),
-			'emp_line_id' 		=> $this->input->post('emp_line_id'),
+			'emp_line_id' 		=> $this->input->post('emp_line_id') ? $this->input->post('emp_line_id') : 1,
 			'emp_desi_id'  		=> $this->input->post('emp_desi_id'),
 			'emp_type'  		=> $this->input->post('emp_type'),
 
@@ -225,6 +267,8 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : null,
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'gross_sal'			=> $this->input->post('gross_sal'),
 			'com_gross_sal'		=> $this->input->post('gross_sal'),
 			'monitor_con'		=> 2,
@@ -243,7 +287,7 @@ class Processdb extends CI_Model{
 		$dob = date("Y-m-d", strtotime($this->input->post('emp_dob')));
 		$per_data = array(
 			'name_bn' 			=> $this->input->post('name_bn'),
-			'name_en' 			=> $this->input->post('name_bn'),
+			'name_en' 			=> $this->input->post('name_en') ? $this->input->post('name_en') : $this->input->post('name_bn'),
 			'emp_dob' 			=> $dob,
 			'gender' 			=> $this->input->post('gender'),
 			'personal_mobile'	=> $this->input->post('personal_mobile'),
@@ -277,12 +321,14 @@ class Processdb extends CI_Model{
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_dept_id'  		=> $this->input->post('emp_dept_id'),
 			'emp_sec_id' 		=> $this->input->post('emp_sec_id'),
-			'emp_line_id' 		=> $this->input->post('emp_line_id'),
+			'emp_line_id' 		=> $this->input->post('emp_line_id') ? $this->input->post('emp_line_id') : 1,
 			'emp_desi_id'  		=> $this->input->post('emp_desi_id'),
 			'emp_type'  		=> $this->input->post('emp_type'),
 
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
+			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : null,
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'emp_join_date'		=> $ejd,
 			'emp_sal_gra_id'  	=> $this->input->post('emp_sal_gra_id'),
 			'salary_type'		=> $this->input->post('salary_type'),
@@ -531,7 +577,7 @@ class Processdb extends CI_Model{
 			'unit_id'			=> $this->input->post('unit_id'),
 			'emp_dept_id'  		=> $this->input->post('emp_dept_id'),
 			'emp_sec_id' 		=> $this->input->post('emp_sec_id'),
-			'emp_line_id' 		=> $this->input->post('emp_line_id'),
+			'emp_line_id' 		=> $this->input->post('emp_line_id') ? $this->input->post('emp_line_id') : 1,
 			'emp_desi_id'  		=> $this->input->post('emp_desi_id'),
 			'emp_type'  		=> $this->input->post('emp_type'),
 
@@ -539,15 +585,17 @@ class Processdb extends CI_Model{
 			'emp_cat_id'		=> $this->input->post('emp_cat_id'),
 			'proxi_id'			=> $this->input->post('proxi_id'),
 			'emp_shift'  		=> $this->input->post('emp_shift'),
-			'gross_sal'			=> $this->input->post('gross_sal'),
-			'com_gross_sal'		=> $this->input->post('com_gross_sal'),
+			'emp_per_shift'  	=> $this->input->post('emp_per_shift') ? $this->input->post('emp_per_shift') : null,
+			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
+			'gross_sal'			=> $this->input->post('gross_sal') ? $this->input->post('gross_sal') : ($this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : 0),
+			'com_gross_sal'		=> $this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : ($this->input->post('gross_sal') ? $this->input->post('gross_sal') : 0),
 
-			'ot_entitle'		=> $this->input->post('ot_entitle'),
-			'com_ot_entitle'		=> $this->input->post('com_ot_entitle'),
-			'lunch'				=> $this->input->post('lunch'),
-			'transport'			=> $this->input->post('transport'),
-			'salary_draw'		=> $this->input->post('salary_draw'),
-			'salary_type'		=> $this->input->post('salary_type'),
+			'ot_entitle'		=> $this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : ($this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : 1),
+			'com_ot_entitle'    => $this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : ($this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : 1),
+			'lunch'				=> $this->input->post('lunch') ? $this->input->post('lunch') : 1,
+			'transport'			=> $this->input->post('transport') ? $this->input->post('transport') : 1,
+			'salary_draw'		=> $this->input->post('salary_draw') ? $this->input->post('salary_draw') : 1,
+			'salary_type'		=> $this->input->post('salary_type') ? $this->input->post('salary_type') : 1,
 			'emp_join_date'		=> $ejd,
 			'hight'		=> $this->input->post('hight'),
 			'symbol'		=> $this->input->post('symbol'),
@@ -559,7 +607,9 @@ class Processdb extends CI_Model{
 			'name_en' 			=> $this->input->post('name_en'),
 			'name_bn' 			=> $this->input->post('name_bn'),
 			'father_name' 		=> $this->input->post('father_name'),
+			'father_name_en' 	=> $this->input->post('father_name_en'),
 			'mother_name' 		=> $this->input->post('mother_name'),
+			'mother_name_en' 	=> $this->input->post('mother_name_en'),
 			'per_village'		=> $this->input->post('per_village'),
 			'per_village_bn'	=> $this->input->post('per_village_bn'),
 
@@ -576,6 +626,7 @@ class Processdb extends CI_Model{
 			'pre_thana'			=> $this->input->post('pre_thana'),
 			'pre_district'		=> $this->input->post('pre_district'),
 			'spouse_name' 		=> $this->input->post('spouse_name'),
+			'spouse_name_en' 	=> $this->input->post('spouse_name_en'),
 
 			'emp_dob' 			=> $dob,
 			'gender' 			=> $this->input->post('gender'),
@@ -623,12 +674,15 @@ class Processdb extends CI_Model{
 			$ids = $this->db->where('emp_id',$id)->get('pr_emp_com_info')->row()->emp_id;
 			$per_data['emp_id'] = $ids;
 			$img = "";
-			if($_FILES["img_source"]["name"] != '')
+			if(isset($_FILES["img_source"]) && $_FILES["img_source"]["name"] != '')
 			{
 				$imgs = explode('.', $_FILES["img_source"]["name"]);
 				$ext = end($imgs);
 
 				$config['upload_path']    = './uploads/photo';
+				if (!is_dir($config['upload_path'])) {
+					mkdir($config['upload_path'], 0777, true);
+				}
 	            $config['allowed_types']  = 'jpg|png|jpeg';
 				$config['file_name'] 	  =  $per_data['emp_id'] .'.'. $ext;
 				$config['max_size']	 	  = '4000';
@@ -638,7 +692,9 @@ class Processdb extends CI_Model{
 				$this->upload->initialize($config);
 				if ( ! $this->upload->do_upload('img_source')){
 					$error = array('error' => $this->upload->display_errors());
-					echo $error["error"];
+					if (!$this->input->is_ajax_request()) {
+						echo $error["error"];
+					}
 				}else{
 					$img_upload = array('upload_data' => $this->upload->data());
 					$img = $img_upload["upload_data"]["file_name"];
@@ -646,11 +702,14 @@ class Processdb extends CI_Model{
 				}
 			}
 
-			if($_FILES["signature"]["name"] != ''){
+			if(isset($_FILES["signature"]) && $_FILES["signature"]["name"] != ''){
 				$imgs = explode('.', $_FILES["signature"]["name"]);
 				$ext = end($imgs);
 
 				$config['upload_path']    = './uploads/emp_signature';
+				if (!is_dir($config['upload_path'])) {
+					mkdir($config['upload_path'], 0777, true);
+				}
 	            $config['allowed_types']  = 'jpg|png|jpeg';
 				$config['file_name'] 	  =  $per_data['emp_id'] .'.'. $ext;
 				$config['max_size']	 	  = '4000';
@@ -661,7 +720,9 @@ class Processdb extends CI_Model{
 				if ( ! $this->upload->do_upload('signature'))
 				{
 					$error = array('error' => $this->upload->display_errors());
-					echo $error["error"];
+					if (!$this->input->is_ajax_request()) {
+						echo $error["error"];
+					}
 				}
 				else
 				{
@@ -673,15 +734,24 @@ class Processdb extends CI_Model{
 			//dd($ids);
 
 			if($this->db->where('emp_id',$ids)->update('pr_emp_per_info', $per_data)){
-				//dd('ok');
+				if ($this->input->is_ajax_request()) {
+					return array('status' => true, 'message' => 'Updated Successfully.');
+				}
 				echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Update Successfully.'); window.location='personal_info';</SCRIPT>";
+				return array('status' => true, 'message' => 'Updated Successfully.');
 			}else{
-				//dd('failed');
+				if ($this->input->is_ajax_request()) {
+					return array('status' => false, 'message' => 'Update Failed.');
+				}
 				echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Update Failed.'); window.location='personal_info';</SCRIPT>";
+				return array('status' => false, 'message' => 'Update Failed.');
 			}
 		} else {
+			if ($this->input->is_ajax_request()) {
+				return array('status' => false, 'message' => 'Update Failed.');
+			}
 			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Update Failed.'); window.location='personal_info';</SCRIPT>";
-		  	return ;
+		  	return array('status' => false, 'message' => 'Update Failed.');
 		}
 	}
 
@@ -802,7 +872,7 @@ class Processdb extends CI_Model{
 			'unit_id'			=> $this->input->post('units'),
 			'emp_dept_id'  		=> $this->input->post('dept'),
 			'emp_sec_id' 		=> $this->input->post('sec'),
-			'emp_line_id' 		=> $this->input->post('line'),
+			'emp_line_id' 		=> $this->input->post('line') ? $this->input->post('line') : 1,
 			'emp_desi_id'  		=> $this->input->post('desig'),
 			'emp_type'  		=> $this->input->post('emp_type'),
 			'emp_operation_id'	=> $this->input->post('operation'),
@@ -2115,12 +2185,11 @@ class Processdb extends CI_Model{
 		$d = $this->db->select('com.*, per.*,deg.*')
 					->from('pr_emp_com_info as com')
 					->join('pr_emp_per_info as per','com.emp_id = per.emp_id', 'left')
-					->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left')
-					->where('deg.hide_status', 1)
+					->join('emp_designation as deg', 'deg.id = com.emp_desi_id AND deg.hide_status = 1', 'left')
 					->where('com.emp_id',$emp_id)
 					->get()->row();
 
-		// dd($d);
+		// dd($this->db->last_query());
 		if ($d == null) {
 			return ['status'=>false,'data'=>'No data found'];
 		}else{
@@ -2153,7 +2222,7 @@ class Processdb extends CI_Model{
 			'unit_id'			=> $this->input->post('unit_id'),
 			'emp_dept_id'  		=> $this->input->post('emp_dept_id'),
 			'emp_sec_id' 		=> $this->input->post('emp_sec_id'),
-			'emp_line_id' 		=> $this->input->post('emp_line_id'),
+			'emp_line_id' 		=> $this->input->post('emp_line_id') ? $this->input->post('emp_line_id') : 1,
 			'emp_desi_id'  		=> $this->input->post('emp_desi_id'),
 			'emp_type'  		=> $this->input->post('emp_type'),
 
@@ -2233,12 +2302,15 @@ class Processdb extends CI_Model{
 			$per_data['emp_id'] = $this->db->insert_id();
 
 			$img ="";
-			if($_FILES["img_source"]["name"] != '')
+			if(isset($_FILES["img_source"]) && $_FILES["img_source"]["name"] != '')
 			{
 				$imgs = explode('.', $_FILES["img_source"]["name"]);
 				$ext = end($imgs);
 
 				$config['upload_path']    = './uploads/photo';
+				if (!is_dir($config['upload_path'])) {
+					mkdir($config['upload_path'], 0777, true);
+				}
 				$config['allowed_types']  = 'jpg|png|jpeg';
 				$config['file_name'] 	  =  $per_data['emp_id'] .'.'. $ext;
 				$config['max_size']	 	  = '4000';
@@ -2249,7 +2321,9 @@ class Processdb extends CI_Model{
 				if ( ! $this->upload->do_upload('img_source'))
 				{
 					$error = array('error' => $this->upload->display_errors());
-					echo $error["error"];
+					if (!$this->input->is_ajax_request()) {
+						echo $error["error"];
+					}
 				}
 				else
 				{

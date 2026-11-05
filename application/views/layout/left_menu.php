@@ -12,8 +12,12 @@
       </li>
 
       <?php
-        $user_id = $this->session->userdata('data')->id;
-        $acl = check_acl_list($user_id);
+        $user_session = $this->session->userdata('data');
+        $user_id      = isset($user_session->id) ? $user_session->id : 0;
+        $u_username   = isset($user_session->id_number) ? strtolower(trim($user_session->id_number)) : '';
+        $acl          = check_acl_list($user_id);
+        $curr_class   = $this->router->fetch_class();
+        $curr_method  = $this->router->fetch_method();
       ?>
 
       <!-- Personal -->
@@ -21,18 +25,32 @@
       <li class="start <?= activate_class('emp_info_con') ?>"> <a href="javascript:;"> <i class="fa fa-users"></i>
         <span class="title">HRM</span> <span class="selected"></span> <span class="arrow <?= arrow_open('emp_info_con') ?>"></span> </a>
         <ul class="sub-menu">
-          <?php if(in_array(11,$acl)) { ?>
+          <!-- <?php if(in_array(11,$acl)) { ?>
             <li class="start <?= activate_method('personal_info') ?>">
               <a href="<?=base_url('emp_info_con/personal_info')?>">
                 <i class="fa fa-id-card"></i> Emp Information
               </a>
             </li>
-          <?php } ?>
+          <?php } ?> -->
 
+          <?php if(in_array(11,$acl) || in_array(12,$acl)) { ?> 
+            <li class="<?= activate_method('employee_list') ?>">
+              <a href="<?=base_url('emp_info_con/employee_list')?>">
+                <i class="fa fa-users"></i> Employee List
+              </a>
+            </li>
+          <?php } ?>
+          <?php if(in_array(50,$acl) || in_array(12,$acl)) { ?>
+            <li class="start <?= activate_method('personal_info') ?>">
+              <a href="<?=base_url('emp_info_con/personal_info')?>">
+                <i class="fa fa-address-book"></i> Add Employee
+              </a>
+            </li>
+          <?php } ?>
           <?php if(in_array(12,$acl)) { ?>
             <li class="start <?= activate_method('personal_info_short') ?>">
               <a href="<?=base_url('emp_info_con/personal_info_short')?>">
-                <i class="fa fa-address-book"></i> Emp Short Information
+                <i class="fa fa-address-book"></i> Add Employee Short Form
               </a>
             </li>
           <?php } ?>
@@ -42,9 +60,19 @@
 
       <!-- Enty System -->
       <?php if(in_array(2,$acl)) { ?>
-      <li class="start <?= activate_class('entry_system_con') ?>"> <a href="javascript:;"> <i class="fa fa-pencil-square-o"></i>
-        <span class="title">Entry System</span> <span class="selected"></span> <span class="arrow <?= arrow_open('entry_system_con') ?>"></span> </a>
+      <?php 
+        $u_data = $this->session->userdata('data');
+        $u_username = $u_data ? strtolower(trim($u_data->id_number)) : '';
+        $ci = get_instance();
+        $curr_class = $ci->router->fetch_class();
+        $curr_method = $ci->router->fetch_method();
+        $is_leave_active = ($curr_class === 'leave_con' || ($curr_class === 'entry_system_con' && in_array($curr_method, array('leave_transation', 'leave_list'))));
+        $is_entry_active = ($curr_class === 'entry_system_con' && !in_array($curr_method, array('leave_transation', 'leave_list')));
+      ?>
+      <li class="start <?= $is_entry_active ? 'active open' : '' ?>"> <a href="javascript:;"> <i class="fa fa-pencil-square-o"></i>
+        <span class="title">Entry System</span> <span class="selected"></span> <span class="arrow <?= $is_entry_active ? 'open' : '' ?>"></span> </a>
         <ul class="sub-menu">
+
           <?php if(in_array(13,$acl)) { ?>
             <li class="<?= activate_method('grid_entry_system') ?>">
               <a href="<?= base_url('entry_system_con/grid_entry_system')?>" class="anchor_cls">
@@ -61,12 +89,12 @@
             </li>
           <?php } ?>
 
-          <?php if(in_array(15,$acl)) { ?>
-            <li class="<?= activate_method('emp_weekend_add') ?>">
-              <a href="<?= base_url('entry_system_con/emp_weekend_add')?>" class="anchor_cls">
-                <i class="fa fa-calendar-plus-o"></i> Weekend Add
-              </a>
-            </li>
+          <?php if(in_array(51,$acl) || in_array(14,$acl) || in_array(2,$acl) || $u_username === 'admin') { ?>
+          <li class="<?= activate_method('running_shift_change') ?>">
+            <a href="<?= base_url('entry_system_con/running_shift_change')?>" class="anchor_cls">
+              <i class="fa fa-random"></i> Emp Shift Change
+            </a>
+          </li>
           <?php } ?>
 
           <?php if(in_array(16,$acl)) { ?>
@@ -77,34 +105,10 @@
             </li>
           <?php } ?>
 
-          <?php if(in_array(17,$acl)) { ?>
-            <li class="<?= activate_method('gov_holiday_list') ?>">
-              <a href="<?= base_url('entry_system_con/gov_holiday_list')?>" class="anchor_cls">
-                <i class="fa fa-flag"></i> Gov. Holiday
-              </a>
-            </li>
-          <?php } ?>
-
-          <?php if(in_array(18,$acl)) { ?>
-            <li class="<?= activate_method('leave_transation') ?>">
-              <a href="<?= base_url('entry_system_con/leave_transation')?>" class="anchor_cls">
-                <i class="fa fa-random"></i> Leave Transaction
-              </a>
-            </li>
-          <?php } ?>
-
-          <?php if(in_array(19,$acl)) { ?>
-            <li class="<?= activate_method('maternity_entry') ?>">
-              <a href="<?= base_url('entry_system_con/maternity_entry')?>" class="anchor_cls">
-                <i class="fa fa-female"></i> Maternity Entry
-              </a>
-            </li>
-          <?php } ?>
-
-          <?php if(in_array(20,$acl)) { ?>
-            <li class="<?= activate_method('leave_list') ?>">
-              <a href="<?= base_url('entry_system_con/leave_list')?>" class="anchor_cls">
-                <i class="fa fa-list"></i> Leave List
+          <?php if(in_array(15,$acl)) { ?>
+            <li class="<?= activate_method('emp_weekend_add') ?>">
+              <a href="<?= base_url('entry_system_con/emp_weekend_add')?>" class="anchor_cls">
+                <i class="fa fa-calendar-plus-o"></i> Weekend Add
               </a>
             </li>
           <?php } ?>
@@ -141,6 +145,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(25,$acl)) { ?>
             <li class="<?= activate_method('inter_unit_transfer') ?>">
               <a href="<?= base_url('entry_system_con/inter_unit_transfer')?>" class="anchor_cls">
@@ -164,18 +169,82 @@
               </a>
             </li>
           <?php } ?>
+          -->
+        </ul>
+      </li>
+      <?php } ?>
+
+      <!-- Leave Main Menu -->
+      <?php 
+        if ($u_username === 'payroll' || $u_username === 'admin' || in_array(18, $acl) || in_array(20, $acl)) {
+      ?>
+      <li class="start <?= $is_leave_active ? 'active open' : '' ?>"> 
+        <a href="javascript:;"> 
+          <i class="fa fa-calendar-check-o"></i>
+          <span class="title">Leave</span> 
+          <span class="selected"></span> 
+          <span class="arrow <?= $is_leave_active ? 'open' : '' ?>"></span> 
+        </a>
+        <ul class="sub-menu">
+          <?php if ($u_username === 'payroll') { ?>
+            <li class="<?= ($curr_class === 'leave_con' && $curr_method === 'hr_dashboard') ? 'active' : '' ?>">
+              <a href="<?= base_url('leave_con/hr_dashboard') ?>" class="anchor_cls">
+                <i class="fa fa-dashboard text-info"></i> Leave Dashboard
+              </a>
+            </li>
+            <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_transation') ? 'active' : '' ?>">
+              <a href="<?= base_url('entry_system_con/leave_transation') ?>" class="anchor_cls">
+                <i class="fa fa-plus-circle text-primary"></i> Leave Entry
+              </a>
+            </li>
+            <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_list') ? 'active' : '' ?>">
+              <a href="<?= base_url('entry_system_con/leave_list') ?>" class="anchor_cls">
+                <i class="fa fa-list text-success"></i> Leave List
+              </a>
+            </li>
+          <?php } ?>
+
+          <?php if ($u_username === 'admin') { ?>
+            <li class="<?= ($curr_class === 'leave_con' && $curr_method === 'admin_dashboard') ? 'active' : '' ?>">
+              <a href="<?= base_url('leave_con/admin_dashboard') ?>" class="anchor_cls">
+                <i class="fa fa-shield text-danger"></i> Leave Approval
+              </a>
+            </li>
+            <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_list') ? 'active' : '' ?>">
+              <a href="<?= base_url('entry_system_con/leave_list') ?>" class="anchor_cls">
+                <i class="fa fa-list text-success"></i> Leave List
+              </a>
+            </li>
+          <?php } ?>
+
+          <?php if ($u_username !== 'payroll' && $u_username !== 'admin') { ?>
+            <?php if (in_array(18, $acl)) { ?>
+              <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_transation') ? 'active' : '' ?>">
+                <a href="<?= base_url('entry_system_con/leave_transation') ?>" class="anchor_cls">
+                  <i class="fa fa-plus-circle text-primary"></i> Leave Entry
+                </a>
+              </li>
+            <?php } ?>
+            <?php if (in_array(20, $acl)) { ?>
+              <li class="<?= ($curr_class === 'entry_system_con' && $curr_method === 'leave_list') ? 'active' : '' ?>">
+                <a href="<?= base_url('entry_system_con/leave_list') ?>" class="anchor_cls">
+                  <i class="fa fa-list text-success"></i> Leave List
+                </a>
+              </li>
+            <?php } ?>
+          <?php } ?>
         </ul>
       </li>
       <?php } ?>
 
       <!-- Attendance -->
-      <?php if(in_array(3,$acl)) { ?>
-      <li class="start <?= activate_class('attn_process_con') ?>">
+      <?php if(in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
+      <li class="start <?= activate_class(array('attn_process_con', 'iclock', 'ot_approval_con', 'attn_regularization_con', 'od_management_con')) ?>">
         <a href="javascript:;">
           <i class="fa fa-clock-o"></i>
           <span class="title">Attendance</span>
           <span class="selected"></span>
-          <span class="arrow <?= arrow_open('attn_process_con') ?>"></span>
+          <span class="arrow <?= arrow_open(array('attn_process_con', 'iclock', 'ot_approval_con', 'attn_regularization_con', 'od_management_con')) ?>"></span>
         </a>
 
         <ul class="sub-menu">
@@ -185,6 +254,14 @@
                 <i class="fa fa-upload"></i> File Upload
               </a>
             </li>
+
+            <!--
+            <li class="<?= activate_method('device_list') ?>">
+              <a href="<?=base_url('iclock/device_list')?>" class="anchor_cls">
+                <i class="fa fa-hdd-o"></i> ADMS Devices
+              </a>
+            </li>
+            -->
           <?php } ?>
 
           <?php if(in_array(29,$acl)) { ?>
@@ -196,18 +273,30 @@
           <?php } ?>
 
           <?php if(in_array(30,$acl)) { ?>
-            <li class="<?= activate_method('alert_msg_list') ?>">
-              <a href="<?=base_url('attn_process_con/alert_msg_list')?>" class="anchor_cls">
-                <i class="fa fa-bell"></i> Alert List
-                <span class="badge badge-danger pull-right" style="margin-right:10px;">
-                  <?= alt_ntf(); ?>
-                </span>
-              </a>
-            </li>
-
             <li class="<?= activate_method('grid_window') ?>">
               <a href="<?=base_url('attn_process_con/grid_window')?>" class="anchor_cls">
                 <i class="fa fa-bar-chart"></i> Reports
+              </a>
+            </li>
+          <?php } ?>
+          <?php if ($u_username === 'admin') { ?>
+            <li class="<?= ($curr_class === 'ot_approval_con' && $curr_method === 'admin_dashboard') ? 'active' : '' ?>">
+              <a href="<?= base_url('ot_approval_con/admin_dashboard') ?>" class="anchor_cls">
+                <i class="fa fa-clock-o"></i> Daily OT Approval
+              </a>
+            </li>
+          <?php } ?>
+          <?php if(in_array(52,$acl) || in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
+          <li class="<?= ($curr_class === 'attn_regularization_con') ? 'active' : '' ?>">
+            <a href="<?= base_url('attn_regularization/dashboard') ?>" class="anchor_cls">
+              <i class="fa fa-calendar-check-o text-warning"></i> Attn. Regularization
+            </a>
+          </li>
+          <?php } ?>
+          <?php if(in_array(53,$acl) || in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
+            <li class="<?= ($curr_class === 'od_management_con') ? 'active' : '' ?>">
+              <a href="<?= base_url('od') ?>" class="anchor_cls">
+                <i class="fa fa-briefcase text-info"></i> Outside Duty (OD)
               </a>
             </li>
           <?php } ?>
@@ -217,8 +306,8 @@
 
       <!-- Payroll -->
       <?php if(in_array(4,$acl)) { ?>
-      <li class="start <?= activate_class('salary_process_con') ?>"> <a href="javascript:;"> <i class="fa fa-money"></i>
-        <span class="title">Payroll </span> <span class="selected"></span> <span class="arrow <?= arrow_open('salary_process_con') ?>"></span> </a>
+      <li class="start <?= activate_class(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con', 'penalty_con', 'palanty_con']) ?>"> <a href="javascript:;"> <i class="fa fa-money"></i>
+        <span class="title">Payroll </span> <span class="selected"></span> <span class="arrow <?= arrow_open(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con', 'penalty_con', 'palanty_con']) ?>"></span> </a>
         <ul class="sub-menu">
           <?php if(in_array(31,$acl)) { ?>
             <li class="<?= activate_method('salary_process_form') ?>">
@@ -228,12 +317,28 @@
             </li>
           <?php } ?>
 
-          <?php if(in_array(32,$acl)) { ?>
-            <li class="<?= activate_method('adv_salary_report') ?>">
-              <a href="<?=base_url('salary_process_con/adv_salary_report')?>" class="anchor_cls">
-                <i class="fa fa-hand-o-right"></i> Adv. Salary
-              </a>
-            </li>
+          <?php if(in_array(54,$acl) || in_array(4,$acl) || $u_username === 'admin') { ?>
+          <li class="<?= ($this->router->fetch_class() == 'arrear_salary_con') ? 'active' : '' ?>">
+            <a href="<?=base_url('arrear_salary')?>" class="anchor_cls">
+              <i class="fa fa-credit-card text-success"></i> Arrear Salary
+            </a>
+          </li>
+          <?php } ?>
+
+          <?php if(in_array(32,$acl) || in_array(4,$acl) || $u_username === 'admin') { ?>
+          <li class="<?= ($this->router->fetch_class() == 'advanced_salary_con') ? 'active' : '' ?>">
+            <a href="<?=base_url('advanced_salary')?>" class="anchor_cls">
+              <i class="fa fa-money text-warning"></i> Advanced Salary
+            </a>
+          </li>
+          <?php } ?>
+
+          <?php if(in_array(4,$acl) || $u_username === 'admin') { ?>
+          <li class="<?= ($this->router->fetch_class() == 'penalty_con' || $this->router->fetch_class() == 'palanty_con') ? 'active' : '' ?>">
+            <a href="<?=base_url('penalty')?>" class="anchor_cls">
+              <i class="fa fa-minus-circle text-danger"></i> Penalty
+            </a>
+          </li>
           <?php } ?>
 
           <?php if(in_array(33,$acl)) { ?>
@@ -248,6 +353,7 @@
       <?php } ?>
 
       <!-- Training -->
+      <!--
       <?php if(in_array(6,$acl)) { ?>
         <li class="start <?= activate_class('training_con') ?>"> <a href="javascript:;"> <i class="fa fa-book fa-fw"></i>
           <span class="title">Training</span> <span class="selected"></span> <span class="arrow <?= arrow_open('training_con') ?>"></span> </a>
@@ -272,8 +378,10 @@
           </ul>
         </li>
       <?php } ?>
+      -->
 
       <!-- Monitoring / Audit Log -->
+      <!--
       <?php if(in_array(8,$acl)) { ?>
         <li class="start <?= activate_class('monitoring_con') ?>"><a href="javascript:;"><i class="fa fa-desktop"></i>
           <span class="title">Audit Log</span> <span class="selected"></span> <span class="arrow <?= arrow_open('monitoring_con') ?>"></span> </a>
@@ -310,6 +418,7 @@
           </ul>
         </li>
       <?php } ?>
+      -->
 
       <!-- Setup -->
       <?php if(in_array(5,$acl)) { ?>
@@ -330,32 +439,25 @@
                 <i class="fa fa-sitemap"></i> Department
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(55,$acl) || in_array(35,$acl)) { ?>
             <li class="<?= activate_method('section') ?>">
               <a href="<?=base_url('setup_con/section')?>" class="anchor_cls">
                 <i class="fa fa-th-large"></i> Section
               </a>
             </li>
+          <?php } ?>
 
-            <li class="<?= activate_method('line') ?>">
-              <a href="<?=base_url('setup_con/line')?>" class="anchor_cls">
-                <i class="fa fa-arrows-h"></i> Line
-              </a>
-            </li>
-
+          <?php if(in_array(56,$acl) || in_array(35,$acl)) { ?>
             <li class="<?= activate_method('designation') ?>">
               <a href="<?=base_url('setup_con/designation')?>" class="anchor_cls">
                 <i class="fa fa-id-badge"></i> Designation
               </a>
             </li>
-
-            <li class="<?= activate_method('position') ?>">
-              <a href="<?=base_url('setup_con/position')?>" class="anchor_cls">
-                <i class="fa fa-map-marker"></i> Position
-              </a>
-            </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(36,$acl)) { ?>
             <li class="<?= activate_method('manage_designation') ?>">
               <a href="<?=base_url('setup_con/manage_designation')?>" class="anchor_cls">
@@ -372,7 +474,11 @@
             </li>
           <?php } ?>
 
-          <?php if(in_array(38,$acl)) { ?>
+          <!--
+          <?php 
+          // All Allowance hidden conditionally
+          $show_all_allowance = false;
+          if($show_all_allowance && in_array(38,$acl)) { ?>
             <li class="<?= activate_method('weekend_allowance_setup') ?>">
               <a href="<?=base_url()?>setup_con/weekend_allowance_setup">
                 <i class="fa fa-calendar"></i> Weekend Allowance
@@ -397,14 +503,17 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
-          <?php if(in_array(38,$acl)) { ?>
+          <?php if(in_array(39,$acl)) { ?>
             <li class="<?= activate_method('shift_schedule') ?>">
               <a href="<?=base_url('setup_con/shift_schedule')?>" class="anchor_cls">
                 <i class="fa fa-clock-o"></i> Shift Schedules
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(57,$acl) || in_array(39,$acl)) { ?>
             <li class="<?= activate_method('shift_management') ?>">
               <a href="<?=base_url('setup_con/shift_management')?>" class="anchor_cls">
                 <i class="fa fa-random"></i> Shift Manage
@@ -412,7 +521,10 @@
             </li>
           <?php } ?>
 
-          <?php if(in_array(40,$acl)) { ?>
+          <?php 
+          // Roster Shift hidden conditionally
+          $show_roster_shift = false;
+          if($show_roster_shift && in_array(40,$acl)) { ?>
             <li class="<?= activate_method('emp_roster_shift') ?>">
               <a href="<?=base_url('setup_con/emp_roster_shift')?>" class="anchor_cls">
                 <i class="fa fa-calendar-check-o"></i> Roster Shift
@@ -421,11 +533,13 @@
           <?php } ?>
 
           <?php if(in_array(41,$acl)) { ?>
+            <?php /*
             <li class="<?= activate_method('alternet_day') ?>">
               <a href="<?=base_url('setup_con/alternet_day')?>">
                 <i class="fa fa-exchange"></i> Alternet Day
               </a>
             </li>
+            */ ?>
           <?php } ?>
 
           <?php if(in_array(42,$acl)) { ?>
@@ -434,13 +548,20 @@
                 <i class="fa fa-money"></i> Salary Grade
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(58,$acl) || in_array(42,$acl)) { ?>
             <li class="<?= activate_method('leave_setup') ?>">
               <a href="<?=base_url()?>setup_con/leave_setup" class="anchor_cls">
                 <i class="fa fa-plane"></i> Leave
               </a>
             </li>
+          <?php } ?>
 
+          <?php 
+          // Bonus Setup hidden conditionally
+          $show_bonus_setup = false;
+          if($show_bonus_setup && (in_array(59,$acl) || in_array(42,$acl))) { ?>
             <li class="<?= activate_method('bonus_setup') ?>">
               <a href="<?=base_url()?>setup_con/bonus_setup" class="anchor_cls">
                 <i class="fa fa-gift"></i> Bonus
@@ -466,24 +587,22 @@
         <span class="title">Settings </span> <span class="selected"></span> <span class="arrow <?= arrow_open('setting_con') ?>"></span> </a>
         <ul class="sub-menu">
           <?php if(in_array(44,$acl)) { ?>
-            <li class="<?= activate_method('crud') ?>">
-              <a href="<?=base_url('setting_con/crud')?>" class="anchor_cls" id="acl">
-                <i class="fa fa-key"></i> Access
-              </a>
-            </li>
-
             <li class="<?= activate_method('left_menu_acl') ?>">
               <a href="<?=base_url('setting_con/left_menu_acl')?>" class="anchor_cls" id="acl">
                 <i class="fa fa-bars"></i> Left Menu Access
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(60,$acl) || in_array(44,$acl)) { ?>
             <li class="<?= activate_method('user_acl_hrm') ?>">
               <a href="<?=base_url('setting_con/user_acl_hrm')?>" class="anchor_cls" id="acl">
                 <i class="fa fa-user"></i> User Access HRM
               </a>
             </li>
+          <?php } ?>
 
+          <?php if(in_array(212,$acl) || in_array(44,$acl)) { ?>
             <li class="<?= activate_method('user_acl_pr') ?>">
               <a href="<?=base_url('setting_con/user_acl_pr')?>" class="anchor_cls" id="acl">
                 <i class="fa fa-money"></i> User Access Payroll
@@ -491,6 +610,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(45,$acl)) { ?>
             <li class="<?= activate_method('report_setting') ?>">
               <a href="<?=base_url('setting_con/report_setting')?>" class="anchor_cls" id="acl">
@@ -520,6 +640,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
 
           <?php if(in_array(48,$acl)) { ?>
             <li class="<?= activate_method('acl') ?>">
@@ -529,6 +650,7 @@
             </li>
           <?php } ?>
 
+          <!--
           <?php if(in_array(49,$acl)) { ?>
             <li class="<?= activate_method('activity_log') ?>">
               <a href="<?=base_url('setting_con/activity_log')?>" class="anchor_cls" id="activity_log">
@@ -536,6 +658,7 @@
               </a>
             </li>
           <?php } ?>
+          -->
         </ul>
       </li>
       <?php } ?>
@@ -562,4 +685,5 @@
   </div>
 </div>
 <!-- END SIDEBAR -->
+
 

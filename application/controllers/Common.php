@@ -23,10 +23,12 @@ class Common extends CI_Controller {
         ini_set("pcre.backtrack_limit", 100000000000);
         ini_set("pcre.recursion_limit", 10000000000);
     	$data = array();
-        $this->db->select('max(com.id) as id, max(com.emp_id) as emp_id, max(per.name_en) as name_en, max(per.name_bn) as name_bn');
+        $this->db->select('max(com.id) as id, max(com.emp_id) as emp_id, max(per.name_en) as name_en, max(per.name_bn) as name_bn, max(shft.shift_name) as shift_name, max(pshft.shift_name) as per_shift_name');
         $this->db->from('pr_emp_com_info as com');
         $this->db->join('pr_emp_per_info as per', 'per.emp_id = com.emp_id', 'left');
-        $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id', 'left');
+        $this->db->join('emp_designation as deg', 'deg.id = com.emp_desi_id AND deg.hide_status = 1', 'left');
+        $this->db->join('pr_emp_shift as shft', 'shft.id = com.emp_shift', 'left');
+        $this->db->join('pr_emp_shift as pshft', 'pshft.id = com.emp_per_shift', 'left');
         // $this->db->join('pr_emp_left_history', 'pr_emp_left_history.emp_id = com.emp_id', 'left');
         // $this->db->join('pr_emp_resign_history', 'pr_emp_resign_history.emp_id = com.emp_id', 'left');
         // $this->db->where('pr_emp_left_history.left_date <=',date('Y-m-d', strtotime('-360 days')));
@@ -35,7 +37,6 @@ class Common extends CI_Controller {
         if (isset($emp_id_not) && !empty($emp_id_not)) {
             $this->db->where_not_in('com.emp_id', $emp_id_not);
         }
-        $this->db->where('deg.hide_status', 1);
 
         if (!empty($dept)) {
             $this->db->where('com.emp_dept_id', $dept);
@@ -48,6 +49,12 @@ class Common extends CI_Controller {
         }
         if (!empty($desig)) {
             $this->db->where('com.emp_desi_id', $desig);
+        }
+        if (!empty($_GET['shift'])) {
+            $this->db->where('com.emp_shift', $_GET['shift']);
+        }
+        if (!empty($_GET['per_shift'])) {
+            $this->db->where('com.emp_per_shift', $_GET['per_shift']);
         }
         if (!empty($_GET['status'])) {
             $this->db->where('com.emp_cat_id', $_GET['status']);
@@ -66,7 +73,7 @@ class Common extends CI_Controller {
         }
 
         $this->db->group_by('com.emp_id');
-        $this->db->order_by('com.emp_id', 'asc');
+        $this->db->order_by('CAST(com.emp_id AS UNSIGNED)', 'ASC');
         $result = $this->db->get()->result();
         //dd($result);
 
@@ -138,6 +145,10 @@ class Common extends CI_Controller {
         if (!empty($_GET['stop_salary'])) {
             $this->db->where('ss.stop_salary', $_GET['stop_salary']);
         }
+        if (!empty($_GET['shift'])) {
+            $this->db->join('pr_emp_com_info as com', 'com.emp_id = ss.emp_id', 'left');
+            $this->db->where('com.emp_shift', $_GET['shift']);
+        }
         if (!empty($searchInput)) {
             $searchTerms = explode(',', $searchInput);
             foreach ($searchTerms as $index => $term) {
@@ -200,6 +211,14 @@ class Common extends CI_Controller {
         }
         $this->db->order_by('sec_name_en', 'ASC');
         $query = $this->db->get()->result();
+
+        if (empty($query) && !empty($unit_id)) {
+            $this->db->select('*');
+            $this->db->from('emp_section');
+            $this->db->where('depertment_id', $id);
+            $this->db->order_by('sec_name_en', 'ASC');
+            $query = $this->db->get()->result();
+        }
 
         foreach ($query as $row) {
             $data[$row->id] = $row->sec_name_en;
@@ -274,7 +293,64 @@ class Common extends CI_Controller {
             $data[$row->id] = $row->desig_name;
         }
 
-        header('Content-Type: application/x-json; charset=utf-8');
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data);
+        exit;
+    }
+
+    function ajax_designation_by_sec_id($id, $unit_id = null){
+        $data = array();
+        if (!empty($id)) {
+            $this->db->select('dg.id, dg.desig_name, dg.desig_bangla');
+            $this->db->from('emp_dasignation_line_acl dl');
+            $this->db->join('emp_designation dg', 'dg.id = dl.designation_id', 'inner');
+            $this->db->where('dl.section_id', $id);
+            if (!empty($unit_id)) {
+                $this->db->where('dl.unit_id', $unit_id);
+            }
+            $this->db->group_by('dg.id');
+            $this->db->order_by('dg.desig_name', 'ASC');
+            $query = $this->db->get()->result();
+
+            if (empty($query) && !empty($unit_id)) {
+                $this->db->select('dg.id, dg.desig_name, dg.desig_bangla');
+                $this->db->from('emp_dasignation_line_acl dl');
+                $this->db->join('emp_designation dg', 'dg.id = dl.designation_id', 'inner');
+                $this->db->where('dl.section_id', $id);
+                $this->db->group_by('dg.id');
+                $this->db->order_by('dg.desig_name', 'ASC');
+                $query = $this->db->get()->result();
+            }
+
+            if (empty($query)) {
+                $this->db->select('dg.id, dg.desig_name, dg.desig_bangla');
+                $this->db->from('pr_emp_com_info com');
+                $this->db->join('emp_designation dg', 'dg.id = com.emp_desi_id', 'inner');
+                $this->db->where('com.emp_sec_id', $id);
+                if (!empty($unit_id)) {
+                    $this->db->where('com.unit_id', $unit_id);
+                }
+                $this->db->group_by('dg.id');
+                $this->db->order_by('dg.desig_name', 'ASC');
+                $query = $this->db->get()->result();
+            }
+
+            if (empty($query)) {
+                $this->db->select('dg.id, dg.desig_name, dg.desig_bangla');
+                $this->db->from('emp_designation dg');
+                if (!empty($unit_id)) {
+                    $this->db->where('dg.unit_id', $unit_id);
+                }
+                $this->db->order_by('dg.desig_name', 'ASC');
+                $query = $this->db->get()->result();
+            }
+
+            foreach ($query as $row) {
+                $data[$row->id] = $row->desig_name;
+            }
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data);
         exit;
     }

@@ -84,12 +84,12 @@
                         <th style="white-space: nowrap;">Section Name Bangla </th>
                         <th style="white-space: nowrap;">Section Name English </th>
                         <th style="white-space: nowrap;">Department</th>
-                        <th tyle="white-space: nowrap;">Operator</th>
+                        <!-- <th tyle="white-space: nowrap;">Operator</th>
                         <th tyle="white-space: nowrap;">Asst. Operator</th>
                         <th tyle="white-space: nowrap;">Line Iron Man</th>
                         <th tyle="white-space: nowrap;">Input Man</th>
                         <th tyle="white-space: nowrap;">Supervisor</th>
-                        <th tyle="white-space: nowrap;">Line Chief</th>
+                        <th tyle="white-space: nowrap;">Line Chief</th> -->
                         <th style="white-space: nowrap;">Company Unit</th>
                         <th width="80">Edit</th>
                         <th <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(in_array(137,$acl)) {echo '';} else { echo 'style="display:none;"';}?>>Delete</th>
@@ -104,12 +104,12 @@
                         <td class="bangla_font" style="white-space: nowrap;"><?php echo $pr_secs['sec_name_bn'] ?></td>
                         <td style="white-space: nowrap;"><?php echo $pr_secs['sec_name_en'] ?></td>
                         <td style="white-space: nowrap;"><?php echo $pr_secs['dept_name'] ?></td>
-                        <td><?php echo $pr_secs['group_one'] ?></td>
+                        <!-- <td><?php echo $pr_secs['group_one'] ?></td>
                         <td><?php echo $pr_secs['group_two'] ?></td>
                         <td><?php echo $pr_secs['group_three'] ?></td>
                         <td><?php echo $pr_secs['group_four'] ?></td>
                         <td><?php echo $pr_secs['group_five'] ?></td>
-                        <td><?php echo $pr_secs['group_six'] ?></td>
+                        <td><?php echo $pr_secs['group_six'] ?></td> -->
                         <td style="white-space: nowrap;"><?php echo $pr_secs['unit_name'] ?></td>
                         <td>
                             <a href="<?=base_url('setup_con/sec_edit') . '/' . $pr_secs["id"]?>"

@@ -9,7 +9,10 @@
         -moz-appearance: textfield;
     }
     .bangla_name, .bangla_village {
-        font-family: SutonnyMJ !important;
+        /* font-family: SutonnyMJ !important; */
+    }
+    .select2-container {
+        width: 100% !important;
     }
 </style>
 <!-- < ? php dd($emp_info);?> -->
@@ -37,36 +40,14 @@
                 style="margin-top: 8px;width:15%;float:right;border-radius: 0 !important;">
 
             <form id="form_id" enctype="multipart/form-data" method="post" name="creatdepartment"
-                action="<?php echo base_url('emp_info_con/personal_info_add')?>">
+                action="<?php echo base_url('emp_info_con/personal_info_add')?>" onsubmit="return false;">
                 <h3 style="font-weight: bold; width:fit-content"><?= $title ?>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-center" style="font-size:18px !important" id='last_emp_id'></span></h3>
 
                 <hr style="margin-bottom: 0px !important;">
                 <div style="background-color: white; padding: 15px !important;">
                     <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Unit <span style="color: red;">*</span> </label>
-                                <select name="unit_id" id="unit_id" onchange='get_last_id()' id="unit_id"
-                                    class="form-control input-sm required" required>
-                                    <option value="">Select Unit</option>
-                                    <?php
-										foreach ($units as $row) {
-                                            if($row->unit_id == $user_data->unit_name){
-                                                $select_data="selected";
-                                            }else{
-                                                if ($user_data->level != "All") {
-                                                    continue;
-                                                }
-                                            }
-
-										echo '<option '.$select_data.'  value="'.$row->unit_id.'">'.$row->unit_name.
-										'</option>';
-										}
-									?>
-                                </select>
-                            </div>
-                        </div>
+                    <input type="hidden" name="unit_id" id="unit_id" value="<?= isset($user_data->unit_name) && $user_data->unit_name ? $user_data->unit_name : 1 ?>">
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Emp Id <span style="color: red;">*</span> </label>
@@ -78,9 +59,9 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label> Punch Card No. <span style="color: red;">*</span> </label>
-                                <input type="text" name="proxi_id" id="proxi_id" value="<?= set_value('proxi_id') ?>"
-                                    required readonly class="form-control input-sm required"
-                                    value="<?= isset($emp_info->proxi_id)?>" required>
+                                <input type="text" name="proxi_id" id="proxi_id"
+                                    class="form-control input-sm required"
+                                    value="<?= isset($emp_info->proxi_id) ? $emp_info->proxi_id : set_value('proxi_id')?>" required>
                                 <?php echo form_error('proxi_id');?>
                             </div>
                         </div>
@@ -93,40 +74,67 @@
                                 <?php echo form_error('name_en');?>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Name (Bangla) <span style="color: red;">*</span> </label>
-                                <input style="" type="text" name="name_bn" id="name_bn" class="form-control input-sm bangla_name required" value="<?= isset($emp_info->name_bn)?>" required>
+                                <input type="text" name="name_bn" id="name_bn" class="form-control input-sm bangla_name required" value="<?= isset($emp_info->name_bn)?>" required>
                                 <?php echo form_error('name_bn');?>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Father's Name (Bangla) <span style="color: red;">*</span> </label>
-                                <input  style="font-family: SutonnyMJ;" type="text" name="father_name" id="father_name"
-                                    class="form-control input-sm bangla_name unicode-to-bijoy required"
-                                    value="<?= isset($emp_info->father_name)?>" required>
-                                <?php echo form_error('father_name');?>
+                                <label>Father's Name (English) <span style="color: red;">*</span> </label>
+                                <input type="text" name="father_name_en" id="father_name_en"
+                                    class="form-control input-sm english_name required"
+                                    value="<?= isset($emp_info->father_name_en) ? $emp_info->father_name_en : '' ?>" required>
+                                <?php echo form_error('father_name_en');?>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Mother's Name (Bangla) <span style="color: red;">*</span> </label>
+                                <label>Father's Name (Bangla)</label>
+                                <input type="text" name="father_name" id="father_name"
+                                    class="form-control input-sm bangla_name"
+                                    value="<?= isset($emp_info->father_name) ? $emp_info->father_name : '' ?>">
+                                <?php echo form_error('father_name');?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Mother's Name (English) <span style="color: red;">*</span> </label>
+                                <input type="text" name="mother_name_en" id="mother_name_en"
+                                    class="form-control input-sm english_name required"
+                                    value="<?= isset($emp_info->mother_name_en) ? $emp_info->mother_name_en : '' ?>" required>
+                                <?php echo form_error('mother_name_en');?>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Mother's Name (Bangla)</label>
                                 <input type="text" name="mother_name" id="mother_name"
-                                    class="form-control input-sm bangla_name required"
-                                    value="<?= isset($emp_info->mother_name)?>" required>
+                                    class="form-control input-sm bangla_name"
+                                    value="<?= isset($emp_info->mother_name) ? $emp_info->mother_name : '' ?>">
                                 <?php echo form_error('mother_name');?>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Spouse Name (Bangla) </label>
+                                <label>Spouse Name (English)</label>
+                                <input type="text" name="spouse_name_en" id="spouse_name_en"
+                                    class="form-control input-sm english_name"
+                                    value="<?= isset($emp_info->spouse_name_en) ? $emp_info->spouse_name_en : '' ?>">
+                                <?php echo form_error('spouse_name_en');?>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Spouse Name (Bangla)</label>
                                 <input type="text" name="spouse_name" id="spouse_name"
-                                    class="form-control input-sm bangla_name "
-                                    value="<?= isset($emp_info->spouse_name)?>">
+                                    class="form-control input-sm bangla_name"
+                                    value="<?= isset($emp_info->spouse_name) ? $emp_info->spouse_name : '' ?>">
                                 <?php echo form_error('spouse_name');?>
                             </div>
                         </div>
@@ -380,7 +388,7 @@
                             <div class="form-group">
                                 <label>District<span style="color: red;">*</span> </label>
                                 <?php echo form_error('pre_district');?>
-                                <select name="pre_district" id="pre_district" class="form-control input-sm required" required>
+                                <select name="pre_district" id="pre_district" class="form-control input-sm select22 required" required>
                                     <option value="">-- Select District --</option>
                                     <?php foreach ($districts as $key => $row) { ?>
                                     <option value="<?= $row->id ?>"><?= $row->name_en.' >>'.$row->name_bn; ?></option>
@@ -392,7 +400,7 @@
                             <div class="form-group">
                                 <label>Upazila/Thana<span style="color: red;">*</span> </label>
                                 <?php echo form_error('pre_thana');?>
-                                <select name="pre_thana" id="pre_thana" class="pre_thana form-control input-sm required"
+                                <select name="pre_thana" id="pre_thana" class="pre_thana form-control input-sm select22 required"
                                     required>
                                     <option value="">-- Select District --</option>
                                 </select>
@@ -403,7 +411,7 @@
                             <div class="form-group">
                                 <label>Post Office<span style="color: red;">*</span> </label>
                                 <?php echo form_error('pre_post');?>
-                                <select name="pre_post" id="pre_post" class="pre_post form-control input-sm required" required>
+                                <select name="pre_post" id="pre_post" class="pre_post form-control input-sm select22 required" required>
                                 <option value="">-- Select District --</option>
                                 </select>
                             </div>
@@ -435,7 +443,7 @@
                             <div class="form-group">
                                 <label>District<span style="color: red;">*</span> </label>
                                 <?php echo form_error('per_district');?>
-                                <select name="per_district" id="per_district" class="form-control input-sm required" required>
+                                <select name="per_district" id="per_district" class="form-control input-sm select22 required" required>
                                 <option value="">-- Select one --</option>
                                     <?php foreach ($districts as $key => $row) { ?>
                                     <option value="<?= $row->id ?>"><?= $row->name_en.' >>'.$row->name_bn; ?></option>
@@ -447,7 +455,7 @@
                             <div class="form-group">
                                 <label>Upazila/Thana<span style="color: red;">*</span> </label>
                                 <?php echo form_error('per_thana');?>
-                                <select name="per_thana" id="per_thana" class="per_thana form-control input-sm required"
+                                <select name="per_thana" id="per_thana" class="per_thana form-control input-sm select22 required"
                                     required>
                                     <option value='' >-- Select District --</option>
                                 </select>
@@ -457,7 +465,7 @@
                             <div class="form-group">
                                 <label>Post Office<span style="color: red;">*</span> </label>
                                 <?php echo form_error('per_post');?>
-                                <select name="per_post" id="per_post" class="per_post form-control input-sm required" required>
+                                <select name="per_post" id="per_post" class="per_post form-control input-sm select22 required" required>
                                 <option value="">-- Select one --</option>
                                 </select>
                             </div>
@@ -469,10 +477,13 @@
                 <hr style="margin-bottom: 0px !important;">
                 <div style="background-color: white; padding: 15px !important;">
                     <?php
-                        if (!empty($user_data->unit_name)) {
-                            $this->db->where('unit_id', $user_data->unit_name);
-                        }
                         $depts = $this->db->get('emp_depertment')->result();
+                        $sections = $this->db->get('emp_section')->result();
+                        $designations = $this->db->order_by('desig_name', 'ASC')->get('emp_designation')->result();
+                        $shifts = $this->db->where('unit_id',$user_data->unit_name)->get('pr_emp_shift')->result();
+                        if (empty($shifts)) {
+                            $shifts = $this->db->get('pr_emp_shift')->result();
+                        }
                     ?>
                     <div class="row">
                         <div class="col-md-3">
@@ -480,10 +491,13 @@
                                 <label>Department <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_dept_id');?>
                                 <select name="emp_dept_id" id="emp_dept_id" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <?php foreach ($depts as $key => $row) { ?>
-                                    <option value="<?= $row->dept_id ?>"><?= $row->dept_name.' >>'.$row->dept_bangla; ?>
-                                    </option>
+                                    <option value="">-- Select Department --</option>
+                                    <?php foreach ($depts as $key => $row) {
+                                        $d_id = isset($row->dept_id) && $row->dept_id ? $row->dept_id : (isset($row->id) ? $row->id : '');
+                                        $d_en = !empty($row->dept_name) ? $row->dept_name : (!empty($row->dept_name_en) ? $row->dept_name_en : '');
+                                        $d_bn = !empty($row->dept_bangla) ? $row->dept_bangla : (!empty($row->dept_name_bn) ? $row->dept_name_bn : '');
+                                    ?>
+                                    <option value="<?= $d_id ?>"><?= $d_en . ($d_bn ? ' >> '.$d_bn : ''); ?></option>
                                     <?php } ?>
                                 </select>
                             </div>
@@ -492,29 +506,37 @@
                             <div class="form-group">
                                 <label>Section <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_sec_id');?>
-                                <select name="emp_sec_id" id="emp_sec_id" class="emp_sec_id form-control input-sm required"
-                                    required>
-                                    <option value="">-- Select one --</option>
+                                <select name="emp_sec_id" id="emp_sec_id" class="emp_sec_id form-control input-sm required" required>
+                                    <option value="">-- Select Section --</option>
+                                    <?php foreach ($sections as $key => $row) {
+                                        $s_id = isset($row->sec_id) && $row->sec_id ? $row->sec_id : (isset($row->id) ? $row->id : '');
+                                        $s_en = !empty($row->sec_name_en) ? $row->sec_name_en : (!empty($row->sec_name) ? $row->sec_name : '');
+                                        $s_bn = !empty($row->sec_name_bn) ? $row->sec_name_bn : (!empty($row->sec_bangla) ? $row->sec_bangla : '');
+                                    ?>
+                                    <option value="<?= $s_id ?>"><?= $s_en . ($s_bn ? ' >> '.$s_bn : ''); ?></option>
+                                    <?php } ?>
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3" style="padding-left: 0px !important;">
-                            <div class="form-group">
-                                <label>Line<span style="color: red;">*</span> </label>
-                                <?php echo form_error('emp_line_id');?>
-                                <select name="emp_line_id" id="emp_line_id" class="emp_line_id form-control input-sm required"
-                                    required>
-                                    <option value="">-- Select one --</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3" style="padding-left: 0px !important;">
+                        <div class="col-md-3">
                             <div class="form-group">
                                 <label>Designation<span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_desi_id');?>
-                                <select name="emp_desi_id" id="emp_desi_id" class="emp_desi_id form-control input-sm required">
-                                    <!--desig  -->
+                                <select name="emp_desi_id" id="emp_desi_id" class="emp_desi_id form-control input-sm required" required>
+                                    <option value="">-- Select Designation --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Emp Permanent Shift <span style="color: red;">*</span> </label>
+                                <?php echo form_error('emp_per_shift');?>
+                                <select name="emp_per_shift" id="emp_per_shift" class="form-control input-sm required" required>
                                     <option value="">-- Select one --</option>
+                                    <?php foreach ($shifts as $key => $row) { ?>
+                                    <option value="<?= $row->id?>">
+                                        <?= $row->shift_name; ?></option>
+                                    <?php } ?>
                                 </select>
                             </div>
                         </div>
@@ -536,7 +558,7 @@
                             </div>
                         </div>
                         <?php $shifts = $this->db->where('unit_id',$user_data->unit_name)->get('pr_emp_shift')->result(); ?>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Emp Shift <span style="color: red;">*</span> </label>
                                 <?php echo form_error('emp_shift');?>
@@ -558,6 +580,21 @@
                                 <?php echo form_error('emp_join_date');?>
                             </div>
                         </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Off Day / Weekend <span style="color: red;">*</span> </label>
+                                <?php echo form_error('weekend');?>
+                                <select name="weekend" id="weekend" class="form-control input-sm required" required>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                    <option value="Sunday">Sunday</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <?php $sl_grade = $this->db->get('pr_grade')->result(); ?>
                         <div class="col-md-2">
@@ -573,66 +610,22 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                         <div class="form-group">
                             <label>Employee Type <span style="color: red;">*</span> </label>
                             <select name="emp_type" id="emp_type" class="form-control input-sm required" required="">
                                 <option value="">-- Select one --</option>
-                                <option value="1">Worker</option>
-                                <option value="2">Staff</option>
+                                <option value="1">Office</option>
+                                <option value="2">Factory</option>
                             </select>
                         </div>
                     </div>
                     </div>
 
-                    <div class="row">
-                        <?php //dd($shifts); ?>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Salary Type <span style="color: red;">*</span> </label>
-                                <?php echo form_error('salary_type');?>
-                                <select name="salary_type" id="salary_type" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <option value="1" selected>Fixed</option>
-                                    <option value="2">Production</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Salary Withdraw <span style="color: red;">*</span> </label>
-                                <?php echo form_error('salary_draw');?>
-                                <select name="salary_draw" id="salary_draw" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <option value="1">cash</option>
-                                    <option value="2">bank</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Lunch <span style="color: red;">*</span> </label>
-                                <?php echo form_error('lunch');?>
-                                <select name="lunch" id="lunch" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <option value="0">Yes</option>
-                                    <option selected value="1">No</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Transport <span style="color: red;">*</span> </label>
-                                <?php echo form_error('transport');?>
-                                <select name="transport" id="transport" class="form-control input-sm required" required>
-                                    <option value="">-- Select one --</option>
-                                    <option value="0">Yes</option>
-                                    <option selected value="1">No</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    <input type="hidden" name="salary_type" id="salary_type" value="1">
+                    <input type="hidden" name="salary_draw" id="salary_draw" value="1">
+                    <input type="hidden" name="lunch" id="lunch" value="1">
+                    <input type="hidden" name="transport" id="transport" value="1">
 
                     <div class="row"  <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(!in_array(10,$acl)) {echo '';} else { echo 'style="display:none;"';}?>>
                         <div class="col-md-2">
@@ -640,7 +633,7 @@
                                 <label>Gross Salary <span style="color: red;">*</span> </label>
                                 <?php echo form_error('gross_sal');?>
                                 <input type="text" onkeyup="salary_structure_cal()" onchange="salary_structure_cal()" name="gross_sal" id="gross_sal"
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -648,7 +641,7 @@
                                 <label>Basic Salary </label>
                                 <?php echo form_error('basic_sal');?>
                                 <input type="text" name="basic_sal" id="basic_sal" disabled
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -656,41 +649,39 @@
                                 <label>House </label>
                                 <?php echo form_error('house_rent');?>
                                 <input type="text" name="house_rent" id="house_rent" disabled
-                                    class="form-control input-sm required" required>
+                                    class="form-control input-sm required">
                             </div>
                         </div>
 
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Medical </label>
                                 <?php echo form_error('medical');?>
-                                <input type="text" name="medical" id="medical" disabled class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="medical" id="medical" disabled class="form-control input-sm required">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Conveyance </label>
+                                <?php echo form_error('trans_allow');?>
+                                <input type="text" name="trans_allow" id="trans_allow" disabled
+                                    class="form-control input-sm required">
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="form-group">
-                                <label>Transport </label>
-                                <?php echo form_error('trans_allow');?>
-                                <input type="text" name="trans_allow" id="trans_allow" disabled
-                                    class="form-control input-sm required" required>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
                                 <label> Food </label>
                                 <?php echo form_error('food');?>
-                                <input type="text" name="food" id="food" disabled class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="food" id="food" disabled class="form-control input-sm required">
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label style="white-space: nowrap">Ot Entitle </label>
                             <?php echo form_error('ot_entitle');?>
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="0" class="form-check-input"
-                                style="display: inline; margin-right: 10px;" required>Yes
+                                style="display: inline; margin-right: 10px;">Yes
                             <input type="radio" name="ot_entitle" id="ot_entitle" value="1" class="form-check-input"
-                                style="display: inline; margin-right: 10px;" required checked>No
+                                style="display: inline; margin-right: 10px;" checked>No
                         </div>
                     </div>
                     <div class="row">
@@ -706,7 +697,7 @@
                             <div class="form-group">
                                 <label>Basic Salary </label>
                                 <?php echo form_error('basic_sall');?>
-                                <input type="text" name="basic_sall" id="basic_sall" disabled
+                                <input type="text" name="basic_sall" id="basic_sall" readonly
                                     class="form-control input-sm required" required>
                             </div>
                         </div>
@@ -714,42 +705,42 @@
                             <div class="form-group">
                                 <label>House </label>
                                 <?php echo form_error('house_rentt');?>
-                                <input type="text" name="house_rentt" id="house_rentt" disabled
+                                <input type="text" name="house_rentt" id="house_rentt" readonly
                                     class="form-control input-sm required" required>
                             </div>
                         </div>
 
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Medical </label>
                                 <?php echo form_error('medicall');?>
-                                <input type="text" name="medicall" id="medicall" disabled class="form-control input-sm required"
+                                <input type="text" name="medicall" id="medicall" readonly class="form-control input-sm required"
                                     required>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Conveyance </label>
+                                <?php echo form_error('trans_alloww');?>
+                                <input type="text" name="trans_alloww" id="trans_alloww" readonly
+                                    class="form-control input-sm required" required>
                             </div>
                         </div>
                         <div class="col-md-1">
                             <div class="form-group">
-                                <label>Transport </label>
-                                <?php echo form_error('trans_alloww');?>
-                                <input type="text" name="trans_alloww" id="trans_alloww" disabled
-                                    class="form-control input-sm required" required>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
                                 <label> Food </label>
                                 <?php echo form_error('foodd');?>
-                                <input type="text" name="foodd" id="foodd" disabled class="form-control input-sm required"
+                                <input type="text" name="foodd" id="foodd" readonly class="form-control input-sm required"
                                     required>
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <label style="white-space: nowrap">Ot Entitle </label>
                             <?php echo form_error('ot_entitle');?>
                             <input type="radio" name="com_ot_entitle" id="com_ot_entitle" value="0"
-                                class="form-check-input" style="display: inline; margin-right: 10px;" required>Yes
+                                class="form-check-input" style="display: inline; margin-right: 5px;" required>Yes
                             <input type="radio" name="com_ot_entitle" id="com_ot_entitle" value="1"
-                                class="form-check-input" style="display: inline; margin-right: 10px;" required checked>No
+                                class="form-check-input" style="display: inline; margin-right: 5px;" required checked>No
                         </div>
                     </div>
                 </div>
@@ -779,7 +770,7 @@
                             <div class="form-group">
                                 <label>District<span style="color: red;">*</span> </label>
                                 <?php echo form_error('nomi_district');?>
-                                <select name="nomi_district" id="nomi_district" class="form-control input-sm required" required>
+                                <select name="nomi_district" id="nomi_district" class="form-control input-sm select22 required" required>
                                     <option value="">-- Select one --</option>
                                     <?php foreach ($districts as $key => $row) { ?>
                                     <option value="<?= $row->id ?>"><?= $row->name_en.' >>'.$row->name_bn; ?></option>
@@ -791,7 +782,7 @@
                             <div class="form-group">
                                 <label>Upazila/Thana<span style="color: red;">*</span> </label>
                                 <?php echo form_error('nomi_thana');?>
-                                <select name="nomi_thana" id="nomi_thana" class="nomi_thana form-control input-sm required"
+                                <select name="nomi_thana" id="nomi_thana" class="nomi_thana form-control input-sm select22 required"
                                     required>
                                     <option value="">-- Select one --</option>
                                 </select>
@@ -804,7 +795,7 @@
                             <div class="form-group">
                                 <label>Post Office<span style="color: red;">*</span> </label>
                                 <?php echo form_error('nomi_post');?>
-                                <select name="nomi_post" id="nomi_post" class="nomi_post form-control input-sm required"
+                                <select name="nomi_post" id="nomi_post" class="nomi_post form-control input-sm select22 required"
                                     required>
                                     <option value="">-- Select one --</option>
                                 </select>
@@ -863,34 +854,33 @@
                     </div>
                 </div>
 
-                <h3 style="font-weight: 600;">Reference/Guardian</h3>
+                <h3 style="font-weight: 600;">Reference/Guardian(Optional)</h3>
                 <hr style="margin-bottom: 0px !important;">
                 <div style="background-color: white; padding: 15px !important;">
                     <div class="row">
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Name <span style="color: red;">*</span> </label>
+                                <label>Name </label>
                                 <?php echo form_error('refer_name');?>
                                 <input type="text" name="refer_name" id="refer_name"
-                                    value="<?= isset($emp_info->refer_name)?>" class="form-control input-sm bangla_name required"
-                                    required>
+                                    value="<?= isset($emp_info->refer_name)?>" class="form-control input-sm bangla_name "
+                                    >
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label>Mobile Number<span style="color: red;">*</span> </label>
+                                <label>Mobile Number</label>
                                 <?php echo form_error('refer_mobile');?>
                                 <input type="text" name="refer_mobile" id="refer_mobile"
-                                    value="<?= isset($emp_info->refer_mobile)?>" class="form-control input-sm required" required>
+                                    value="<?= isset($emp_info->refer_mobile)?>" class="form-control input-sm">
                             </div>
                         </div>
                         <div class="col-md-2">
                             <div class="form-group">
-                                <label>Rrelation<span style="color: red;">*</span> </label>
+                                <label>Rrelation</label>
                                 <?php echo form_error('refer_relation');?>
-                                <input type="text" name="refer_relation" id="refer_relation" value="<?= isset($emp_info->refer_relation)?>" class="form-control input-sm required" required>
-                                <!-- <select name="refer_relation" id="refer_relation" class="form-control input-sm required"
-                                    required>
+                                <input type="text" name="refer_relation" id="refer_relation" value="<?= isset($emp_info->refer_relation)?>" class="form-control input-sm">
+                                <!-- <select name="refer_relation" id="refer_relation" class="form-control input-sm">
                                     <option value='' >-- Select --</option>
                                     < ?php foreach ($nominees as $key => $row) { ?>
                                     <option value="< ?= $row->id ?>"><?= $row->nomini_relation; ?></option>
@@ -900,20 +890,20 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Village <span style="color: red;">*</span> </label>
+                                <label>Village</label>
                                 <?php echo form_error('refer_village');?>
                                 <input type="text" name="refer_village" id="refer_village"
                                     value="<?= isset($emp_info->refer_village)?>"
-                                    class="form-control input-sm english_village required" required>
+                                    class="form-control input-sm english_village " >
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>District <span style="color: red;">*</span> </label>
+                                <label>District </label>
                                 <?php echo form_error('ref_district');?>
-                                <select name="ref_district" id="ref_district" class="form-control input-sm required" required>
+                                <select name="ref_district" id="ref_district" class="form-control input-sm select22">
                                     <option value='' >-- Select --</option>
                                     <?php foreach ($districts as $key => $row) { ?>
                                     <option value="<?= $row->id ?>"><?= $row->name_en.' >>'.$row->name_bn; ?></option>
@@ -923,19 +913,18 @@
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Thana/Upazila<span style="color: red;">*</span> </label>
+                                <label>Thana/Upazila</label>
                                 <?php echo form_error('ref_thana');?>
-                                <select name="ref_thana" id="ref_thana" class="ref_thana form-control input-sm required"
-                                    required>
+                                <select name="ref_thana" id="ref_thana" class="ref_thana form-control input-sm select22">
                                     <option value='' >-- Select --</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Post Office<span style="color: red;">*</span> </label>
+                                <label>Post Office</label>
                                 <?php echo form_error('ref_post');?>
-                                <select name="ref_post" id="ref_post" class="ref_post form-control input-sm required" required>
+                                <select name="ref_post" id="ref_post" class="ref_post form-control input-sm select22">
                                     <option value='' >-- Select --</option>
                                 </select>
                             </div>
@@ -1018,8 +1007,8 @@
 
                             <input type="hidden" name="submit_type" id="submit_type">
 
-                            <button onclick="checkAndBlockSubmit('edit',event)" class="btn btn-success">EDIT</button>
-                            <button onclick="checkAndBlockSubmit('save',event)" class="btn btn-primary">SAVE</button>
+                            <button type="button" onclick="submitFormViaAjax('edit', event)" class="btn btn-success">EDIT</button>
+                            <button type="button" onclick="submitFormViaAjax('save', event)" class="btn btn-primary">SAVE</button>
 
                         </div>
                     </div>
@@ -1030,6 +1019,182 @@
 </div>
 </div>
 <script>
+function loadUpazilaOptions(dis_id, thana_selector, post_selector, selected_thana, selected_post) {
+    if ($(thana_selector).data('select2')) {
+        $(thana_selector).select2('destroy');
+    }
+    $(thana_selector).empty().append("<option value=''>-- Select Upazila/Thana --</option>");
+    if (post_selector) {
+        if ($(post_selector).data('select2')) {
+            $(post_selector).select2('destroy');
+        }
+        $(post_selector).empty().append("<option value=''>-- Select Post Office --</option>");
+        $(post_selector).select2({ width: '100%' });
+    }
+    if (!dis_id) {
+        $(thana_selector).select2({ width: '100%' });
+        return;
+    }
+    $.ajax({
+        type: "POST",
+        url: hostname + "common/ajax_upazila_by_dis/" + dis_id,
+        success: function(func_data) {
+            if ($(thana_selector).data('select2')) {
+                $(thana_selector).select2('destroy');
+            }
+            $(thana_selector).empty().append("<option value=''>-- Select Upazila/Thana --</option>");
+            $.each(func_data, function(id, name) {
+                var opt = $('<option />');
+                opt.val(id);
+                opt.text(name);
+                $(thana_selector).append(opt);
+            });
+            if (selected_thana) {
+                $(thana_selector).val(selected_thana);
+                if (selected_post && post_selector) {
+                    loadPostOfficeOptions(selected_thana, post_selector, selected_post);
+                }
+            }
+            $(thana_selector).select2({ width: '100%' });
+        }
+    });
+}
+
+function loadPostOfficeOptions(thana_id, post_selector, selected_post) {
+    if ($(post_selector).data('select2')) {
+        $(post_selector).select2('destroy');
+    }
+    $(post_selector).empty().append("<option value=''>-- Select Post Office --</option>");
+    if (!thana_id) {
+        $(post_selector).select2({ width: '100%' });
+        return;
+    }
+    $.ajax({
+        type: "POST",
+        url: hostname + "common/ajax_post_office_by_upa_id/" + thana_id,
+        success: function(upazilaThanas) {
+            if ($(post_selector).data('select2')) {
+                $(post_selector).select2('destroy');
+            }
+            $(post_selector).empty().append("<option value=''>-- Select Post Office --</option>");
+            $.each(upazilaThanas, function(id, ut_name) {
+                var opt = $('<option />');
+                opt.val(id);
+                opt.text(ut_name);
+                $(post_selector).append(opt);
+            });
+            if (selected_post) {
+                $(post_selector).val(selected_post);
+            }
+            $(post_selector).select2({ width: '100%' });
+        }
+    });
+}
+
+function load_sections(dept_id, selected_sec_id, callback) {
+    var unit_id = $('#unit_id').val() || 1;
+    dept_id = (dept_id !== undefined && dept_id !== null) ? dept_id : $('#emp_dept_id').val();
+
+    if ($('#emp_sec_id').data('select2')) {
+        $('#emp_sec_id').select2('destroy');
+    }
+    $('#emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
+
+    if (!dept_id) {
+        if ($('#emp_sec_id').data('select2') || $('#emp_sec_id').hasClass('select22')) {
+            $('#emp_sec_id').select2({ width: '100%' });
+        }
+        load_designations('', '', callback);
+        return;
+    }
+
+    $.ajax({
+        type: "POST",
+        url: hostname + "common/ajax_section_by_dept_id/" + dept_id + '/' + unit_id,
+        dataType: "json",
+        success: function(func_data) {
+            if (typeof func_data === 'string') {
+                try { func_data = JSON.parse(func_data); } catch(e) {}
+            }
+            if ($('#emp_sec_id').data('select2')) {
+                $('#emp_sec_id').select2('destroy');
+            }
+            $('#emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
+            $.each(func_data, function(id, name) {
+                var opt = $('<option />');
+                opt.val(id);
+                opt.text(name);
+                $('#emp_sec_id').append(opt);
+            });
+            if (selected_sec_id) {
+                $('#emp_sec_id').val(selected_sec_id);
+            }
+            if ($('#emp_sec_id').data('select2') || $('#emp_sec_id').hasClass('select22')) {
+                $('#emp_sec_id').select2({ width: '100%' });
+            }
+            if (typeof callback === 'function') callback();
+        },
+        error: function() {
+            if ($('#emp_sec_id').data('select2') || $('#emp_sec_id').hasClass('select22')) {
+                $('#emp_sec_id').select2({ width: '100%' });
+            }
+            if (typeof callback === 'function') callback();
+        }
+    });
+}
+
+function load_designations(sec_id, selected_desig_id, callback) {
+    var unit_id = $('#unit_id').val() || 1;
+    sec_id = (sec_id !== undefined && sec_id !== null) ? sec_id : $('#emp_sec_id').val();
+
+    if ($('#emp_desi_id').data('select2')) {
+        $('#emp_desi_id').select2('destroy');
+    }
+    $('#emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
+
+    if (!sec_id) {
+        if ($('#emp_desi_id').data('select2') || $('#emp_desi_id').hasClass('select22')) {
+            $('#emp_desi_id').select2({ width: '100%' });
+        }
+        if (typeof callback === 'function') callback();
+        return;
+    }
+
+    $.ajax({
+        type: "POST",
+        url: hostname + "common/ajax_designation_by_sec_id/" + sec_id + '/' + unit_id,
+        dataType: "json",
+        success: function(func_data) {
+            if (typeof func_data === 'string') {
+                try { func_data = JSON.parse(func_data); } catch(e) {}
+            }
+            if ($('#emp_desi_id').data('select2')) {
+                $('#emp_desi_id').select2('destroy');
+            }
+            $('#emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
+            $.each(func_data, function(id, name) {
+                var opt = $('<option />');
+                opt.val(id);
+                opt.text(name);
+                $('#emp_desi_id').append(opt);
+            });
+            if (selected_desig_id) {
+                $('#emp_desi_id').val(selected_desig_id);
+            }
+            if ($('#emp_desi_id').data('select2') || $('#emp_desi_id').hasClass('select22')) {
+                $('#emp_desi_id').select2({ width: '100%' });
+            }
+            if (typeof callback === 'function') callback();
+        },
+        error: function() {
+            if ($('#emp_desi_id').data('select2') || $('#emp_desi_id').hasClass('select22')) {
+                $('#emp_desi_id').select2({ width: '100%' });
+            }
+            if (typeof callback === 'function') callback();
+        }
+    });
+}
+
 function set_desi_item() {
 
     var emp_dob = localStorage.getItem('emp_dob');
@@ -1043,7 +1208,7 @@ function set_desi_item() {
     }
     var emp_dept_id = localStorage.getItem('emp_dept_id');
     var emp_sec_id = localStorage.getItem('emp_sec_id');
-    var emp_line_id = localStorage.getItem('emp_line_id');
+    // var emp_line_id = localStorage.getItem('emp_line_id');
     var emp_desi_id = localStorage.getItem('emp_desi_id');
     var nomi_district = localStorage.getItem('nomi_district');
     var nomi_thana = localStorage.getItem('nomi_thana');
@@ -1066,115 +1231,108 @@ function set_desi_item() {
             }, 500)
         }, 500)
 
-
-
-
-
-
-
-
-    //alert(new Date(emp_dob));
     var nomi_age = localStorage.getItem('nomi_age');
+    if (nomi_age && $("#nomi_age").length) {
+        try {
+            var nDate = new Date(nomi_age);
+            if (!isNaN(nDate.getTime()) && typeof $("#nomi_age").datepicker === 'function') {
+                $("#nomi_age").datepicker("setDate", nDate);
+            }
+        } catch(e) {}
+    }
+
     var emp_join_date = localStorage.getItem('emp_join_date');
-    // var ft = localStorage.getItem('ft');
-    // var inches = localStorage.getItem('inches');
-    // console.log(ft, inches);
+    if (emp_join_date && $("#emp_join_date").length) {
+        $("#emp_join_date").val(emp_join_date);
+        try {
+            var jDate = new Date(emp_join_date);
+            if (!isNaN(jDate.getTime()) && typeof $("#emp_join_date").datepicker === 'function') {
+                $("#emp_join_date").datepicker("setDate", jDate);
+            }
+        } catch(e) {}
+    }
+    $('#weekend').val(localStorage.getItem('weekend')).trigger('change');
 
-
-    // $('#ft').val(ft).trigger('change');
-    // $('#inches').val(inches).trigger('change');
-
-
-
-    //$("#emp_dob").datepicker("setDate", emp_dob);
-    $("#nomi_age").datepicker("setDate", new Date(nomi_age));
-    $("#emp_join_date").datepicker("setDate", new Date(emp_join_date));
-
-    $('#nomi_district').val(nomi_district).trigger('change');
-    setTimeout(function() {
-        $('#nomi_thana').val(nomi_thana).trigger('change');
-        setTimeout(function() {
-            $('#nomi_post').val(nomi_post).trigger('change');
-        }, 500)
-    }, 500)
+    var nomi_district = localStorage.getItem('nomi_district');
+    var nomi_thana = localStorage.getItem('nomi_thana');
+    var nomi_post = localStorage.getItem('nomi_post');
+    if (nomi_district) {
+        $('#nomi_district').val(nomi_district);
+        loadUpazilaOptions(nomi_district, '#nomi_thana', '#nomi_post', nomi_thana, nomi_post);
+    }
 
     var pre_district = localStorage.getItem('pre_district');
     var pre_thana = localStorage.getItem('pre_thana');
     var pre_post = localStorage.getItem('pre_post');
-    $('#pre_district').val(pre_district).trigger('change');
-    setTimeout(function() {
-        $('#pre_thana').val(pre_thana).trigger('change');
-        setTimeout(function() {
-            $('#pre_post').val(pre_post).trigger('change');
-        }, 500)
-    }, 500)
+    if (pre_district) {
+        $('#pre_district').val(pre_district);
+        loadUpazilaOptions(pre_district, '#pre_thana', '#pre_post', pre_thana, pre_post);
+    }
 
     var per_district = localStorage.getItem('per_district');
     var per_thana = localStorage.getItem('per_thana');
     var per_post = localStorage.getItem('per_post');
-
-    $('#per_district').val(per_district).trigger('change');
-    setTimeout(function() {
-        $('#per_thana').val(per_thana).trigger('change');
-        setTimeout(function() {
-            $('#per_post').val(per_post).trigger('change');
-        }, 500)
-    }, 500)
+    if (per_district) {
+        $('#per_district').val(per_district);
+        loadUpazilaOptions(per_district, '#per_thana', '#per_post', per_thana, per_post);
+    }
 
     var ref_district = localStorage.getItem('ref_district');
     var ref_thana = localStorage.getItem('ref_thana');
     var ref_post = localStorage.getItem('ref_post');
+    if (ref_district) {
+        $('#ref_district').val(ref_district);
+        loadUpazilaOptions(ref_district, '#ref_thana', '#ref_post', ref_thana, ref_post);
+    }
 
     var hight = localStorage.getItem('hight');
     $('#hight').val(hight).trigger('change');
 
+    // Directly set values for unit, department, section, line, designation without cascading wipeout
+    var unit_id = localStorage.getItem('unit_id');
+    if (unit_id) $('#unit_id').val(unit_id);
+    if (emp_dept_id) {
+        $('#emp_dept_id').val(emp_dept_id);
+        if ($('#emp_dept_id').data('select2')) $('#emp_dept_id').select2('val', emp_dept_id);
+        load_sections(emp_dept_id, emp_sec_id, function() {
+            if (emp_sec_id) {
+                load_designations(emp_sec_id, emp_desi_id);
+            } else {
+                load_designations('');
+            }
+        });
+    } else {
+        if (emp_sec_id) {
+            $('#emp_sec_id').val(emp_sec_id);
+            if ($('#emp_sec_id').data('select2')) $('#emp_sec_id').select2('val', emp_sec_id);
+            load_designations(emp_sec_id, emp_desi_id);
+        } else {
+            load_designations('');
+        }
+    }
+    if (nomi_district && $('#nomi_district').data('select2')) $('#nomi_district').select2('val', nomi_district);
+    if (pre_district && $('#pre_district').data('select2')) $('#pre_district').select2('val', pre_district);
+    if (per_district && $('#per_district').data('select2')) $('#per_district').select2('val', per_district);
+    if (ref_district && $('#ref_district').data('select2')) $('#ref_district').select2('val', ref_district);
 
-
-    $('#ref_district').val(ref_district).trigger('change');
-    setTimeout(function() {
-        $('#ref_thana').val(ref_thana).trigger('change');
-        setTimeout(function() {
-            $('#ref_post').val(ref_post).trigger('change');
-        }, 500)
-    }, 500)
-
-    // Update emp_dept_id and trigger 'change'
-    $('#unit_id').trigger('change');
-    setTimeout(function() {
-        $('#emp_dept_id').val(emp_dept_id).trigger('change');
-        // Set a delay of 0.5 seconds before updating emp_sec_id
-        setTimeout(function() {
-            $('#emp_sec_id').val(emp_sec_id).trigger('change');
-            // Set another delay of 0.5 seconds before updating emp_line_id
-            setTimeout(function() {
-                $('#emp_line_id').val(emp_line_id).trigger('change');
-                setTimeout(function() {
-                    $('#emp_desi_id').val(emp_desi_id);
-                }, 500);
-            }, 500);
-        }, 500);
-    }, 500);
-    // Clear all items in localStorage
     var otEntitleElement = document.querySelector('input[name="ot_entitle"][value="'+ot_entitle+'"]');
-        if (otEntitleElement) {
-            otEntitleElement.checked = true;
-        }
+    if (otEntitleElement) {
+        otEntitleElement.checked = true;
+    }
 
-        var comOtEntitleElement = document.querySelector('input[name="com_ot_entitle"][value="'+com_ot_entitle+'"]');
-        if (comOtEntitleElement) {
-            comOtEntitleElement.checked = true;
-        }
+    var comOtEntitleElement = document.querySelector('input[name="com_ot_entitle"][value="'+com_ot_entitle+'"]');
+    if (comOtEntitleElement) {
+        comOtEntitleElement.checked = true;
+    }
 
-        var nidDobCheckElement = document.querySelector('input[name="nid_dob_check"][value="'+nid_dob_check+'"]');
-        if (nidDobCheckElement) {
-            nidDobCheckElement.checked = true;
-        }
-        var nomiNidBcCheckElement = document.querySelector('input[name="nomi_nid_bc_check"][value="'+nomi_nid_bc_check+'"]');
-        if (nomiNidBcCheckElement) {
-            nomiNidBcCheckElement.checked = true;
-        }
-//localStorage.clear();
-
+    var nidDobCheckElement = document.querySelector('input[name="nid_dob_check"][value="'+nid_dob_check+'"]');
+    if (nidDobCheckElement) {
+        nidDobCheckElement.checked = true;
+    }
+    var nomiNidBcCheckElement = document.querySelector('input[name="nomi_nid_bc_check"][value="'+nomi_nid_bc_check+'"]');
+    if (nomiNidBcCheckElement) {
+        nomiNidBcCheckElement.checked = true;
+    }
 }
 </script>
 
@@ -1208,11 +1366,11 @@ function emp_id_search(id = null) {
             if (e.status == true) {
                 const keysToFilter = [
                     "id", "emp_id", "name_en", "name_bn",
-                    "father_name", "mother_name", "per_village", "per_post",
+                    "father_name", "father_name_en", "mother_name", "mother_name_en", "spouse_name", "spouse_name_en", "per_village", "per_post",
                     "per_thana", "per_district", "per_village_bn",
                     "pre_home_owner", "holding_num", "home_own_mobile",
                     "pre_village", "pre_post", "pre_thana", "pre_district",
-                    "pre_village_bn", "spouse_name", "emp_dob", "gender",
+                    "pre_village_bn", "emp_dob", "gender",
                     "marital_status", "religion", "blood", "m_child", "f_child",
                     "nominee_name", "nominee_vill", "nomi_post", "nomi_thana",
                     "nomi_district", "nomi_age","nomi_nid", "nomi_relation", "nomi_mobile",
@@ -1220,10 +1378,11 @@ function emp_id_search(id = null) {
                     "education", "nid_dob_id", "nid_dob_check","nomi_nid_bc_check", "exp_factory_name",
                     "exp_duration", "exp_designation", "personal_mobile", "exp_dasignation",
                     "bank_bkash_no", "unit_id", "emp_dept_id", "refer_village",
-                    "emp_sec_id", "emp_line_id", "emp_desi_id", "emp_sal_gra_id", "emp_type",
-                    "emp_cat_id", "proxi_id", "emp_shift", "gross_sal",
+                    "emp_sec_id", "emp_line_id", "emp_desi_id",
+                    "emp_sal_gra_id", "emp_type",
+                    "emp_cat_id", "proxi_id", "emp_shift", "emp_per_shift", "gross_sal",
                     "com_gross_sal", "ot_entitle", "com_ot_entitle", "transport", "img_source",
-                    "lunch", "att_bonus", "salary_draw", "salary_type", "emp_join_date",
+                    "lunch", "att_bonus", "salary_draw", "salary_type", "emp_join_date", "weekend",
                     "ref_district", "refer_village", "ref_thana", "ref_post","hight","symbol"
                 ];
                 // Filter the data based on keysToFilter
@@ -1231,13 +1390,13 @@ function emp_id_search(id = null) {
                 keysToFilter.forEach(function(key) {
                     // console.log(key);
                     if (data[key] !== undefined && data[key] !== null) {
-                        if (key == 'emp_dept_id' || key == 'emp_sec_id' || key == 'emp_line_id' ||
+                        if (key == 'emp_dept_id' || key == 'emp_sec_id'  ||
                             key == 'emp_desi_id' || key == 'nomi_district' || key == 'nomi_thana' ||
                             key == 'pre_district' || key == 'pre_thana' || key == 'per_district' ||
                             key == 'per_thana' || key == 'per_post' || key == 'pre_post' || key ==
                             'nomi_post' || key == 'ref_thana' || key == 'ref_post' || key ==
                             'ref_district' || key == 'emp_dob' || key == 'nomi_age' || key ==
-                            'emp_join_date' || key == 'hight' || key == 'ot_entitle' || key == 'com_ot_entitle' ||key == 'nomi_nid_bc_check'|| key == 'nid_dob_check' || key == 'com_gross_sal'|| key == 'gross_sal'
+                            'emp_join_date' || key == 'weekend' || key == 'hight' || key == 'ot_entitle' || key == 'com_ot_entitle' ||key == 'nomi_nid_bc_check'|| key == 'nid_dob_check' || key == 'com_gross_sal'|| key == 'gross_sal'
                         ) {
                             localStorage.setItem(key, data[key]);
                         } else if (key == 'img_source') {
@@ -1259,8 +1418,33 @@ function emp_id_search(id = null) {
                         }
                     }
                 });
-            }
+                if (data.emp_per_shift) {
+                    $('#emp_per_shift').val(data.emp_per_shift);
+                } else {
+                    $('#emp_per_shift').val('');
+                }
+                if (data.unit_id) {
+                    $('#unit_id').val(data.unit_id);
+                }
 
+                if (data.emp_dept_id) {
+                    $('#emp_dept_id').val(data.emp_dept_id);
+                    if ($('#emp_dept_id').data('select2')) $('#emp_dept_id').select2('val', data.emp_dept_id);
+                    load_sections(data.emp_dept_id, data.emp_sec_id, function() {
+                        if (data.emp_sec_id) {
+                            load_designations(data.emp_sec_id, data.emp_desi_id);
+                        } else {
+                            load_designations('');
+                        }
+                    });
+                } else if (data.emp_sec_id) {
+                    $('#emp_sec_id').val(data.emp_sec_id);
+                    if ($('#emp_sec_id').data('select2')) $('#emp_sec_id').select2('val', data.emp_sec_id);
+                    load_designations(data.emp_sec_id, data.emp_desi_id);
+                } else {
+                    load_designations('');
+                }
+            }
 
             set_desi_item();
             get_last_id();
@@ -1274,262 +1458,73 @@ function emp_id_search(id = null) {
 
 <script type="text/javascript">
 $(document).ready(function() {
-    //Designation dropdown
+    $('.select22').select2({ width: '100%' });
+
+    // Department change populates Section dropdown and resets Designation dropdown
+    $('#emp_dept_id').change(function() {
+        var dept_id = $(this).val();
+        load_sections(dept_id, null, function() {
+            load_designations('');
+        });
+    });
+
+    // Section change populates Designation dropdown directly
+    $('#emp_sec_id').change(function() {
+        var sec_id = $(this).val();
+        load_designations(sec_id);
+    });
+
+    // Auto-load section and designation if pre-selected
+    var initial_dept = $('#emp_dept_id').val();
+    var initial_sec = $('#emp_sec_id').val();
+    var initial_desi = $('#emp_desi_id').val();
+    if (initial_dept) {
+        load_sections(initial_dept, initial_sec, function() {
+            if (initial_sec) {
+                load_designations(initial_sec, initial_desi);
+            }
+        });
+    } else if (initial_sec) {
+        load_designations(initial_sec, initial_desi);
+    }
+
+    // Designation dropdown
     $('#emp_id').change(function() {
         var emp_id = $('#emp_id').val();
         $("#proxi_id").empty();
         $('#proxi_id').val(emp_id);
     });
 
-
-    //Designation dropdown
-    $('#emp_line_id').change(function() {
-        $('.emp_desi_id').addClass('form-control input-sm');
-        $(".emp_desi_id > option").remove();
-        var id = $('#emp_line_id').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_designation_by_line_id/" + id,
-            success: function(func_data) {
-                $('.emp_desi_id').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_desi_id').append(opt);
-                    // $(function() {
-                    // 	$('#emp_dept_id').val();
-                    // });
-                });
-            }
-        });
-    });
-
-    //Line dropdown
-    $('#emp_sec_id').change(function() {
-        $('.emp_line_id').addClass('form-control input-sm');
-        $(".emp_line_id > option").remove();
-        $(".emp_desi_id > option").remove();
-        var id = $('#emp_sec_id').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_line_by_sec_id/" + id,
-            success: function(func_data) {
-                $('.emp_line_id').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_line_id').append(opt);
-                });
-            }
-        });
-    });
-
-    //section dropdown
-    $('#emp_dept_id').change(function() {
-        $('.emp_sec_id').addClass('form-control input-sm');
-        $(".emp_sec_id > option").remove();
-        $(".emp_line_id > option").remove();
-        var id = $('#emp_dept_id').val();
-        var unit_id = $('#unit_id').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_section_by_dept_id/" + id + '/' + unit_id,
-            success: function(func_data) {
-                $('.emp_sec_id').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.emp_sec_id').append(opt);
-                });
-            }
-        });
-    });
-    $('#unit_id').change(function() {
-        var id = $('#unit_id').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_department_by_unit_id/" + id,
-            success: function(func_data) {
-                $('#emp_dept_id').empty();
-                $('#emp_dept_id').append(
-                    "<option value=''>-- Select Department --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('#emp_dept_id').append(opt);
-                });
-            }
-        });
-    });
-
-    //nominee Upazila dropdown
-    $('#nomi_district').change(function() {
-        $('.nomi_thana').addClass('form-control input-sm');
-        $(".nomi_thana > option").remove();
-        $(".nomi_post > option").remove();
-        var id = $('#nomi_district').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_upazila_by_dis/" + id,
-            success: function(func_data) {
-                $('.nomi_thana').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.nomi_thana').append(opt);
-                });
-            }
-        });
-    });
-
-    //nominee post office dropdown
-    $('#nomi_thana').change(function() {
-        $('.nomi_post').addClass('form-control input-sm');
-        $(".nomi_post > option").remove();
-        var id = $('#nomi_thana').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_post_office_by_upa_id/" + id,
-            success: function(func_data) {
-                $('.nomi_post').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.nomi_post').append(opt);
-                });
-            }
-        });
-    });
-
-
-    //Refer Upazila dropdown
-    $('#ref_district').change(function() {
-        $('.ref_thana').addClass('form-control input-sm');
-        $(".ref_thana > option").remove();
-        $(".ref_post > option").remove();
-        var id = $('#ref_district').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_upazila_by_dis/" + id,
-            success: function(func_data) {
-                $('.ref_thana').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.ref_thana').append(opt);
-                });
-            }
-        });
-    });
-
-    //Refer post office dropdown
-    $('#ref_thana').change(function() {
-        $('.ref_post').addClass('form-control input-sm');
-        $(".ref_post > option").remove();
-        var id = $('#ref_thana').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_post_office_by_upa_id/" + id,
-            success: function(func_data) {
-                $('.ref_post').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.ref_post').append(opt);
-                });
-            }
-        });
-    });
-
-
-    //Upazila dropdown
+    // Present Address
     $('#pre_district').change(function() {
-        $('.pre_thana').addClass('form-control input-sm');
-        $(".pre_thana > option").remove();
-        $(".pre_post > option").remove();
-        var id = $('#pre_district').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_upazila_by_dis/" + id,
-            success: function(func_data) {
-                $('.pre_thana').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.pre_thana').append(opt);
-                });
-            }
-        });
+        loadUpazilaOptions($(this).val(), '#pre_thana', '#pre_post');
     });
-
-    //Post Office dropdown
     $('#pre_thana').change(function() {
-        $('.pre_post').addClass('form-control input-sm');
-        $(".pre_post > option").remove();
-        var id = $('#pre_thana').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_post_office_by_upa_id/" + id,
-            success: function(upazilaThanas) {
-                $('.pre_post').append("<option value=''>-- Select Upazila --</option>");
-                $.each(upazilaThanas, function(id, ut_name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(ut_name);
-                    $('.pre_post').append(opt);
-                });
-            }
-        });
+        loadPostOfficeOptions($(this).val(), '#pre_post');
     });
 
-    //Upazila dropdown
+    // Permanent Address
     $('#per_district').change(function() {
-        $('.per_thana').addClass('form-control input-sm');
-        $(".per_thana > option").remove();
-        $(".per_post > option").remove();
-        var id = $('#per_district').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_upazila_by_dis/" + id,
-            success: function(func_data) {
-                $('.per_thana').append("<option value=''>-- Select District --</option>");
-                $.each(func_data, function(id, name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(name);
-                    $('.per_thana').append(opt);
-                });
-            }
-        });
+        loadUpazilaOptions($(this).val(), '#per_thana', '#per_post');
+    });
+    $('#per_thana').change(function() {
+        loadPostOfficeOptions($(this).val(), '#per_post');
     });
 
-    //Post Office dropdown
-    $('#per_thana').change(function() {
-        $('.per_post').addClass('form-control input-sm');
-        $(".per_post > option").remove();
-        var id = $('#per_thana').val();
-        $.ajax({
-            type: "POST",
-            url: hostname + "common/ajax_post_office_by_upa_id/" + id,
-            success: function(upazilaThanas) {
-                $('.per_post').append("<option value=''>-- Select Upazila --</option>");
-                $.each(upazilaThanas, function(id, ut_name) {
-                    var opt = $('<option />');
-                    opt.val(id);
-                    opt.text(ut_name);
-                    $('.per_post').append(opt);
-                });
-            }
-        });
+    // Nominee
+    $('#nomi_district').change(function() {
+        loadUpazilaOptions($(this).val(), '#nomi_thana', '#nomi_post');
+    });
+    $('#nomi_thana').change(function() {
+        loadPostOfficeOptions($(this).val(), '#nomi_post');
+    });
+
+    // Reference
+    $('#ref_district').change(function() {
+        loadUpazilaOptions($(this).val(), '#ref_thana', '#ref_post');
+    });
+    $('#ref_thana').change(function() {
+        loadPostOfficeOptions($(this).val(), '#ref_post');
     });
 });
 </script>
@@ -1638,71 +1633,68 @@ $(function() {
     });
 });
 function changeFontBn() {
-    setTimeout(() => {
-        $('.ui-menu-item-wrapper').css('font-family', 'SutonnyMJ');
-    }, 500);
+    // Standard Unicode (Avro) support
 }
 </script>
 <script>
-function checkAndBlockSubmit(type, e) {
-    e.preventDefault();
-
-
-    console.log($('#per_district').val())
+function submitFormViaAjax(type, e) {
+    if (e) e.preventDefault();
     $('#submit_type').val(type);
-    if (type == 'edit') {
-        var flag = true;
-         $('#form_id').find(".required").each(function() {
-            $(this).siblings('.help-block').remove();
-            $(this).parent().removeClass('has-error');
-            if ($(this).val() == '' || $(this).val() == null) {
-                flag = false;
-                $(this).parent().append('<span class="help-block">This field is required</span>');
-                $(this).parent().addClass('has-error');
+
+    // Clear previous error messages and highlighting
+    $('#form_id').find('.help-block').remove();
+    $('#form_id').find('.has-error').removeClass('has-error');
+
+    var form = document.getElementById('form_id');
+    var formData = new FormData(form);
+
+    $.ajax({
+        type: "POST",
+        url: $('#form_id').attr('action'),
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: "json",
+        success: function(response) {
+            if (response.status === true) {
+                alert(response.message || 'Operation successful.');
+                // Clear/reset form ONLY when data insert or update is successful
+                $('#form_id')[0].reset();
+                if ($('#emp_dept_id').data('select2')) $('#emp_dept_id').select2('val', '');
+                if ($('#emp_sec_id').data('select2')) $('#emp_sec_id').select2('val', '');
+                if ($('#emp_desi_id').data('select2')) $('#emp_desi_id').select2('val', '');
+                $('#emp_sec_id').empty().append("<option value=''>-- Select Section --</option>");
+                $('#emp_desi_id').empty().append("<option value=''>-- Select Designation --</option>");
+                $("#image").attr("src", "");
+                $('#age').html('-');
+                $('#job_duration').html('-');
+                if (typeof get_last_id === 'function') {
+                    get_last_id();
+                }
             } else {
-                $(this).siblings('.help-block').remove();
-                $(this).parent().removeClass('has-error');
-            }
-        });
-        if (flag) {
-            $('#form_id').submit();
-        }
-    } else {
-        $.ajax({
-            type: "POST",
-            url: "<?php echo base_url('emp_info_con/checkAndBlockSubmit'); ?>",
-            data: {
-                id: $('#emp_id').val()
-            },
-            success: function(data) {
-                if (data == 'true') {
-                    var flag = true;
-                    $('#form_id').find(".required").each(function() {
-                        $(this).siblings('.help-block').remove();
-                        $(this).parent().removeClass('has-error');
-                        if ($(this).val() == '' || $(this).val() == null) {
-                            flag = false;
-                            $(this).parent().append(
-                                '<span class="help-block">This field is required</span>');
-                            $(this).parent().addClass('has-error');
-                        } else {
-                            $(this).siblings('.help-block').remove();
-                            $(this).parent().removeClass('has-error');
+                // Display warning and DO NOT reset form data
+                alert('Warning: ' + (response.message || 'Data insertion failed.'));
+                if (response.errors) {
+                    $.each(response.errors, function(key, val) {
+                        var field = $('#' + key);
+                        if (field.length) {
+                            field.parent().addClass('has-error');
+                            field.siblings('.help-block').remove();
+                            field.parent().append('<span class="help-block" style="color:red;">' + val + '</span>');
                         }
                     });
-                    if (flag) {
-                        $('#form_id').submit();
-                    }
-                } else {
-                    alert('Employee ID Already Exist');
-                    return false;
                 }
             }
-        })
+        },
+        error: function(xhr, status, error) {
+            alert('Warning: An error occurred while submitting data. Form data has not been reset.');
+            console.error(xhr.responseText);
+        }
+    });
+}
 
-    }
-
-
+function checkAndBlockSubmit(type, e) {
+    submitFormViaAjax(type, e);
 }
 </script>
 
@@ -1736,6 +1728,14 @@ function get_last_id() {
         }
     })
 }
-get_last_id()
+get_last_id();
 
+$(document).ready(function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var emp_id = urlParams.get('emp_id');
+    if (emp_id) {
+        $('#employee_id').val(emp_id);
+        emp_id_search(emp_id);
+    }
+});
 </script>

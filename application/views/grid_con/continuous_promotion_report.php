@@ -78,12 +78,12 @@ for($counter = 1; $counter <= $page; $counter ++)
     <th style="background:#DDDDDD;">Prev. Emp ID</th>
     <th>Name</th>
     <th>DOJ</th>
-    <th>Prev. Line</th>
+    <th>Prev. Section</th>
     <th>Prev. Desig.</th>
     <th>Prev. Salary</th> 
     
     <th style="background:#DDDDDD;">New Emp ID</th>
-    <th>New Line</th>
+    <th>New Section</th>
     <th>New Desig.</th>
     <th>New Salary</th> 
     
@@ -137,7 +137,7 @@ for($counter = 1; $counter <= $page; $counter ++)
 	echo "</td>";
 	
 	echo "<td style='text-align:left; padding:2px;'>";
-	echo $values["prev_line"][$k];
+	echo $values["prev_section"][$k];
 	echo "</td>";
 	
 	echo "<td style='text-align:left; padding:2px; width:150px;'>";
@@ -156,7 +156,7 @@ for($counter = 1; $counter <= $page; $counter ++)
 
 	
 	echo "<td style='text-align:left; padding:2px;'>";
-	echo $values["new_line"][$k];
+	echo $values["new_section"][$k];
 	echo "</td>";
 	
 	echo "<td style='text-align:left; padding:2px; width:150px;'>";

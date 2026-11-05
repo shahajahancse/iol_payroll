@@ -80,7 +80,7 @@ for($counter = 1; $counter <= $page; $counter ++){
 <th>Emp ID</th>
 <th>Name</th>
 <th style="margin:0px;padding:0px;">Designation</th>
-<th>Line</th>
+<th>Section</th>
 <th>Date of Birth</th>
 <th>Joining Date</th>
 <th>Last Working <br>Date</th>
@@ -119,7 +119,7 @@ for($counter = 1; $counter <= $page; $counter ++){
 			echo "</td>";
 
 			echo "<td style='padding:5px 3px'>";
-			echo $values["line_name"][$k];
+			echo $values["sec_name_en"][$k];
 			echo "</td>";
 
 			echo "<td style='padding:5px 3px'>";

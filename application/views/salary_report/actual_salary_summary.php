@@ -83,7 +83,7 @@ $this->load->view("head_english");
 	<table class="sal" border="1" cellspacing="0" cellpadding="0" style="font-size:12px; margin:0 auto;">
 
 		<tr height="20" align="center" style="font-weight:bold; background-color:#CCC;">
-			<td height="60"  width="200">Line</td>
+			<td height="60"  width="200">Section</td>
 			<td   width="150">Total MP</td>
 			<td   width="150">Cash MP</td>
 			<td   width="150">Bank MP</td>
@@ -135,7 +135,7 @@ $this->load->view("head_english");
 			echo "<tr>";
 			
 			echo "<td  style='text-align:left; padding-left:3px; font-size:10px;'>";
-			echo $row->line_name_en;
+			echo isset($row->sec_name_en) ? $row->sec_name_en : $row->line_name_en;
 			echo "</td>";
 			
 			$total_emp = $row->emp_cash; 
@@ -203,24 +203,22 @@ $this->load->view("head_english");
 			echo "</td>";
 			$gt_transport = $gt_transport + $total_trans_allow;
 	
-			$total_net_pay = $row->cash_sum_net_pay+ $row->bank_sum_net_pay ;							 	
-			$total_ot_amount = $row->cash_ot_amount + $row->bank_ot_amount;
-			$total_attn_bonus = $row->cash_att_bonus + $row->bank_att_bonus;
+			$total_eot_amount = (float)$row->eot_amount_cash_sum + (float)$row->eot_amount_bank_sum;
+			$total_ot_amount = (float)$row->cash_ot_amount + (float)$row->bank_ot_amount + $total_eot_amount;
+			$total_attn_bonus = (float)$row->cash_att_bonus + (float)$row->bank_att_bonus;
+			$total_net_pay = (float)$row->cash_sum_net_pay + (float)$row->bank_sum_net_pay + $total_eot_amount;
 					
-			// $total_salary_amount = $total_net_pay - ($total_ot_amount + $total_attn_bonus); 
-			$total_salary_amount = $total_net_pay + ($total_emp * 0) - ($total_ot_amount + $total_attn_bonus); 
-			//$gross_salary - $total_deduction + $value[$k]->stamp + $value[$k]->adv_deduct;
+			$total_salary_amount = $total_net_pay - ($total_ot_amount + $total_attn_bonus); 
 			
 			echo "<td align='right' style='padding-right:5px;'>";
 			echo number_format($total_salary_amount);
 			echo "</td>";
 			$gt_salary_amt = $gt_salary_amt + $total_salary_amount;
 			
-			//TOTAL OT HOUR
-			$total_ot_hour = $row->cash_sum_ot_hour;
-            // + $row->bank_sum_ot_hour;
+			//TOTAL OT HOUR (Full OT = regular OT + extra OT)
+			$total_ot_hour = (float)$row->cash_sum_ot_hour + (float)$row->eot_cash_sum + (float)$row->bank_sum_ot_hour + (float)$row->eot_bank_sum;
 			echo "<td align='right' style='padding-right:5px;'>";
-			echo number_format($total_ot_hour);
+			echo number_format($total_ot_hour); // Full OT
 			echo "</td>";
 			$gt_ot_hour = $gt_ot_hour + $total_ot_hour;
 			
@@ -237,19 +235,21 @@ $this->load->view("head_english");
 			$gt_attn_bonus = $gt_attn_bonus + $total_attn_bonus;
 			
 			//CASH TOTAL NET WAGES
+			$cash_net_wages = (float)$row->cash_sum_net_pay + (float)$row->eot_amount_cash_sum + (float)$row->stam_deduct_cash;
 			echo "<td align='right' style='padding-right:5px;'>";
-			echo number_format($row->cash_sum_net_pay +$row->stam_deduct_cash);
+			echo number_format($cash_net_wages);
 			echo "</td>";
-			$gt_cash_salary = $gt_cash_salary + $row->cash_sum_net_pay+$row->stam_deduct_cash;
+			$gt_cash_salary = $gt_cash_salary + $cash_net_wages;
 			
 			//BANK TOTAL NET WAGES
+			$bank_net_wages = (float)$row->bank_sum_net_pay + (float)$row->eot_amount_bank_sum + (float)$row->stam_deduct_bank;
 			echo "<td align='right' style='padding-right:5px;'>";
-			echo number_format($row->bank_sum_net_pay + $row->stam_deduct_bank);
+			echo number_format($bank_net_wages);
 			echo "</td>";
-			$gt_bank_salary = $gt_bank_salary + $row->bank_sum_net_pay + $row->stam_deduct_bank;
+			$gt_bank_salary = $gt_bank_salary + $bank_net_wages;
 			
 			//CASH & BANK TOTAL NET WAGES
-			$total_net_pay_with_stamp = $row->cash_sum_net_pay+ $row->bank_sum_net_pay + $row->stam_deduct_cash +$row->stam_deduct_bank;							 	
+			$total_net_pay_with_stamp = $cash_net_wages + $bank_net_wages;							 	
 
 			
 			echo "<td align='right' style='padding-right:5px;'>";

@@ -98,3 +98,131 @@ $route['api/user/login'] = 'api/auth/login'; // login Route
 $route['api/user/dashboard'] = 'api/dashboard/index'; // dashboard Route
 $route['api/dashboard/common-data'] = 'api/dashboard/common_data';
 
+/*
+| -------------------------------------------------------------------------
+| ZKTeco ADMS (Push SDK) Protocol Routes for SenseFace 4A & Devices
+| -------------------------------------------------------------------------
+*/
+$route['iclock/cdata'] = 'iclock/cdata';
+$route['iclock/cdata.aspx'] = 'iclock/cdata';
+$route['iclock/cdata.php'] = 'iclock/cdata';
+$route['iclock/getrequest'] = 'iclock/getrequest';
+$route['iclock/devicecmd'] = 'iclock/devicecmd';
+$route['iclock/registry'] = 'iclock/registry';
+$route['iclock/push'] = 'iclock/push';
+$route['iclock/device_list'] = 'iclock/device_list';
+$route['iclock/(:any)'] = 'iclock/$1';
+
+/*
+| -------------------------------------------------------------------------
+| Leave Management Workflow Routes
+| -------------------------------------------------------------------------
+*/
+$route['hr_leave_dashboard'] = 'leave_con/hr_dashboard';
+$route['admin_leave_dashboard'] = 'leave_con/admin_dashboard';
+
+/*
+| -------------------------------------------------------------------------
+| Daily OT Approval & Admin Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['admin_ot_dashboard'] = 'ot_approval_con/admin_dashboard';
+
+/*
+| -------------------------------------------------------------------------
+| Outside Duty (OD) Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['od']             = 'od_management_con/index';
+$route['od/manage']      = 'od_management_con/index';
+$route['od/dashboard']   = 'od_management_con/index';
+$route['od/create']      = 'od_management_con/create';
+$route['od/edit/(:num)'] = 'od_management_con/edit/$1';
+$route['od/list']        = 'od_management_con/list';
+$route['od/approval']    = 'od_management_con/approval';
+$route['od/reports']     = 'od_management_con/reports';
+$route['od/report_data_ajax']       = 'od_management_con/report_data_ajax';
+$route['od/dashboard_stats_ajax']   = 'od_management_con/dashboard_stats_ajax';
+$route['od/list_ajax']              = 'od_management_con/list_ajax';
+$route['od/employee_search_ajax']   = 'od_management_con/employee_search_ajax';
+$route['od/employee_info_ajax']     = 'od_management_con/employee_info_ajax';
+$route['od/check_conflicts_ajax']   = 'od_management_con/check_conflicts_ajax';
+$route['od/details_ajax/(:num)']    = 'od_management_con/details_ajax/$1';
+$route['od/approve_ajax']           = 'od_management_con/approve_ajax';
+$route['od/bulk_approve_ajax']      = 'od_management_con/bulk_approve_ajax';
+$route['od/reject_ajax']            = 'od_management_con/reject_ajax';
+$route['od/cancel_ajax']            = 'od_management_con/cancel_ajax';
+$route['od/export_excel']           = 'od_management_con/export_excel';
+$route['od/export_pdf']             = 'od_management_con/export_pdf';
+
+/*
+| -------------------------------------------------------------------------
+| Attendance Regularization & Remark Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['attn_regularization']               = 'attn_regularization_con/dashboard';
+$route['attn_regularization/dashboard']     = 'attn_regularization_con/dashboard';
+$route['attn_regularization/create']        = 'attn_regularization_con/dashboard';
+$route['attn_regularization/save']          = 'attn_regularization_con/save';
+$route['attn_regularization/list']          = 'attn_regularization_con/list';
+$route['attn_regularization/approval']      = 'attn_regularization_con/approval';
+$route['attn_regularization/action']        = 'attn_regularization_con/action';
+$route['attn_regularization/reports']       = 'attn_regularization_con/reports';
+$route['attn_regularization/delete/(:num)'] = 'attn_regularization_con/delete/$1';
+$route['attn_regularization/get_issues_ajax'] = 'attn_regularization_con/get_issues_ajax';
+$route['attn_regularization/get_issue_detail_ajax'] = 'attn_regularization_con/get_issue_detail_ajax';
+$route['attn_regularization/save_quick_remark_ajax'] = 'attn_regularization_con/save_quick_remark_ajax';
+
+/*
+| -------------------------------------------------------------------------
+| Arrear Salary Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['arrear_salary']                      = 'arrear_salary_con/index';
+$route['arrear_salary/create']               = 'arrear_salary_con/create';
+$route['arrear_salary/edit/(:any)']          = 'arrear_salary_con/edit/$1';
+$route['arrear_salary/save']                 = 'arrear_salary_con/save';
+$route['arrear_salary/delete/(:any)']        = 'arrear_salary_con/delete/$1';
+$route['arrear_salary/approve/(:any)']       = 'arrear_salary_con/approve/$1';
+$route['arrear_salary/cancel/(:any)']        = 'arrear_salary_con/cancel/$1';
+$route['arrear_salary/employee_search_ajax'] = 'arrear_salary_con/employee_search_ajax';
+$route['arrear_salary/get_employee_ajax']    = 'arrear_salary_con/get_employee_ajax';
+$route['arrear_salary/get_arrear_ajax/(:num)'] = 'arrear_salary_con/get_arrear_ajax/$1';
+
+/*
+| -------------------------------------------------------------------------
+| Advanced Salary Management Routes
+| -------------------------------------------------------------------------
+*/
+$route['advanced_salary']                           = 'advanced_salary_con/index';
+$route['advanced_salary/list_ajax']                 = 'advanced_salary_con/list_ajax';
+$route['advanced_salary/get_details_ajax/(:num)']   = 'advanced_salary_con/get_details_ajax/$1';
+$route['advanced_salary/save']                      = 'advanced_salary_con/save';
+$route['advanced_salary/cancel/(:num)']             = 'advanced_salary_con/cancel/$1';
+$route['advanced_salary/delete/(:num)']             = 'advanced_salary_con/delete/$1';
+$route['advanced_salary/employee_search_ajax']      = 'advanced_salary_con/employee_search_ajax';
+$route['advanced_salary/get_employee_ajax']         = 'advanced_salary_con/get_employee_ajax';
+$route['advanced_salary/report_data_ajax']          = 'advanced_salary_con/report_data_ajax';
+$route['advanced_salary/export_excel']              = 'advanced_salary_con/export_excel';
+$route['advanced_salary/export_csv']                = 'advanced_salary_con/export_csv';
+
+$route['penalty']                                   = 'penalty_con/index';
+$route['penalty/list_ajax']                         = 'penalty_con/list_ajax';
+$route['penalty/get_details_ajax/(:num)']           = 'penalty_con/get_details_ajax/$1';
+$route['penalty/save']                              = 'penalty_con/save';
+$route['penalty/cancel/(:num)']                     = 'penalty_con/cancel/$1';
+$route['penalty/delete/(:num)']                     = 'penalty_con/delete/$1';
+$route['penalty/employee_search_ajax']              = 'penalty_con/employee_search_ajax';
+$route['penalty/get_employee_ajax']                 = 'penalty_con/get_employee_ajax';
+$route['penalty/penalty_sheet']                     = 'penalty_con/penalty_sheet';
+
+// Backward compatibility
+$route['palanty']                                   = 'penalty_con/index';
+$route['palanty/list_ajax']                         = 'penalty_con/list_ajax';
+$route['palanty/get_details_ajax/(:num)']           = 'penalty_con/get_details_ajax/$1';
+$route['palanty/save']                              = 'penalty_con/save';
+$route['palanty/cancel/(:num)']                     = 'penalty_con/cancel/$1';
+$route['palanty/delete/(:num)']                     = 'penalty_con/delete/$1';
+$route['palanty/employee_search_ajax']              = 'penalty_con/employee_search_ajax';
+$route['palanty/get_employee_ajax']                 = 'penalty_con/get_employee_ajax';
+$route['palanty/palanty_sheet']                     = 'penalty_con/penalty_sheet';

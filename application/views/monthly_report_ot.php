@@ -36,7 +36,7 @@
 			<th>Emp Id </th>
 			<th>Name</th>
 			<th>Designation</th> 
-			<th>Line</th>
+			<th>Section</th>
 			<?php $first_y=date("Y", strtotime("$att_month"));
 			$first_m=date("m", strtotime("$att_month"));
 			$last_date = date("t", strtotime("$att_month"));
@@ -68,7 +68,7 @@
 				echo (isset($value[$i]) && isset($value[$i]['name_en'])) ? $value[$i]['name_en'] : '';
 				echo "</td><td>";
 				echo (isset($value[$i]) && isset($value[$i]['desig_name'])) ? $value[$i]['desig_name'] : '';				echo "</td><td>";
-				echo (isset($value[$i]) && isset($value[$i]['line_name_en'])) ? $value[$i]['line_name_en'] : '';
+				echo (isset($value[$i]) && isset($value[$i]['sec_name_en'])) ? $value[$i]['sec_name_en'] : '';
 				echo "</td>";
 
 				$p = 0 ;

@@ -51,7 +51,7 @@ for($i=0; $i<$count; $i++ )
 {
 	if($line_name !=$values["line_name"][$i]){
 	echo "<tr bgcolor='#CCCCCC'>";
-	echo "<td colspan='15' style='font-size:16px; font-weight : bold;'>Line :".$values["line_name"][$i]."</td>";
+	echo "<td colspan='15' style='font-size:16px; font-weight : bold;'>Section :".$values["line_name"][$i]."</td>";
 	echo "</tr>";
 	}
 	

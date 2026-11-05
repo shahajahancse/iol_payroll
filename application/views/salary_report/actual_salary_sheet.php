@@ -65,6 +65,7 @@ $k = 0;
 	 $grand_total_food_allow		= 0;
 	 $grand_total_gross_salary		= 0;
 	 $grand_total_adv_deduct		= 0;
+	 $grand_total_penalty_deduct	= 0;
 	 $grand_total_att_bonus			= 0;
 	 $grand_total_late_deduction	= 0;
 	 $grand_total_hd_deduct_amount	= 0;
@@ -80,6 +81,7 @@ $k = 0;
 	 $grand_total_tax_deduct		= 0;
 	 $grand_total_wages_with_stamp	= 0;
 	 $grand_total_sum				= 0;
+	 $grand_total_arrear_amount		= 0;
 
 for ( $counter = 1; $counter <= $page; $counter ++){
 ?>
@@ -145,7 +147,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
     <td rowspan="2"  width="15" height="20px"><div align="center"><strong>নং</strong></div></td>
     <td rowspan="2" width="25" height="20px"><div align="center"><strong>কার্ড নং</strong></div></td>
     <td rowspan="2" colspan="6" width="94" height="20px"><div align="center"><strong>নাম, পদবী, যোগদান, গ্রেড</strong></div></td>
-	<td rowspan="2" width="50" height="20px"><div align="center"><strong>লাইন</strong></div></td>
+	<td rowspan="2" width="50" height="20px"><div align="center"><strong>সেকশন</strong></div></td>
     <td rowspan="2" width="20" height="20px"> <div align="center"><strong>মূল বেতন</strong></div></td>
     <td rowspan="2" width="17" height="20px"><div align="center"><strong>বাড়ী ভাড়া</strong></div></td>
     <td rowspan="2" width="15" height="20px"><div align="center"><strong>চিকিৎসা ভাতা</strong></div></td>
@@ -167,6 +169,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 -->	  <?php } ?> 
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>সর্বমোট টাকা</strong></div></td>
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>অগ্রীম কর্তন</strong></div></td>
+    <td rowspan="2" width="22" height="20px"><div align="center"><strong>পেনাল্টি কর্তন</strong></div></td>
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>রাজস্ব কর্তন</strong></div></td>
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>সর্বমোট প্রাপ্য</strong></div></td>
 	<td rowspan="2"  width="180"><div align="center"><strong>গ্রহীতার স্বাক্ষর</strong></div></td>
@@ -213,6 +216,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
    $total_food_allow		= 0;
    $total_gross_salary		= 0;
    $total_adv_deduct		= 0;
+   $total_penalty_deduct	= 0;
    $total_att_bonus			= 0;
    $total_hd_deduct_amount	= 0;
    $total_late_deduction	= 0;
@@ -229,6 +233,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
    $total_wages_with_stamp	= 0;
    $total_sum				= 0;
    $in_total_sum			= 0;
+   $total_arrear_amount		= 0;
 
 	for($p=0; $p<=$per_page_row;$p++)
 	{
@@ -257,6 +262,9 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo '<br>';
 		echo "Grade: ";print_r ($value[$k]->gr_name);
 		echo '<br>';
+		if (!empty($value[$k]->arrear_amount) && $value[$k]->arrear_amount > 0) {
+			echo "<span style='font-size:10px; font-weight:bold; color:#0c74bf;'>বকেয়া: " . number_format($value[$k]->arrear_amount) . "</span><br>";
+		}
 		if($grid_status == 4)
 		{
 			$resign_date = $this->grid_model->get_resign_date_by_empid($value[$k]->emp_id);
@@ -268,7 +276,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo "</td>"; 
 			
 		echo "<td style='font-family:arial; font-size:10px;'>";
-		echo  $value[$k]->line_name_en;
+		echo  $value[$k]->sec_name_en;
 		echo "</td>";
 			
 		$basic_salary 				= $value[$k]->basic_sal;
@@ -400,26 +408,32 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo $att_bonus;
 		echo "</td>";
 		
+		// Full OT: regular OT + extra OT
+		$emp_full_ot_hour = (float)$value[$k]->ot_hour + (float)$value[$k]->eot_hour;
 		echo "<td>";
-		print_r ($value[$k]->ot_hour);
+		echo $emp_full_ot_hour;
 		
-		$total_ot_hour 			= $total_ot_hour + $value[$k]->ot_hour;
-		$grand_total_ot_hour 	= $grand_total_ot_hour + $value[$k]->ot_hour;
+		$total_ot_hour 			= $total_ot_hour + $emp_full_ot_hour;
+		$grand_total_ot_hour 	= $grand_total_ot_hour + $emp_full_ot_hour;
 		echo "</td>";
 		
 		echo "<td>";
 		print_r ($value[$k]->ot_rate);
 		echo "</td>";
 		
-		$ot_amount 					= $value[$k]->ot_amount;	
-		$ot_eot_amount 				= $ot_amount;// + $eot_amount;
+		$ot_amount 					= round((float)$value[$k]->ot_amount + (float)$value[$k]->eot_amount);	
+		$ot_eot_amount 				= $ot_amount;
 		$total_ot_eot_amount 		= $total_ot_eot_amount + $ot_eot_amount;
 		$grand_total_ot_eot_amount 	= $grand_total_ot_eot_amount + $ot_eot_amount;
 		echo "<td>";
 		echo $ot_amount;
 		echo "</td>";
 	
-		$total_sum =  $net_wages + $att_bonus + $ot_amount; 
+		$arrear_amount 				= isset($value[$k]->arrear_amount) ? (float)$value[$k]->arrear_amount : 0;
+		$total_arrear_amount 		= $total_arrear_amount + $arrear_amount;
+		$grand_total_arrear_amount 	= $grand_total_arrear_amount + $arrear_amount;
+
+		$total_sum =  $net_wages + $att_bonus + $ot_amount + $arrear_amount; 
 		$in_total_sum = $in_total_sum  + $total_sum;
 		$grand_total_sum = $grand_total_sum + $total_sum;
 		echo "<td>";
@@ -439,6 +453,13 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo "<td>";
 		echo $adv_deduct;
 		echo "</td>";
+
+		$penalty_deduct 			= isset($value[$k]->penalty_deduct) ? $value[$k]->penalty_deduct : (isset($value[$k]->palanty_deduct) ? $value[$k]->palanty_deduct : 0);
+		$total_penalty_deduct 		= $total_penalty_deduct + $penalty_deduct;
+		$grand_total_penalty_deduct = $grand_total_penalty_deduct + $penalty_deduct;
+		echo "<td>";
+		echo $penalty_deduct;
+		echo "</td>";
 	
 		$stamp_deduct 				= $value[$k]->stamp;
 		// $stamp_deduct 				= 0;
@@ -455,10 +476,10 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 			// exit('hi ali');
 			$net_pay 				= $total_sum - $stamp_deduct ;
 		}else{
-			$net_pay 				= $total_sum - $stamp_deduct - $adv_deduct;
+			$net_pay 				= $total_sum - $stamp_deduct - $adv_deduct - $penalty_deduct;
 		}*/
 
-		$net_pay 				= $total_sum - $stamp_deduct - $adv_deduct;
+		$net_pay 				= $total_sum - $stamp_deduct - $adv_deduct - $penalty_deduct;
 		$total_net_pay 			= $total_net_pay + $net_pay;
 		$grand_total_net_pay 	= $grand_total_net_pay + $net_pay;
 			
@@ -496,6 +517,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
         <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_ot_eot_amount);?></strong></td>
         <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($in_total_sum);?></strong></td>
           <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_adv_deduct);?></strong></td>
+          <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_penalty_deduct);?></strong></td>
       
         <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_stamp_deduct);?></strong></td>
        
@@ -530,6 +552,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_ot_eot_amount);?></strong></td>
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_sum);?></strong></td>
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_adv_deduct);?></strong></td>
+            <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_penalty_deduct);?></strong></td>
         	<td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_stamp_deduct);?></strong></td>
 			<td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_net_pay);?></strong></td>
 			<td align="center" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_wages_with_stamp);?></strong></td>
@@ -537,7 +560,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
             </tr>
 			<?php } ?>
 			<tr>
-				<td colspan="37">
+				<td colspan="38">
 					<?php 
 					$siginfo['unit_id'] = $unit_id;
 					$this->load->view("authorised_signature", $siginfo);?>

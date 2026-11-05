@@ -72,7 +72,7 @@ class Attn_process_con extends CI_Controller {
 			echo "Sorry! This Month Already Final Processed";
 			return false; exit();
 		}
-		// final process check end
+		// final process check end 
 
 		$data = $this->Attn_process_model->attn_process($input_date,$unit,$grid_emp_id);
 		$this->db->trans_complete();

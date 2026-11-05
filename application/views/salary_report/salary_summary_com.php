@@ -83,7 +83,7 @@ $this->load->view("head_english");
 	<table class="sal" border="1" cellspacing="0" cellpadding="0" style="font-size:15px; margin:0 auto;">
 
   <tr height="20" align="center" style="font-weight:bold; background-color:#CCC;">
-    <td height="60"  width="200">Line</td>
+    <td height="60"  width="200">Section</td>
     <td   width="150">Total MP</td>
     <td   width="150">Cash MP</td>
     <td   width="150">Bank MP</td>
