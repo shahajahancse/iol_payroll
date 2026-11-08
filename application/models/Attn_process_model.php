@@ -389,8 +389,8 @@ class Attn_process_model extends CI_Model{
 					if ($has_punch && $ot_entitle == 1) {
 						// For ot_entitle == 1, working on weekend counts as normal duty day
 						$attn_status = "P";
-					} elseif (!$has_punch && $this->is_weekend_holiday_between_leave_and_absent($emp_id, $process_date)) {
-						// Sandwich Rule: Weekend falling between Leave and Absent becomes Absent ('A')
+					} elseif (!$has_punch && ($this->check_bridge_absent($emp_id, $process_date) || $this->is_weekend_holiday_between_leave_and_absent($emp_id, $process_date))) {
+						// Bridge Rule & Sandwich Rule: Weekend preceded by Absent or falling between Leave and Absent becomes Absent ('A')
 						$attn_status = "A";
 						$in_time = '00:00:00';
 						$out_time = '00:00:00';
@@ -657,8 +657,10 @@ class Attn_process_model extends CI_Model{
 				// while remaining counted/deducted in pr_leave_trans.
 				if ($attn_status == 'A') {
 					$this->forfeit_consecutive_preceding_leaves($emp_id, $process_date);
+					$this->bridge_consecutive_subsequent_weekends_holidays($emp_id, $process_date);
 				} elseif ($attn_status == 'P') {
 					$this->restore_consecutive_preceding_leaves($emp_id, $process_date);
+					$this->unbridge_consecutive_subsequent_weekends_holidays($emp_id, $process_date);
 				}
 			}
 		}
@@ -1535,6 +1537,37 @@ class Attn_process_model extends CI_Model{
 
     function check_bridge_absent($emp_id, $date)
     {
+        // Bridge Absent Policy for Weekend:
+        // If employee did not work and was absent on previous scheduled working day, weekend becomes Absent (A)
+        $prev_date = date('Y-m-d', strtotime("$date - 1 days"));
+        for ($i = 0; $i < 7; $i++) {
+            $log = $this->db->select('present_status, in_time, out_time')
+                            ->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $prev_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+
+            if (!empty($log)) {
+                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                if ($has_punch) {
+                    return false;
+                }
+                $status = strtoupper(trim($log->present_status));
+                if ($status === 'A') {
+                    // Preceding working day was absent without punch -> triggers bridge absent!
+                    return true;
+                }
+                if ($status === 'W' || $status === 'H') {
+                    // Preceding day was another off-day -> step back further
+                    $prev_date = date('Y-m-d', strtotime("$prev_date - 1 days"));
+                    continue;
+                }
+                // Preceding day was Leave (L), Outside Duty (OD), etc. -> not unexcused absent
+                return false;
+            } else {
+                break;
+            }
+        }
         return false;
     }
 
@@ -1784,7 +1817,41 @@ class Attn_process_model extends CI_Model{
 
     function bridge_consecutive_subsequent_weekends_holidays($emp_id, $absent_date)
     {
-        return;
+        $next_date = date('Y-m-d', strtotime("$absent_date + 1 days"));
+        for ($i = 0; $i < 7; $i++) {
+            $log = $this->db->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $next_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+            if (!empty($log)) {
+                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                if ($has_punch) {
+                    break;
+                }
+                $is_wk = $this->check_weekend($emp_id, $next_date, false);
+                if ($is_wk || $log->present_status === 'W') {
+                    $this->db->where('emp_id', $emp_id)
+                             ->where('shift_log_date', $next_date)
+                             ->update('pr_emp_shift_log', array(
+                                 'present_status' => 'A',
+                                 'in_time'        => '00:00:00',
+                                 'out_time'       => '00:00:00',
+                                 'tot'            => 0,
+                                 'ot'             => 0,
+                                 'eot'            => 0,
+                                 'late_status'    => 0,
+                                 'deduction_hour' => 0,
+                                 'weekly_allo'    => 0,
+                                 'holiday_allo'   => 0
+                             ));
+                    $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
     }
 
     function unbridge_consecutive_subsequent_weekends_holidays($emp_id, $present_date)
