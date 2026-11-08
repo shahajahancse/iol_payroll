@@ -369,6 +369,14 @@ class Attn_process_model extends CI_Model{
 					if ($has_punch && $ot_entitle == 1) {
 						// For ot_entitle == 1, working on holiday counts as normal duty day
 						$attn_status = "P";
+					} elseif (!$has_punch && $this->is_weekend_holiday_between_leave_and_absent($emp_id, $process_date)) {
+						// Sandwich Rule: Holiday falling between Leave and Absent becomes Absent ('A')
+						$attn_status = "A";
+						$in_time = '00:00:00';
+						$out_time = '00:00:00';
+						$tot_hour = 0;
+						$ot_hour = 0;
+						$eot_hour = 0;
 					} else {
 						// Holiday off day (without punches or ot_entitle==0)
 						$attn_status = "H";
@@ -381,6 +389,14 @@ class Attn_process_model extends CI_Model{
 					if ($has_punch && $ot_entitle == 1) {
 						// For ot_entitle == 1, working on weekend counts as normal duty day
 						$attn_status = "P";
+					} elseif (!$has_punch && $this->is_weekend_holiday_between_leave_and_absent($emp_id, $process_date)) {
+						// Sandwich Rule: Weekend falling between Leave and Absent becomes Absent ('A')
+						$attn_status = "A";
+						$in_time = '00:00:00';
+						$out_time = '00:00:00';
+						$tot_hour = 0;
+						$ot_hour = 0;
+						$eot_hour = 0;
 					} else {
 						// Weekend off day (without punches or ot_entitle==0)
 						$attn_status = "W";
@@ -1525,18 +1541,24 @@ class Attn_process_model extends CI_Model{
     function is_next_day_absent($date, $emp_id)
     {
         $next_date = date('Y-m-d', strtotime("$date + 1 days"));
-        for ($i = 0; $i < 7; $i++) {
-            $log = $this->db->select('present_status')
+        for ($i = 0; $i < 15; $i++) {
+            $log = $this->db->select('present_status, in_time, out_time')
                             ->where('emp_id', $emp_id)
                             ->where('shift_log_date', $next_date)
                             ->get('pr_emp_shift_log')
                             ->row();
             if (!empty($log)) {
+                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                if ($has_punch) {
+                    return false;
+                }
                 $status = strtoupper(trim($log->present_status));
                 if ($status === 'A') {
                     return true;
                 }
-                if ($status === 'W' || $status === 'H' || $status === 'L') {
+                $is_w = $this->check_weekend($emp_id, $next_date);
+                $is_h = $this->check_holiday($emp_id, $next_date);
+                if ($status === 'W' || $status === 'H' || $status === 'L' || $is_w || $is_h) {
                     $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
                     continue;
                 }
@@ -1548,21 +1570,142 @@ class Attn_process_model extends CI_Model{
         return false;
     }
 
+    function is_weekend_holiday_between_leave_and_absent($emp_id, $date)
+    {
+        // 1. Backward check: Must be preceded by an approved Leave (allowing intervening off-days)
+        $has_prev_leave = false;
+        $prev_date = date('Y-m-d', strtotime("$date - 1 days"));
+        for ($i = 0; $i < 15; $i++) {
+            if ($this->leave_chech($prev_date, $emp_id)) {
+                $has_prev_leave = true;
+                break;
+            }
+            $log = $this->db->select('in_time, out_time, present_status')
+                            ->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $prev_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+            $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+            if ($has_punch) {
+                break;
+            }
+            $is_w = $this->check_weekend($emp_id, $prev_date);
+            $is_h = $this->check_holiday($emp_id, $prev_date);
+            if ($is_w || $is_h || (!empty($log) && in_array(strtoupper(trim($log->present_status)), array('W', 'H', 'A')))) {
+                $prev_date = date('Y-m-d', strtotime("$prev_date - 1 days"));
+                continue;
+            }
+            break;
+        }
+
+        if (!$has_prev_leave) {
+            return false;
+        }
+
+        // 2. Forward check: Must be followed by Absent ('A') (allowing intervening off-days)
+        $has_next_absent = false;
+        $next_date = date('Y-m-d', strtotime("$date + 1 days"));
+        for ($i = 0; $i < 15; $i++) {
+            $log = $this->db->select('in_time, out_time, present_status')
+                            ->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $next_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+            if (empty($log)) {
+                break;
+            }
+            $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+            if ($has_punch) {
+                break;
+            }
+            $status = strtoupper(trim($log->present_status));
+            if ($status === 'A') {
+                $has_next_absent = true;
+                break;
+            }
+            $is_w = $this->check_weekend($emp_id, $next_date);
+            $is_h = $this->check_holiday($emp_id, $next_date);
+            if ($is_w || $is_h || $status === 'W' || $status === 'H') {
+                $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
+                continue;
+            }
+            break;
+        }
+
+        return ($has_prev_leave && $has_next_absent);
+    }
+
     function forfeit_consecutive_preceding_leaves($emp_id, $absent_date)
     {
+        $intervening_offdays = array();
+        $preceding_leaves    = array();
         $curr_date = date('Y-m-d', strtotime("$absent_date - 1 days"));
-        for ($i = 0; $i < 30; $i++) {
-            $has_leave = $this->db->where("(leave_start <= '$curr_date' AND leave_end >= '$curr_date')")
-                                  ->where("emp_id", $emp_id)
-                                  ->where("(status = 'approved' OR status IS NULL)")
-                                  ->get("pr_leave_trans")
-                                  ->num_rows();
 
-            if ($has_leave > 0) {
-                // Forfeit this leave in pr_emp_shift_log by marking it Absent (A),
-                // while KEEPING pr_leave_trans INTACT so the leave balance is still consumed!
+        // Step 1: Collect intervening weekends/holidays immediately before this absence
+        for ($i = 0; $i < 15; $i++) {
+            if ($this->leave_chech($curr_date, $emp_id)) {
+                break; // Hit leave directly
+            }
+            $log = $this->db->select('in_time, out_time, present_status')
+                            ->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $curr_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+            $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+            if ($has_punch) {
+                break;
+            }
+            $is_w = $this->check_weekend($emp_id, $curr_date);
+            $is_h = $this->check_holiday($emp_id, $curr_date);
+            if ($is_w || $is_h || (!empty($log) && in_array(strtoupper(trim($log->present_status)), array('W', 'H', 'A')))) {
+                $intervening_offdays[] = $curr_date;
+                $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+                continue;
+            }
+            break;
+        }
+
+        // Step 2: Collect preceding consecutive leaves (and any offdays between consecutive leaves)
+        for ($i = 0; $i < 30; $i++) {
+            if ($this->leave_chech($curr_date, $emp_id)) {
+                $preceding_leaves[] = $curr_date;
+                $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+                continue;
+            }
+            // If weekend/holiday between multiple leaves (e.g. Leave -> Weekend -> Leave)
+            $is_w = $this->check_weekend($emp_id, $curr_date);
+            $is_h = $this->check_holiday($emp_id, $curr_date);
+            if ($is_w || $is_h) {
+                $prev_has_leave = false;
+                $check_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+                for ($k = 0; $k < 5; $k++) {
+                    if ($this->leave_chech($check_date, $emp_id)) {
+                        $prev_has_leave = true;
+                        break;
+                    }
+                    if ($this->check_weekend($emp_id, $check_date) || $this->check_holiday($emp_id, $check_date)) {
+                        $check_date = date('Y-m-d', strtotime("$check_date - 1 days"));
+                        continue;
+                    }
+                    break;
+                }
+                if ($prev_has_leave) {
+                    $intervening_offdays[] = $curr_date;
+                    $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+                    continue;
+                }
+            }
+            break;
+        }
+
+        // CRITICAL RULE:
+        // Only forfeit if at least one approved leave preceded this absence!
+        // If an employee had NO leave (e.g. Present -> Weekend -> Absent), normal weekends/holidays are preserved!
+        if (!empty($preceding_leaves)) {
+            $dates_to_forfeit = array_unique(array_merge($intervening_offdays, $preceding_leaves));
+            foreach ($dates_to_forfeit as $forfeit_date) {
                 $this->db->where('emp_id', $emp_id)
-                         ->where('shift_log_date', $curr_date)
+                         ->where('shift_log_date', $forfeit_date)
                          ->update('pr_emp_shift_log', array(
                              'present_status' => 'A',
                              'in_time'        => '00:00:00',
@@ -1575,52 +1718,66 @@ class Attn_process_model extends CI_Model{
                              'weekly_allo'    => 0,
                              'holiday_allo'   => 0
                          ));
-                $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
-            } else {
-                $log = $this->db->select('present_status')
-                                ->where('emp_id', $emp_id)
-                                ->where('shift_log_date', $curr_date)
-                                ->get('pr_emp_shift_log')
-                                ->row();
-                if (!empty($log) && in_array(strtoupper(trim($log->present_status)), array('W', 'H'))) {
-                    $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
-                    continue;
-                }
-                break;
             }
         }
     }
 
     function restore_consecutive_preceding_leaves($emp_id, $present_date)
     {
+        $intervening_offdays = array();
+        $preceding_leaves    = array();
         $curr_date = date('Y-m-d', strtotime("$present_date - 1 days"));
-        for ($i = 0; $i < 30; $i++) {
-            $has_leave = $this->db->where("(leave_start <= '$curr_date' AND leave_end >= '$curr_date')")
-                                  ->where("emp_id", $emp_id)
-                                  ->where("(status = 'approved' OR status IS NULL)")
-                                  ->get("pr_leave_trans")
-                                  ->num_rows();
 
-            if ($has_leave > 0) {
-                // Restore status in shift log to 'L' if it was previously set to 'A'
+        // Collect intervening offdays
+        for ($i = 0; $i < 15; $i++) {
+            if ($this->leave_chech($curr_date, $emp_id)) {
+                break;
+            }
+            $is_w = $this->check_weekend($emp_id, $curr_date);
+            $is_h = $this->check_holiday($emp_id, $curr_date);
+            if ($is_w || $is_h) {
+                $intervening_offdays[] = array('date' => $curr_date, 'type' => ($is_h ? 'H' : 'W'));
+                $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+                continue;
+            }
+            break;
+        }
+
+        // Collect preceding leaves
+        for ($i = 0; $i < 30; $i++) {
+            if ($this->leave_chech($curr_date, $emp_id)) {
+                $preceding_leaves[] = $curr_date;
+                $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+                continue;
+            }
+            $is_w = $this->check_weekend($emp_id, $curr_date);
+            $is_h = $this->check_holiday($emp_id, $curr_date);
+            if ($is_w || $is_h) {
+                $intervening_offdays[] = array('date' => $curr_date, 'type' => ($is_h ? 'H' : 'W'));
+                $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+                continue;
+            }
+            break;
+        }
+
+        if (!empty($preceding_leaves)) {
+            // Restore leaves to 'L'
+            foreach ($preceding_leaves as $l_date) {
                 $this->db->where('emp_id', $emp_id)
-                         ->where('shift_log_date', $curr_date)
+                         ->where('shift_log_date', $l_date)
                          ->where('present_status', 'A')
                          ->update('pr_emp_shift_log', array(
                              'present_status' => 'L'
                          ));
-                $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
-            } else {
-                $log = $this->db->select('present_status')
-                                ->where('emp_id', $emp_id)
-                                ->where('shift_log_date', $curr_date)
-                                ->get('pr_emp_shift_log')
-                                ->row();
-                if (!empty($log) && in_array(strtoupper(trim($log->present_status)), array('W', 'H'))) {
-                    $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
-                    continue;
-                }
-                break;
+            }
+            // Restore intervening offdays to 'W' or 'H'
+            foreach ($intervening_offdays as $off) {
+                $this->db->where('emp_id', $emp_id)
+                         ->where('shift_log_date', $off['date'])
+                         ->where('present_status', 'A')
+                         ->update('pr_emp_shift_log', array(
+                             'present_status' => $off['type']
+                         ));
             }
         }
     }
