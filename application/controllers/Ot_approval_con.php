@@ -58,34 +58,46 @@ class Ot_approval_con extends CI_Controller
     }
 
     /**
-     * Enforce strict admin-only authorization for all approval actions.
-     * Redirects anyone except admin to the Dashboard (payroll_con).
+     * Determine if current user has permission for Daily OT Approval (ACL ID 218 or Admin)
+     */
+    public function has_permission()
+    {
+        if ($this->is_admin()) {
+            return true;
+        }
+        $user_id = isset($this->data['user_data']->id) ? $this->data['user_data']->id : 0;
+        $acl = check_acl_list($user_id);
+        return in_array(218, $acl);
+    }
+
+    /**
+     * Enforce authorization for Daily OT Approval actions.
      */
     private function require_admin()
     {
-        if (!$this->is_admin()) {
+        if (!$this->has_permission()) {
             if ($this->input->is_ajax_request()) {
                 $this->output->set_content_type('application/json')
                              ->set_status_header(403)
                              ->set_output(json_encode(array(
                                  'status'  => 'error',
-                                 'message' => 'Unauthorized. Daily OT Approval is restricted exclusively to Admin users.'
+                                 'message' => 'Unauthorized. You do not have permission for Daily OT Approval.'
                              )));
                 exit();
             }
-            $this->session->set_flashdata('error', 'Access Denied: Daily OT Approval is restricted exclusively to Admin.');
+            $this->session->set_flashdata('error', 'Access Denied: You do not have permission for Daily OT Approval.');
             redirect('payroll_con');
             exit();
         }
     }
 
     /**
-     * Default index: Redirect non-admin to dashboard, or admin to admin_dashboard
+     * Default index: Redirect non-authorized to dashboard, or authorized to admin_dashboard
      */
     public function index()
     {
-        if (!$this->is_admin()) {
-            $this->session->set_flashdata('error', 'Access Denied: Daily OT Approval is restricted exclusively to Admin.');
+        if (!$this->has_permission()) {
+            $this->session->set_flashdata('error', 'Access Denied: You do not have permission for Daily OT Approval.');
             redirect('payroll_con');
             return;
         }
@@ -375,5 +387,52 @@ class Ot_approval_con extends CI_Controller
             'record' => $record,
             'audit'  => $audit
         )));
+    }
+
+    /**
+     * AJAX endpoint: Get flagged records comparison (Before vs After)
+     */
+    public function flagged_comparison_ajax()
+    {
+        $this->require_admin();
+
+        $id         = $this->input->get_post('id');
+        $start_date = $this->input->get_post('start_date');
+        $end_date   = $this->input->get_post('end_date');
+        if (empty($start_date)) {
+            $start_date = $this->input->get_post('ot_date');
+        }
+        $unit_id    = $this->input->get_post('unit_id');
+        if (empty($unit_id)) {
+            $unit_id = $this->get_scoped_unit_id();
+        }
+
+        $records = $this->Ot_approval_model->get_flagged_records_comparison(array(
+            'id'         => $id,
+            'start_date' => $start_date,
+            'end_date'   => $end_date,
+            'unit_id'    => $unit_id
+        ));
+
+        $this->output->set_content_type('application/json')->set_output(json_encode(array(
+            'status'  => 'success',
+            'count'   => count($records),
+            'records' => $records
+        )));
+    }
+
+    /**
+     * AJAX endpoint: Dismiss flag and keep existing decision
+     */
+    public function dismiss_flag_ajax()
+    {
+        $this->require_admin();
+
+        $id = $this->input->post('id');
+        $remarks = $this->input->post('remarks');
+        $admin_id = $this->data['username'];
+
+        $res = $this->Ot_approval_model->dismiss_flag((int)$id, $admin_id, $remarks);
+        $this->output->set_content_type('application/json')->set_output(json_encode($res));
     }
 }

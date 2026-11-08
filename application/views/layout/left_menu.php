@@ -238,7 +238,7 @@
       <?php } ?>
 
       <!-- Attendance -->
-      <?php if(in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
+      <?php if(in_array(3,$acl) || in_array(28,$acl) || in_array(29,$acl) || in_array(30,$acl) || in_array(218,$acl) || in_array(52,$acl) || in_array(53,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
       <li class="start <?= activate_class(array('attn_process_con', 'iclock', 'ot_approval_con', 'attn_regularization_con', 'od_management_con')) ?>">
         <a href="javascript:;">
           <i class="fa fa-clock-o"></i>
@@ -279,21 +279,21 @@
               </a>
             </li>
           <?php } ?>
-          <?php if ($u_username === 'admin') { ?>
+          <?php if(in_array(218,$acl) || $u_username === 'admin') { ?>
             <li class="<?= ($curr_class === 'ot_approval_con' && $curr_method === 'admin_dashboard') ? 'active' : '' ?>">
               <a href="<?= base_url('ot_approval_con/admin_dashboard') ?>" class="anchor_cls">
                 <i class="fa fa-clock-o"></i> Daily OT Approval
               </a>
             </li>
           <?php } ?>
-          <?php if(in_array(52,$acl) || in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
+          <?php if(in_array(52,$acl) || $u_username === 'admin') { ?>
           <li class="<?= ($curr_class === 'attn_regularization_con') ? 'active' : '' ?>">
             <a href="<?= base_url('attn_regularization/dashboard') ?>" class="anchor_cls">
               <i class="fa fa-calendar-check-o text-warning"></i> Attn. Regularization
             </a>
           </li>
           <?php } ?>
-          <?php if(in_array(53,$acl) || in_array(3,$acl) || $u_username === 'admin' || $u_username === 'payroll') { ?>
+          <?php if(in_array(53,$acl) || $u_username === 'admin') { ?>
             <li class="<?= ($curr_class === 'od_management_con') ? 'active' : '' ?>">
               <a href="<?= base_url('od') ?>" class="anchor_cls">
                 <i class="fa fa-briefcase text-info"></i> Outside Duty (OD)

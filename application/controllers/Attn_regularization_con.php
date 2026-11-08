@@ -27,6 +27,32 @@ class Attn_regularization_con extends CI_Controller
 
         $this->data['user_data'] = $this->session->userdata('data');
         $this->data['username']  = isset($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : $this->session->userdata('username');
+
+        // Check ACL permission (ID 52 or Admin)
+        if (!$this->has_permission()) {
+            if ($this->input->is_ajax_request()) {
+                $this->output->set_content_type('application/json')
+                             ->set_status_header(403)
+                             ->set_output(json_encode(array('status' => 'error', 'message' => 'Access Denied: You do not have permission for Attn. Regularization.')));
+                exit();
+            }
+            $this->session->set_flashdata('error', 'Access Denied: You do not have permission for Attn. Regularization.');
+            redirect('payroll_con');
+            exit();
+        }
+    }
+
+    /**
+     * Determine if current user has permission for Attn Regularization (ACL ID 52 or Admin)
+     */
+    public function has_permission()
+    {
+        if ($this->is_admin()) {
+            return true;
+        }
+        $user_id = isset($this->data['user_data']->id) ? $this->data['user_data']->id : 0;
+        $acl = check_acl_list($user_id);
+        return in_array(52, $acl);
     }
 
     /**

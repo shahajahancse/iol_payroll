@@ -793,6 +793,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                     <option value="approved">Approved</option>
                     <option value="rejected">Rejected</option>
                     <option value="actual_ot">With Actual OT (>0)</option>
+                    <option value="flagged">⚠️ Flagged / Recalculated (Review Required)</option>
                 </select>
             </div>
             <div class="ot-filter-reset">
@@ -810,8 +811,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
                 <h4><i class="fa fa-list"></i> Daily OT Approval Records (<span id="total_records_badge">0</span>)</h4>
             </div>
             <div class="table-actions">
-                <span id="flagged_warning" style="display: none; color: #b45309; font-size: 12px; font-weight: 700; margin-right: 10px;">
-                    <i class="fa fa-exclamation-triangle"></i> <span id="flagged_count_text">0</span> record(s) flagged due to attendance recalculation
+                <span id="flagged_warning" onclick="openFlaggedComparisonModal()" style="display: none; background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-right: 10px; cursor: pointer; transition: all 0.2s ease;" title="Click to view What Changed (আগে কি ছিল vs প্রসেসের পর কি হলো)">
+                    <i class="fa fa-exclamation-triangle" style="color: #d97706;"></i> <span id="flagged_count_text">0</span> record(s) flagged due to attendance recalculation
+                    <span style="text-decoration: underline; margin-left: 5px; font-weight: 600;"><i class="fa fa-search"></i> Click to View Changes</span>
                 </span>
                 <label style="font-size: 12px; margin: 0; color: #64748b;">Per Page:</label>
                 <select id="page_limit" class="form-control input-sm" style="width: 75px; display: inline-block; height: 30px;" onchange="loadOtList(0)">
@@ -1067,6 +1069,49 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             </div>
             <div class="modal-footer" style="background: #fafbfc; border-radius: 0 0 8px 8px;">
                 <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ========================================================================= -->
+<!-- ATTENDANCE RECALCULATION COMPARISON MODAL (BEFORE VS AFTER) -->
+<!-- ========================================================================= -->
+<div class="modal fade" id="flaggedComparisonModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document" style="width: 90%; max-width: 980px;">
+        <div class="modal-content" style="border-radius: 10px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; padding: 16px 20px;">
+                <button type="button" class="close" data-dismiss="modal" style="color: #ffffff; opacity: 0.8; font-size: 24px;">&times;</button>
+                <h4 class="modal-title" style="font-weight: 700; font-size: 17px; display: flex; align-items: center;">
+                    <i class="fa fa-exchange text-warning" style="margin-right: 10px; font-size: 20px; color: #fbbf24;"></i>
+                    Attendance Recalculation Review — আগে কি ছিল vs প্রসেসের পর কি হলো
+                </h4>
+            </div>
+            <div class="modal-body" style="padding: 20px; background: #f8fafc; max-height: calc(85vh - 120px); overflow-y: auto;">
+                <div style="background: #fffbeb; border: 1px solid #fde68a; border-left: 4px solid #f59e0b; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px;">
+                    <div style="font-size: 13px; color: #92400e; font-weight: 600;">
+                        <i class="fa fa-info-circle" style="color: #f59e0b; margin-right: 5px;"></i> 
+                        নিচের রেকর্ডগুলোতে ইতিপূর্বে অ্যাডমিনের সিদ্ধান্ত নেওয়া হয়েছিল। পরবর্তীতে Attendance প্রসেস বা পাঞ্চ পরিবর্তনের কারণে তাদের Actual OT পরিবর্তিত হয়েছে।
+                    </div>
+                    <div style="font-size: 12px; color: #b45309; margin-top: 4px;">
+                        প্রতিটি কর্মীর পূর্ববর্তী অবস্থা (আগে কি ছিল) এবং বর্তমান অবস্থা (প্রসেসের পর কি হলো) পর্যালোচনা করে নতুন ঘণ্টা অনুযায়ী সিদ্ধান্ত নিশ্চিত করুন।
+                    </div>
+                </div>
+
+                <div id="flagged_cards_container">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="modal-footer" style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <button type="button" class="btn btn-ot-default btn-sm" onclick="filterMainTableFlagged()" style="font-weight: 600;">
+                        <i class="fa fa-filter"></i> মূল টেবিলে শুধুমাত্র এই রেকর্ডগুলো ফিল্টার করুন
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">বন্ধ করুন (Close)</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1349,7 +1394,7 @@ function renderTableRows(records) {
         }
 
         if (isFlagged) {
-            statusBadge += ' <span class="badge-flagged" title="Attendance punch changed after decision! Review required."><i class="fa fa-warning"></i> Modified</span>';
+            statusBadge += ' <span class="badge-flagged" onclick="openFlaggedComparisonModal(' + row.id + ')" style="cursor: pointer;" title="Attendance punch changed after decision! Click to view What Changed (আগে কি ছিল vs প্রসেসের পর কি হলো)"><i class="fa fa-warning"></i> Modified (View)</span>';
         }
 
         // Actions
@@ -1786,5 +1831,218 @@ function escapeHtml(text) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+// Open Flagged Records Comparison Modal (Before vs After)
+function openFlaggedComparisonModal(targetId) {
+    var startDate = $('#filter_start_date').val();
+    var endDate   = $('#filter_end_date').val();
+
+    $('#flagged_cards_container').html('<div class="text-center" style="padding: 40px; color: #94a3b8;"><i class="fa fa-spinner fa-spin fa-2x"></i><br>তুলনামূলক তথ্য লোড হচ্ছে...</div>');
+    $('#flaggedComparisonModal').modal('show');
+
+    $.ajax({
+        url: "<?= base_url('ot_approval_con/flagged_comparison_ajax') ?>",
+        type: "GET",
+        data: {
+            id: targetId || '',
+            start_date: startDate,
+            end_date: endDate
+        },
+        dataType: "json",
+        success: function(res) {
+            if (res.status !== 'success' || !res.records || res.records.length === 0) {
+                $('#flagged_cards_container').html('<div class="text-center" style="padding: 40px; color: #64748b;"><i class="fa fa-check-circle fa-2x text-success"></i><br>এই তারিখ বা ফিল্টারে বর্তমানে কোনো Flagged / Recalculated রেকর্ড নেই।</div>');
+                return;
+            }
+
+            var html = '';
+            res.records.forEach(function(rec) {
+                var diffColor = rec.diff_hours > 0 ? '#16a34a' : (rec.diff_hours < 0 ? '#dc2626' : '#64748b');
+                var diffBg    = rec.diff_hours > 0 ? '#dcfce7' : (rec.diff_hours < 0 ? '#fee2e2' : '#f1f5f9');
+                var diffText  = rec.diff_hours > 0 ? ('+' + rec.diff_hours + ' hrs বেড়েছে') : (rec.diff_hours < 0 ? (rec.diff_hours + ' hrs কমেছে') : 'পরিবর্তন হয়নি');
+
+                var prevStatusBadge = '';
+                if (rec.before.status === 'approved') {
+                    prevStatusBadge = '<span class="badge-status badge-approved" style="font-size: 11px;"><i class="fa fa-check"></i> পূর্বে Approved ছিল (' + rec.before.approved_ot + ' hrs)</span>';
+                } else if (rec.before.status === 'rejected') {
+                    prevStatusBadge = '<span class="badge-status badge-rejected" style="font-size: 11px;"><i class="fa fa-times"></i> পূর্বে Rejected ছিল</span>';
+                } else {
+                    prevStatusBadge = '<span class="badge-status badge-pending" style="font-size: 11px;"><i class="fa fa-hourglass-half"></i> Pending ছিল</span>';
+                }
+
+                html += '<div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">';
+                
+                // Card Header
+                html += '<div style="background: #f1f5f9; padding: 10px 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">';
+                html += '<div>';
+                html += '<span style="font-weight: 700; color: #0f172a; font-size: 14px;"><i class="fa fa-user" style="color: #0284c7;"></i> ' + escapeHtml(rec.emp_name) + '</span>';
+                html += ' <span style="background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 12px; margin-left: 6px;">ID: ' + escapeHtml(rec.emp_id) + '</span>';
+                html += ' <span style="color: #64748b; font-size: 12px; margin-left: 8px;">' + escapeHtml(rec.dept_name || '') + ' &bull; ' + escapeHtml(rec.shift_name || '') + '</span>';
+                html += '</div>';
+                html += '<div style="font-size: 12px; font-weight: 700; color: #475569;">';
+                html += '<i class="fa fa-calendar" style="color: #0284c7;"></i> তারিখ: ' + rec.ot_date;
+                html += '</div>';
+                html += '</div>';
+
+                // Comparison Body (2 columns side by side)
+                html += '<div style="padding: 16px;">';
+                html += '<div class="row">';
+                
+                // Left Column: আগে কি ছিল
+                html += '<div class="col-md-6" style="margin-bottom: 10px;">';
+                html += '<div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 12px 14px; height: 100%;">';
+                html += '<div style="font-weight: 700; color: #991b1b; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #fecaca; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">';
+                html += '<span><i class="fa fa-history"></i> ১. আগে কি ছিল (Before Change)</span>';
+                html += prevStatusBadge;
+                html += '</div>';
+                html += '<table style="width: 100%; font-size: 12px; color: #7f1d1d;">';
+                html += '<tr><td style="width: 130px; padding: 3px 0; color: #991b1b;">পূর্ববর্তী Actual OT:</td><td style="font-weight: 700; font-size: 14px; color: #b91c1c;">' + parseFloat(rec.before.actual_ot).toFixed(1) + ' hrs</td></tr>';
+                html += '<tr><td style="padding: 3px 0; color: #991b1b;">অনুমোদিত OT (Approved):</td><td style="font-weight: 700;">' + parseFloat(rec.before.approved_ot).toFixed(1) + ' hrs</td></tr>';
+                html += '<tr><td style="padding: 3px 0; color: #991b1b;">পাঞ্চ সময় (In - Out):</td><td style="font-family: monospace;">' + (rec.before.in_time || '-') + ' &rarr; ' + (rec.before.out_time || '-') + '</td></tr>';
+                if (rec.before.decision_by) {
+                    html += '<tr><td style="padding: 3px 0; color: #991b1b;">সিদ্ধান্ত গ্রহণকারী:</td><td>' + escapeHtml(rec.before.decision_by) + (rec.before.decision_at ? (' (' + rec.before.decision_at + ')') : '') + '</td></tr>';
+                }
+                html += '</table>';
+                html += '</div>';
+                html += '</div>';
+
+                // Right Column: প্রসেসের পর কি হলো
+                html += '<div class="col-md-6" style="margin-bottom: 10px;">';
+                html += '<div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px 14px; height: 100%;">';
+                html += '<div style="font-weight: 700; color: #166534; font-size: 13px; margin-bottom: 8px; border-bottom: 1px solid #bbf7d0; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">';
+                html += '<span><i class="fa fa-refresh"></i> ২. প্রসেসের পর কি হলো (After Recalculation)</span>';
+                html += '<span style="background: ' + diffBg + '; color: ' + diffColor + '; font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid ' + diffColor + ';">' + diffText + '</span>';
+                html += '</div>';
+                html += '<table style="width: 100%; font-size: 12px; color: #14532d;">';
+                html += '<tr><td style="width: 130px; padding: 3px 0; color: #166534;">নতুন Actual OT:</td><td style="font-weight: 700; font-size: 15px; color: #15803d;">' + parseFloat(rec.after.actual_ot).toFixed(1) + ' hrs</td></tr>';
+                html += '<tr><td style="padding: 3px 0; color: #166534;">বর্তমান পাঞ্চ সময়:</td><td style="font-family: monospace; font-weight: 700;">' + (rec.after.in_time || '-') + ' &rarr; ' + (rec.after.out_time || '-') + '</td></tr>';
+                html += '<tr><td style="padding: 3px 0; color: #166534;">রি-ক্যালকুলেশন সময়:</td><td style="color: #475569;">' + (rec.after.recalculated_at || '-') + '</td></tr>';
+                html += '<tr><td style="padding: 3px 0; color: #166534;">কারণ / Note:</td><td style="color: #b45309;"><i class="fa fa-warning"></i> ' + escapeHtml(rec.after.note || '') + '</td></tr>';
+                html += '</table>';
+                html += '</div>';
+                html += '</div>';
+
+                html += '</div>'; // end row
+
+                // Card Action Footer
+                html += '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">';
+                html += '<div style="font-size: 12px; color: #64748b;">';
+                html += '<i class="fa fa-cog"></i> <strong>পদক্ষেপ (Action Required):</strong> নতুন ঘণ্টা গ্রহণ করবেন নাকি পূর্বের সিদ্ধান্ত বহাল রাখবেন?';
+                html += '</div>';
+                html += '<div style="display: flex; gap: 6px;">';
+                // 1. Approve New Hours
+                html += '<button type="button" class="btn btn-success btn-xs" onclick="quickApproveFromModal(' + rec.id + ', ' + rec.after.actual_ot + ', \'' + escapeHtml(rec.emp_id) + '\', \'' + escapeHtml(rec.emp_name) + '\', \'' + rec.ot_date + '\')" style="font-weight: 600;">';
+                html += '<i class="fa fa-check"></i> নতুন ঘণ্টা Approve করুন (' + rec.after.actual_ot + ' hrs)';
+                html += '</button>';
+                // 2. Adjust Hours
+                html += '<button type="button" class="btn btn-primary btn-xs" onclick="openModifyFromModal(' + rec.id + ', ' + rec.after.actual_ot + ', ' + rec.before.approved_ot + ', \'' + escapeHtml(rec.emp_id) + '\', \'' + escapeHtml(rec.emp_name) + '\', \'' + escapeHtml(rec.dept_name || '') + '\', \'' + rec.ot_date + '\')" style="font-weight: 600;">';
+                html += '<i class="fa fa-pencil"></i> ঘণ্টা Adjust করুন';
+                html += '</button>';
+                // 3. Keep Previous Decision / Dismiss Flag
+                html += '<button type="button" class="btn btn-default btn-xs" onclick="dismissFlagRecord(' + rec.id + ', \'' + escapeHtml(rec.emp_id) + '\')" style="font-weight: 600; color: #475569;" title="পূর্ববর্তী সিদ্ধান্ত বহাল রাখুন এবং ফ্ল্যাগ ক্লিয়ার করুন">';
+                html += '<i class="fa fa-shield"></i> পূর্বের সিদ্ধান্ত বহাল রাখুন (Dismiss)';
+                html += '</button>';
+                html += '</div>';
+                html += '</div>';
+
+                html += '</div>'; // end padding
+                html += '</div>'; // end card
+            });
+
+            $('#flagged_cards_container').html(html);
+        },
+        error: function() {
+            $('#flagged_cards_container').html('<div class="text-center text-danger" style="padding: 30px;"><i class="fa fa-exclamation-circle fa-2x"></i><br>তুলনামূলক তথ্য লোড করতে সমস্যা হয়েছে।</div>');
+        }
+    });
+}
+
+// Quick Approve from inside comparison modal
+function quickApproveFromModal(id, actualHours, empId, empName, otDate) {
+    Swal.fire({
+        title: 'Approve New Actual Hours?',
+        html: 'Employee: <strong>' + empId + ' - ' + empName + '</strong><br>' +
+              'Date: <strong>' + otDate + '</strong><br>' +
+              'New Approved Hours: <strong class="text-success" style="font-size: 16px;">' + actualHours + ' hrs</strong>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Yes, Approve New Hours'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "<?= base_url('ot_approval_con/approve_ot_ajax') ?>",
+                type: "POST",
+                data: {
+                    id: id,
+                    approved_hours: actualHours,
+                    remarks: 'Approved updated actual hours after recalculation'
+                },
+                dataType: "json",
+                success: function(res) {
+                    if (res.status) {
+                        toastr.success(res.message);
+                        loadDashboardStats();
+                        loadOtList();
+                        openFlaggedComparisonModal(); // Refresh comparison modal
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+// Open Modify Modal from comparison modal
+function openModifyFromModal(id, actualHours, approvedHours, empId, empName, deptName, otDate) {
+    $('#flaggedComparisonModal').modal('hide');
+    openModifyModal(id, actualHours, approvedHours, empId, empName, deptName, otDate);
+}
+
+// Dismiss Flag & Retain Previous Decision
+function dismissFlagRecord(id, empId) {
+    Swal.fire({
+        title: 'Keep Previous Decision?',
+        html: 'Employee <strong>' + empId + '</strong> এর পূর্বের অনুমোদিত/বাতিলকৃত সিদ্ধান্ত বহাল রেখে সতর্কবার্তাটি (Flag) ক্লিয়ার করবেন?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#0284c7',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Yes, Keep Decision & Dismiss',
+        cancelButtonText: 'Cancel'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "<?= base_url('ot_approval_con/dismiss_flag_ajax') ?>",
+                type: "POST",
+                data: {
+                    id: id,
+                    remarks: 'Admin reviewed recalculation and confirmed retaining previous decision'
+                },
+                dataType: "json",
+                success: function(res) {
+                    if (res.status) {
+                        toastr.success(res.message);
+                        loadDashboardStats();
+                        loadOtList();
+                        openFlaggedComparisonModal(); // Refresh modal
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+// Filter main table to show only flagged records
+function filterMainTableFlagged() {
+    $('#flaggedComparisonModal').modal('hide');
+    $('#filter_status').val('flagged');
+    loadOtList(0);
+    toastr.info('টেবিলে শুধুমাত্র Flagged / Recalculated রেকর্ডগুলো ফিল্টার করা হয়েছে।');
 }
 </script>

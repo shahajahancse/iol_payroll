@@ -194,12 +194,13 @@ if (isset($type) && $type == 3) {
             'icon'  => 'fa fa-clock-o',
             'color' => '#e74c3c',
             'items' => array(
-                array('id' => 3,  'name' => 'Attendance (Main Menu)', 'is_main' => true),
-                array('id' => 28, 'name' => 'File Upload', 'is_main' => false),
-                array('id' => 29, 'name' => 'Attendance Process', 'is_main' => false),
-                array('id' => 30, 'name' => 'Reports', 'is_main' => false),
-                array('id' => 52, 'name' => 'Attn. Regularization', 'is_main' => false),
-                array('id' => 53, 'name' => 'Outside Duty (OD)', 'is_main' => false),
+                array('id' => 3,   'name' => 'Attendance (Main Menu)', 'is_main' => true),
+                array('id' => 28,  'name' => 'File Upload', 'is_main' => false),
+                array('id' => 29,  'name' => 'Attendance Process', 'is_main' => false),
+                array('id' => 30,  'name' => 'Reports', 'is_main' => false),
+                array('id' => 218, 'name' => 'Daily OT Approval', 'is_main' => false),
+                array('id' => 52,  'name' => 'Attn. Regularization', 'is_main' => false),
+                array('id' => 53,  'name' => 'Outside Duty (OD)', 'is_main' => false),
             )
         ),
         array(

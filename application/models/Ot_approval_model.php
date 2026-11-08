@@ -390,6 +390,8 @@ class Ot_approval_model extends CI_Model
             if (!empty($status) && $status !== 'all') {
                 if ($status === 'actual_ot') {
                     $builder->where('o.actual_ot_hours >', 0);
+                } elseif ($status === 'flagged') {
+                    $builder->where('o.attendance_modified_flag', 1);
                 } else {
                     $builder->where('o.status', $status);
                 }
@@ -863,5 +865,193 @@ class Ot_approval_model extends CI_Model
             'approved_eot'   => $tot_eot,
             'total_approved' => $tot_approved
         );
+    }
+
+    /**
+     * Get flagged records with Before vs After comparison
+     */
+    public function get_flagged_records_comparison($params = array())
+    {
+        $this->ensure_table_exists();
+
+        $start_date = !empty($params['start_date']) ? $params['start_date'] : null;
+        $end_date   = !empty($params['end_date']) ? $params['end_date'] : $start_date;
+        $unit_id    = !empty($params['unit_id']) ? $params['unit_id'] : null;
+        $id         = !empty($params['id']) ? (int)$params['id'] : null;
+
+        $this->db->select('
+            o.id,
+            o.emp_id,
+            o.unit_id,
+            o.ot_date,
+            o.shift_id,
+            o.in_time,
+            o.out_time,
+            o.regular_hours,
+            o.actual_ot_hours,
+            o.calculated_ot_hours,
+            o.approved_ot_hours,
+            o.status,
+            o.admin_remarks,
+            o.modification_reason,
+            o.attendance_modified_flag,
+            o.audit_history,
+            o.updated_at,
+            p.name_en as emp_name,
+            d.dept_name,
+            sec.sec_name_en as sec_name,
+            des.desig_name,
+            s.shift_name
+        ');
+        $this->db->from('pr_daily_ot_approval o');
+        $this->db->join('pr_emp_per_info p', 'p.emp_id = o.emp_id', 'left');
+        $this->db->join('pr_emp_com_info c', 'c.emp_id = o.emp_id', 'left');
+        $this->db->join('emp_depertment d', 'd.dept_id = c.emp_dept_id', 'left');
+        $this->db->join('emp_section sec', 'sec.id = c.emp_sec_id', 'left');
+        $this->db->join('emp_designation des', 'des.id = c.emp_desi_id', 'left');
+        $this->db->join('pr_emp_shift s', 's.id = o.shift_id', 'left');
+
+        if (!empty($id)) {
+            $this->db->where('o.id', $id);
+        } else {
+            $this->db->where('o.attendance_modified_flag', 1);
+            if (!empty($start_date) && !empty($end_date)) {
+                if ($start_date === $end_date) {
+                    $this->db->where('o.ot_date', $start_date);
+                } else {
+                    $this->db->where('o.ot_date >=', $start_date);
+                    $this->db->where('o.ot_date <=', $end_date);
+                }
+            }
+            if (!empty($unit_id)) {
+                $this->db->where('o.unit_id', $unit_id);
+            }
+        }
+
+        $this->db->order_by('o.ot_date', 'DESC');
+        $this->db->order_by('o.id', 'DESC');
+        $records = $this->db->get()->result();
+
+        $items = array();
+        foreach ($records as $r) {
+            $audit = !empty($r->audit_history) ? json_decode($r->audit_history, true) : array();
+            if (!is_array($audit)) {
+                $audit = array();
+            }
+
+            $prev_decision = null;
+            $change_entry = null;
+            $last_in = $r->in_time;
+            $last_out = $r->out_time;
+
+            foreach ($audit as $a) {
+                if (in_array($a['action'], array('approved', 'rejected', 'modified'))) {
+                    $prev_decision = $a;
+                }
+                if ($a['action'] === 'generated' && !empty($a['in_time'])) {
+                    $last_in = $a['in_time'];
+                    $last_out = $a['out_time'];
+                }
+                if ($a['action'] === 'attendance_changed_after_decision') {
+                    $change_entry = $a;
+                }
+            }
+
+            $before_status = $r->status;
+            $before_approved = (float)$r->approved_ot_hours;
+            $decision_by = 'admin';
+            $decision_at = '';
+
+            if ($prev_decision) {
+                $decision_by = !empty($prev_decision['by']) ? $prev_decision['by'] : 'admin';
+                $decision_at = !empty($prev_decision['timestamp']) ? $prev_decision['timestamp'] : '';
+                if ($prev_decision['action'] === 'modified') {
+                    $before_approved = (float)(isset($prev_decision['new_approved_hours']) ? $prev_decision['new_approved_hours'] : $r->approved_ot_hours);
+                    $before_status = 'approved';
+                } elseif ($prev_decision['action'] === 'approved') {
+                    $before_approved = (float)(isset($prev_decision['approved_hours']) ? $prev_decision['approved_hours'] : $r->approved_ot_hours);
+                    $before_status = 'approved';
+                } elseif ($prev_decision['action'] === 'rejected') {
+                    $before_approved = 0.0;
+                    $before_status = 'rejected';
+                }
+            }
+
+            $old_actual = (float)(isset($change_entry['old_actual']) ? $change_entry['old_actual'] : $r->actual_ot_hours);
+            $new_actual = (float)(isset($change_entry['new_actual']) ? $change_entry['new_actual'] : $r->actual_ot_hours);
+            $diff = round($new_actual - $old_actual, 2);
+
+            $before_in  = !empty($change_entry['old_in']) ? $change_entry['old_in'] : $last_in;
+            $before_out = !empty($change_entry['old_out']) ? $change_entry['old_out'] : $last_out;
+
+            $items[] = array(
+                'id'              => (int)$r->id,
+                'emp_id'          => $r->emp_id,
+                'emp_name'        => $r->emp_name,
+                'dept_name'       => $r->dept_name,
+                'sec_name'        => $r->sec_name,
+                'desig_name'      => $r->desig_name,
+                'shift_name'      => $r->shift_name,
+                'ot_date'         => $r->ot_date,
+                'current_status'  => $r->status,
+                'before'          => array(
+                    'status'        => $before_status,
+                    'approved_ot'   => $before_approved,
+                    'actual_ot'     => $old_actual,
+                    'in_time'       => $before_in,
+                    'out_time'      => $before_out,
+                    'decision_by'   => $decision_by,
+                    'decision_at'   => $decision_at
+                ),
+                'after'           => array(
+                    'actual_ot'     => $new_actual,
+                    'in_time'       => $r->in_time,
+                    'out_time'      => $r->out_time,
+                    'recalculated_at' => !empty($change_entry['timestamp']) ? $change_entry['timestamp'] : $r->updated_at,
+                    'note'          => !empty($change_entry['note']) ? $change_entry['note'] : 'Attendance recalculated'
+                ),
+                'diff_hours'      => $diff,
+                'diff_str'        => ($diff > 0 ? "+$diff" : "$diff") . " hrs",
+                'is_flagged'      => (int)$r->attendance_modified_flag
+            );
+        }
+
+        return $items;
+    }
+
+    /**
+     * Dismiss attendance modified flag and retain previous decision
+     */
+    public function dismiss_flag($id, $admin_id, $remarks = '')
+    {
+        $record = $this->get_record_by_id($id);
+        if (!$record) {
+            return array('status' => false, 'message' => 'Record not found.');
+        }
+
+        $now_dt = date('Y-m-d H:i:s');
+        $audit_trail = !empty($record->audit_history) ? json_decode($record->audit_history, true) : array();
+        if (!is_array($audit_trail)) {
+            $audit_trail = array();
+        }
+
+        $audit_trail[] = array(
+            'action'         => 'flag_dismissed_kept_decision',
+            'timestamp'      => $now_dt,
+            'by'             => $admin_id,
+            'status'         => $record->status,
+            'approved_hours' => (float)$record->approved_ot_hours,
+            'remarks'        => $remarks,
+            'note'           => 'Admin reviewed attendance recalculation and confirmed keeping previous decision'
+        );
+
+        $this->db->where('id', $id)->update('pr_daily_ot_approval', array(
+            'attendance_modified_flag' => 0,
+            'admin_remarks'            => !empty($remarks) ? $remarks : $record->admin_remarks,
+            'audit_history'            => json_encode($audit_trail),
+            'updated_at'               => $now_dt
+        ));
+
+        return array('status' => true, 'message' => 'Flag dismissed. Previous decision retained for Employee ' . $record->emp_id . '.');
     }
 }
