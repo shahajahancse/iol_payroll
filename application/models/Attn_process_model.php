@@ -185,8 +185,12 @@ class Attn_process_model extends CI_Model{
             	} elseif (strtolower(trim($shift_name)) == 'single') {
             		$in_time  = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'ASC', $table);
             		$out_time = $this->time_check_in("$process_date 00:00:00", "$process_date 23:59:59", $emp_id, 'DESC', $table);
-            		if ($in_time != '' && $in_time == $out_time) {
-            			$out_time = '00:00:00';
+            		// For Single shift: out_time must be distinct from in_time and at least 4 hours later
+            		// (avoid morning double punches like 09:19:30 and 09:19:32 being treated as out_time)
+            		if (!empty($in_time) && !empty($out_time)) {
+            			if ($in_time == $out_time || (strtotime($out_time) - strtotime($in_time)) < 14400) {
+            				$out_time = '00:00:00';
+            			}
             		}
             	} elseif (strtolower(trim($shift_name)) == 'billing' || strtolower(trim($sec_name)) == 'billing') {
             		$next_day = date('Y-m-d', strtotime($process_date . ' + 1 days'));
@@ -227,39 +231,26 @@ class Attn_process_model extends CI_Model{
             			}
             		}
 
-            		// Rule 2: 12-Hour Shift max OT is 12 hours (total 24 hours work).
-            		// If employee worked continuously into the next day and punched on the next day morning/shift:
-            		// Previous shift MUST close at the 24-hour mark ($transition_dt = $sched_in_dt + 24 hours)
-            		// so previous shift gets full 12h regular duty (6 to 6) + 12h OT (till 6 AM).
-            		// And any punch on the next day (e.g. at 10:00 AM or within next shift's 4-hour snap window)
-            		// will be used as the new shift's IN punch for normal day duty!
-            		if ($is_12_shift && !empty($in_time) && $in_time != '00:00:00' && (empty($out_time) || $out_time == '00:00:00')) {
-            			$sched_in_dt   = "$process_date " . $schedule[0]["in_time"];
-            			$transition_dt = date('Y-m-d H:i:s', strtotime("$sched_in_dt + 24 hours"));
-            			$search_start  = date('Y-m-d H:i:s', strtotime($out_end_dt . ' + 1 seconds'));
-            			// Look ahead through the next day's 4-hour snap window (up to +28 hours 30 minutes from shift start)
-            			$search_end    = date('Y-m-d H:i:s', strtotime("$sched_in_dt + 28 hours 30 minutes"));
-
-            			$next_punch = $this->time_check_in($search_start, $search_end, $emp_id, 'ASC');
-            			if (!empty($next_punch)) {
-            				// If punch was right around transition (<= transition + 15 mins), use that punch
-            				// If punch was later (e.g. 06:30, 08:00, 10:00 AM), close previous shift at exactly $transition_dt (06:00:00)
-            				// so previous shift closes cleanly at 6 AM with max 12h OT,
-            				// and the later punch belongs to the new shift as normal day duty!
-            				if (strtotime($next_punch) <= strtotime("$transition_dt + 15 minutes")) {
-            					$out_time = $next_punch;
-            				} else {
-            					$out_time = $transition_dt;
-            				}
-            			}
-            		}
-
             		if (!empty($in_time) && !empty($out_time) && $in_time == $out_time) {
             			$out_time = '00:00:00';
             		}
             		// If employee did not punch IN on this date and the OUT punch that was found occurred on the next day,
             		// that next day morning punch belongs to the next day's shift, not this shift's exit.
             		if ((empty($in_time) || $in_time == '00:00:00') && !empty($out_time) && $out_time != '00:00:00' && date('Y-m-d', strtotime($out_time)) > $process_date) {
+            			$out_time = '00:00:00';
+            		}
+            	}
+
+            	// Strict Policy: No punch within the in_time range [in_start_dt, in_end_dt] can be accepted as out_time!
+            	// If no punch falls in the designated out_start to out_end range, out_time must remain '00:00:00'.
+            	if (!empty($out_time) && $out_time != '00:00:00') {
+            		$out_ts = strtotime($out_time);
+            		$in_start_ts = strtotime($in_start_dt);
+            		$in_end_ts   = strtotime($in_end_dt);
+            		if ($out_ts >= $in_start_ts && $out_ts <= $in_end_ts) {
+            			$out_time = '00:00:00';
+            		}
+            		if (!empty($in_time) && $in_time != '00:00:00' && $out_ts <= strtotime($in_time)) {
             			$out_time = '00:00:00';
             		}
             	}
@@ -473,7 +464,7 @@ class Attn_process_model extends CI_Model{
 					$early_exit = 0;
 				}elseif (($in_time != '' && $in_time != '00:00:00') || ($out_time != '' && $out_time != '00:00:00')){
 					// Punch Error: Only IN punch or only OUT punch present -> Half Day (4 hours deduction)
-					$attn_status = "P";
+					$attn_status = "P(Error)";
 					$deduction_hour = 4; // Half-day deduction
 					$early_exit = 1;
 				}
@@ -621,7 +612,7 @@ class Attn_process_model extends CI_Model{
 
 				// get alert message
 				$alert_msg = 0;
-				if ($attn_status == "P") {
+				if ($attn_status == "P" || $attn_status == "P(Error)") {
 					$alert_msg = $this->get_alert_message($emp_id, $process_date, 1);
 				}
 
@@ -1301,7 +1292,13 @@ class Attn_process_model extends CI_Model{
 			if ($is_weekend_holiday) {
 				$present_status = ($ot_entitle == 1) ? 'P' : (($date == $holiday || $holiday === true) ? 'H' : 'W');
 			} else {
-				$present_status = ($final_in != '00:00:00' || $final_out != '00:00:00') ? 'P' : 'A';
+				if ($final_in != '00:00:00' && $final_out != '00:00:00' && $final_in != $final_out) {
+					$present_status = 'P';
+				} elseif ($final_in != '00:00:00' || $final_out != '00:00:00') {
+					$present_status = 'P(Error)';
+				} else {
+					$present_status = 'A';
+				}
 			}
 
 			// Deductions & early exit
