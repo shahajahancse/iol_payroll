@@ -316,7 +316,11 @@ class Attn_process_model extends CI_Model{
 				//============= Check employee attendance status & Special Shift Policies =============
 				$attn_status = 'A';
 				if($leaves){
-					$attn_status = "L";
+					if ($this->is_next_day_absent($process_date, $emp_id)) {
+						$attn_status = "A";
+					} else {
+						$attn_status = "L";
+					}
 					$in_time = '00:00:00';
 					$out_time = '00:00:00';
 					$tot_hour = 0;
@@ -631,6 +635,15 @@ class Attn_process_model extends CI_Model{
 				$this->db->where('shift_log_date', $process_date);
 				$this->db->where('emp_id', $emp_id);
 				$this->db->update('pr_emp_shift_log', $data);
+
+				// Rule: If an employee took leave, but is absent on subsequent day(s):
+				// The preceding consecutive leave days are forfeited in attendance log (marked 'A'),
+				// while remaining counted/deducted in pr_leave_trans.
+				if ($attn_status == 'A') {
+					$this->forfeit_consecutive_preceding_leaves($emp_id, $process_date);
+				} elseif ($attn_status == 'P') {
+					$this->restore_consecutive_preceding_leaves($emp_id, $process_date);
+				}
 			}
 		}
 
@@ -1564,6 +1577,15 @@ class Attn_process_model extends CI_Model{
                          ));
                 $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
             } else {
+                $log = $this->db->select('present_status')
+                                ->where('emp_id', $emp_id)
+                                ->where('shift_log_date', $curr_date)
+                                ->get('pr_emp_shift_log')
+                                ->row();
+                if (!empty($log) && in_array(strtoupper(trim($log->present_status)), array('W', 'H'))) {
+                    $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+                    continue;
+                }
                 break;
             }
         }
@@ -1589,6 +1611,15 @@ class Attn_process_model extends CI_Model{
                          ));
                 $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
             } else {
+                $log = $this->db->select('present_status')
+                                ->where('emp_id', $emp_id)
+                                ->where('shift_log_date', $curr_date)
+                                ->get('pr_emp_shift_log')
+                                ->row();
+                if (!empty($log) && in_array(strtoupper(trim($log->present_status)), array('W', 'H'))) {
+                    $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
+                    continue;
+                }
                 break;
             }
         }
