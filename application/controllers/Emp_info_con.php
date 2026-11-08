@@ -157,9 +157,7 @@ class Emp_info_con extends CI_Controller {
 		if(isset($_POST['save'])) {
 			$this->Processdb->insert_emp_info_short();
 		} elseif(isset($_POST['edit'])){
-			if($this->Processdb->updatedb_short()) {
-				echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Updated successfully'); window.location='personal_info_short';</SCRIPT>";
-			}
+			$this->Processdb->updatedb_short();
 		} else {
 			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Error Occurred'); window.location='personal_info_short';</SCRIPT>";
 		}

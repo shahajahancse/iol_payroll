@@ -312,7 +312,7 @@ class Processdb extends CI_Model{
 		// dd($_POST);
 		if($this->input->post('emp_id') == '')
 		{
-			return ;
+			return false;
 		}
 		$ejd = date("Y-m-d", strtotime($this->input->post('emp_join_date')));
 		$data = array(
@@ -331,21 +331,21 @@ class Processdb extends CI_Model{
 			'weekend'    		=> $this->input->post('weekend') ? $this->input->post('weekend') : 'Friday',
 			'emp_join_date'		=> $ejd,
 			'emp_sal_gra_id'  	=> $this->input->post('emp_sal_gra_id'),
-			'salary_type'		=> $this->input->post('salary_type'),
-			'salary_draw'		=> $this->input->post('salary_draw'),
-			'lunch'				=> $this->input->post('lunch'),
-			'transport'			=> $this->input->post('transport'),
-			'gross_sal'			=> $this->input->post('gross_sal'),
-			'ot_entitle'		=> $this->input->post('ot_entitle'),
-			'com_gross_sal'		=> $this->input->post('com_gross_sal'),
-			'com_ot_entitle'    => $this->input->post('com_ot_entitle'),
+			'salary_type'		=> $this->input->post('salary_type') ? $this->input->post('salary_type') : 1,
+			'salary_draw'		=> $this->input->post('salary_draw') ? $this->input->post('salary_draw') : 1,
+			'lunch'				=> $this->input->post('lunch') ? $this->input->post('lunch') : 1,
+			'transport'			=> $this->input->post('transport') ? $this->input->post('transport') : 1,
+			'gross_sal'			=> $this->input->post('gross_sal') ? $this->input->post('gross_sal') : ($this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : 0),
+			'ot_entitle'		=> $this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : ($this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : 1),
+			'com_gross_sal'		=> $this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : ($this->input->post('gross_sal') ? $this->input->post('gross_sal') : 0),
+			'com_ot_entitle'    => $this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : ($this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : 1),
 
 		);
 
 		$dob = date("Y-m-d", strtotime($this->input->post('emp_dob')));
 		$per_data = array(
 			'name_bn' 			=> $this->input->post('name_bn'),
-			'name_en' 			=> $this->input->post('name_en'),
+			'name_en' 			=> $this->input->post('name_en') ? $this->input->post('name_en') : $this->input->post('name_bn'),
 			'emp_dob' 			=> $dob,
 			'gender' 			=> $this->input->post('gender'),
 			'personal_mobile'	=> $this->input->post('personal_mobile'),
@@ -353,11 +353,18 @@ class Processdb extends CI_Model{
 		);
 		$id = $this->input->post('emp_id');
 		if($this->db->where('emp_id',$id)->update('pr_emp_com_info', $data)){
-			$this->db->where('emp_id',$id)->update('pr_emp_per_info', $per_data);
-			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Updated Successfully.'); window.location='personal_info_short';</SCRIPT>";
+			$check_per = $this->db->where('emp_id', $id)->get('pr_emp_per_info');
+			if ($check_per->num_rows() > 0) {
+				$this->db->where('emp_id', $id)->update('pr_emp_per_info', $per_data);
+			} else {
+				$per_data['emp_id'] = $id;
+				$this->db->insert('pr_emp_per_info', $per_data);
+			}
+			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Updated Successfully.'); window.location='personal_info_short?emp_id=" . $id . "';</SCRIPT>";
+			return true;
 		} else {
 		  echo "FAILED" ;
-		  return ;
+		  return false;
 		}
 	}
 
@@ -733,7 +740,15 @@ class Processdb extends CI_Model{
 			}
 			//dd($ids);
 
-			if($this->db->where('emp_id',$ids)->update('pr_emp_per_info', $per_data)){
+			$check_per = $this->db->where('emp_id', $ids)->get('pr_emp_per_info');
+			if ($check_per->num_rows() > 0) {
+				$per_res = $this->db->where('emp_id', $ids)->update('pr_emp_per_info', $per_data);
+			} else {
+				$per_data['emp_id'] = $ids;
+				$per_res = $this->db->insert('pr_emp_per_info', $per_data);
+			}
+
+			if($per_res){
 				if ($this->input->is_ajax_request()) {
 					return array('status' => true, 'message' => 'Updated Successfully.');
 				}
@@ -2182,7 +2197,7 @@ class Processdb extends CI_Model{
 
 	function get_emp_info($emp_id){
 		// dd($emp_id);
-		$d = $this->db->select('com.*, per.*,deg.*')
+		$d = $this->db->select('per.*, deg.desig_name, deg.desig_bangla, com.*, com.emp_id as emp_id, com.id as id')
 					->from('pr_emp_com_info as com')
 					->join('pr_emp_per_info as per','com.emp_id = per.emp_id', 'left')
 					->join('emp_designation as deg', 'deg.id = com.emp_desi_id AND deg.hide_status = 1', 'left')
@@ -2194,9 +2209,8 @@ class Processdb extends CI_Model{
 			return ['status'=>false,'data'=>'No data found'];
 		}else{
 			$d->emp_dob = ($d->emp_dob == '0000-00-00' || $d->emp_dob == null) ? date('Y-m-d') : $d->emp_dob;
-			$d->emp_dob=$d->emp_dob=='0000-00-00'? date('Y-m-d'): $d->emp_dob;
 			$date1 = new DateTime(date("d-m-Y", strtotime($d->emp_dob)));
-			$d->nomi_age= $d->nomi_age=='0000-00-00'? date('Y-m-d'): $d->nomi_age;
+			$d->nomi_age= ($d->nomi_age == '0000-00-00' || $d->nomi_age == null) ? date('Y-m-d') : $d->nomi_age;
 			$date2 = new DateTime();
 			$interval = $date1->diff($date2);
 			$d->age = $interval->format("%y years %m months %d days");

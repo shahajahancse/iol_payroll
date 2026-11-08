@@ -92,7 +92,7 @@ input[type="number"] {
                             <div class="form-group">
                                 <label>Date Of Birth <span style="color: red;">*</span> </label>
                                 <input type="text" name="emp_dob" id="emp_dob" class="date form-control input-sm required"
-                                    value="<?= isset($emp_info->emp_dob)?>" required>
+                                    value="<?= isset($emp_info->emp_dob) ? $emp_info->emp_dob : '' ?>" required>
                                 <?php echo form_error('emp_dob');?>
                             </div>
                         </div>
@@ -638,6 +638,7 @@ function emp_id_search(id = null) {
         alert('Field can not be empty');
         return;
     }
+    try { localStorage.clear(); } catch(e) {}
     document.getElementById("form_id").reset();
     $.ajax({
         type: 'POST',
