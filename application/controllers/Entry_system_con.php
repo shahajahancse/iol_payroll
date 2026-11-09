@@ -2626,9 +2626,36 @@ class Entry_system_con extends CI_Controller
     }
 
     public function emp_leave_del($id){
-        $this->db->where('id', $id);
-        $this->db->delete('pr_leave_trans');
-        $this->session->set_flashdata('success', 'Record Deleted successfully!');
+        $user_id  = isset($this->session->userdata('data')->id) ? $this->session->userdata('data')->id : null;
+        $username = isset($this->session->userdata('data')->id_number) ? $this->session->userdata('data')->id_number : 'System';
+
+        // Check ACL 130 or Admin
+        $acl = check_acl_list($user_id);
+        $is_admin = (strtolower(trim($username)) === 'admin');
+        if (!in_array(130, $acl) && !$is_admin) {
+            if ($this->input->is_ajax_request()) {
+                echo json_encode(array('status' => 'error', 'message' => 'Access Denied: You do not have permission to delete leave records.'));
+                return;
+            }
+            $this->session->set_flashdata('error', 'Access Denied: You do not have permission to delete leave records.');
+            redirect(base_url('entry_system_con/leave_list'));
+            return;
+        }
+
+        $this->load->model('Leave_model');
+        $reason = $this->input->post('delete_reason') ? trim($this->input->post('delete_reason')) : 'Deleted from Leave List';
+        $res = $this->Leave_model->delete_leave_with_refund($id, $user_id, $username, $reason);
+
+        if ($this->input->is_ajax_request()) {
+            echo json_encode($res);
+            return;
+        }
+
+        if ($res['status'] === 'success') {
+            $this->session->set_flashdata('success', $res['message']);
+        } else {
+            $this->session->set_flashdata('error', $res['message']);
+        }
         redirect(base_url('entry_system_con/leave_list'));
     }
 

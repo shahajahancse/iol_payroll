@@ -274,7 +274,7 @@
                     <td>${element.unit_name}</td>
                     <td>${stBadge}</td>
                     <td>
-                        <a   <?php  $user_id = $this->session->userdata('data')->id; $acl = check_acl_list($user_id); if(in_array(130,$acl)) {echo '';} else { echo 'style="display:none;"';}?>   href="<?=base_url('entry_system_con/emp_leave_del/')?>${element.id}" class="btn btn-danger btn-xs" role="button">Delete</a>
+                        <a <?php $user_data = $this->session->userdata('data'); $user_id = !empty($user_data) ? $user_data->id : 0; $u_name = !empty($user_data->id_number) ? strtolower(trim($user_data->id_number)) : ''; $acl = check_acl_list($user_id); if(in_array(130,$acl) || $u_name === 'admin') {echo '';} else { echo 'style="display:none;"';}?> href="<?=base_url('entry_system_con/emp_leave_del/')?>${element.id}" onclick="return confirmDeleteLeaveList(event, '${element.id}', '${element.status || 'approved'}', '${element.user_name || element.emp_id}', '${element.total_leave}')" class="btn btn-danger btn-xs" role="button"><i class="fa fa-trash"></i> Delete</a>
                     </td>
                 </tr>`)
                 });
@@ -282,4 +282,37 @@
         })
     }
 
+    function confirmDeleteLeaveList(e, id, status, name, days) {
+        e.preventDefault();
+        let url = "<?= base_url('entry_system_con/emp_leave_del/') ?>" + id;
+        let isApproved = (status.toLowerCase() === 'approved');
+        let title = isApproved ? 'Delete Approved Leave?' : 'Delete Leave Record?';
+        let text = isApproved 
+            ? `This leave for ${name} (${days} days) is APPROVED. Deleting it will restore attendance shift logs and automatically refund any deducted leave balance. Do you want to proceed?`
+            : `Are you sure you want to delete this leave record for ${name}?`;
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fa fa-trash"></i> Yes, Delete with Refund',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
+            });
+        } else {
+            if (confirm(text)) {
+                window.location.href = url;
+            }
+        }
+        return false;
+    }
+
 </script>
+

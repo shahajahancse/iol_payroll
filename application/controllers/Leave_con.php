@@ -13,7 +13,7 @@ class Leave_con extends CI_Controller
         $this->load->helper('form');
         $this->load->helper('setting_helper');
 
-        if ($this->session->userdata('logged_in') == false) {
+        if ($this->session->userdata('logged_in') == false && !$this->input->is_cli_request()) {
             if ($this->input->is_ajax_request()) {
                 echo json_encode(array('status' => 'error', 'message' => 'Session expired. Please login again.'));
                 exit();
@@ -1172,6 +1172,13 @@ class Leave_con extends CI_Controller
                 $msg = ($new_status === 'approved') ? 'Leave modified and approved successfully.' : 'Leave details modified successfully.';
                 break;
 
+            case 'delete':
+                $this->db->trans_rollback(); // Release initial transaction; delete_leave_with_refund manages atomic transaction
+                $reason = trim($this->input->post('delete_reason'));
+                $del_res = $this->Leave_model->delete_leave_with_refund($leave_id, $admin_id, $admin_name, $reason);
+                echo json_encode($del_res);
+                return;
+
             default:
                 $this->db->trans_rollback();
                 echo json_encode(array('status' => 'error', 'message' => 'Invalid action specified.'));
@@ -1205,3 +1212,5 @@ class Leave_con extends CI_Controller
         redirect('entry_system_con/export_leave_pdf' . $qs);
     }
 }
+
+

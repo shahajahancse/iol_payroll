@@ -572,6 +572,235 @@ class Leave_model extends CI_Model{
      
      return $aDays;  
    }
+
+	/**
+	 * Delete a leave transaction (Pending, Approved, Rejected, Returned) with automatic balance refund
+	 * Scenarios handled:
+	 * 1. Approved Leave - Already Deducted: Restores shift logs and refunds deducted days.
+	 * 2. Approved Leave - Not Yet Deducted: Deletes without adding extra balance.
+	 * 3. Partial Deduction: Refunds only the actual deducted days (never more than original deduction).
+	 * Maintains complete audit trail in pr_leave_deleted_log and activity_log.
+	 */
+	public function delete_leave_with_refund($leave_id, $user_id = null, $user_name = null, $reason = '')
+	{
+		$leave_id = (int)$leave_id;
+		if (empty($leave_id)) {
+			return array('status' => 'error', 'message' => 'Invalid leave ID specified.');
+		}
+
+		// Ensure audit table exists
+		$this->ensure_deleted_log_table();
+
+		// Start atomic database transaction
+		$this->db->trans_start();
+
+		// 1. Fetch leave record
+		$leave = $this->db->where('id', $leave_id)->get('pr_leave_trans')->row();
+		if (empty($leave)) {
+			$this->db->trans_rollback();
+			return array('status' => 'error', 'message' => 'Leave record not found or already deleted.');
+		}
+
+		$emp_id       = $leave->emp_id;
+		$leave_type   = strtolower(trim($leave->leave_type));
+		$leave_status = strtolower(trim($leave->status));
+		$leave_start  = $leave->leave_start;
+		$leave_end    = $leave->leave_end;
+		$total_leave  = (int)$leave->total_leave;
+
+		$deducted_days = 0;
+		$refunded_days = 0;
+		$restored_logs = array();
+
+		// 2. Only Approved leaves could have deducted attendance or leave balance
+		if ($leave_status === 'approved') {
+			// Find shift logs in date range where present_status = 'L'
+			$shift_logs = $this->db->where('emp_id', $emp_id)
+				->where('shift_log_date >=', $leave_start)
+				->where('shift_log_date <=', $leave_end)
+				->where('present_status', 'L')
+				->order_by('shift_log_date', 'ASC')
+				->get('pr_emp_shift_log')
+				->result();
+
+			$log_count = count($shift_logs);
+
+			// Fallback: Check pr_attn_monthly if shift logs are missing
+			$monthly_count = 0;
+			if ($log_count === 0 && !empty($leave_start) && !empty($leave_end)) {
+				$days = $this->GetDays($leave_start, $leave_end);
+				foreach ($days as $day) {
+					$ym = date('Y-m', strtotime($day));
+					$d_num = date('d', strtotime($day)); // date_01 to date_31
+					$col = "date_{$d_num}";
+					$m_row = $this->db->select($col)
+						->where('emp_id', $emp_id)
+						->like('att_month', $ym)
+						->get('pr_attn_monthly')
+						->row();
+					if (!empty($m_row) && isset($m_row->$col) && strtoupper(trim($m_row->$col)) === 'L') {
+						$monthly_count++;
+					}
+				}
+			}
+
+			$actual_attendance_deductions = max($log_count, $monthly_count);
+
+			// Calculate actual deducted days: strictly capped at total_leave
+			$deducted_days = min($total_leave, $actual_attendance_deductions);
+			$refunded_days = $deducted_days;
+
+			// 3. Restore shift logs from 'L' back to real attendance status
+			if (!empty($shift_logs)) {
+				$this->load->model('Attn_process_model');
+
+				foreach ($shift_logs as $slog) {
+					$log_date = $slog->shift_log_date;
+
+					// Determine non-leave status:
+					$has_in  = (!empty($slog->in_time) && $slog->in_time != '00:00:00');
+					$has_out = (!empty($slog->out_time) && $slog->out_time != '00:00:00');
+
+					if ($has_in && $has_out) {
+						$restored_status = 'P';
+					} elseif ($has_in || $has_out) {
+						$restored_status = 'P(Error)';
+					} else {
+						$is_holiday = $this->Attn_process_model->check_holiday($emp_id, $log_date);
+						if ($is_holiday) {
+							$restored_status = 'H';
+						} else {
+							$is_weekend = $this->Attn_process_model->check_weekend($emp_id, $log_date);
+							if ($is_weekend) {
+								$is_bridge = $this->Attn_process_model->check_bridge_absent($emp_id, $log_date);
+								$restored_status = $is_bridge ? 'A' : 'W';
+							} else {
+								$restored_status = 'A';
+							}
+						}
+					}
+
+					// Update shift log
+					$this->db->where('id', $slog->id)->update('pr_emp_shift_log', array(
+						'present_status' => $restored_status
+					));
+
+					// Update monthly attendance table if row exists
+					$ym = date('Y-m', strtotime($log_date));
+					$d_num = date('d', strtotime($log_date)); // date_01 to date_31
+					$col = "date_{$d_num}";
+					$m_exists = $this->db->where('emp_id', $emp_id)->like('att_month', $ym)->get('pr_attn_monthly')->num_rows();
+					if ($m_exists > 0) {
+						$this->db->where('emp_id', $emp_id)
+							->like('att_month', $ym)
+							->update('pr_attn_monthly', array($col => $restored_status));
+					}
+
+					$restored_logs[] = array(
+						'date'            => $log_date,
+						'previous_status' => 'L',
+						'restored_status' => $restored_status
+					);
+				}
+			}
+
+			// 4. Earn Leave refund if EL
+			if ($leave_type === 'el' && $refunded_days > 0) {
+				$earn_row = $this->db->where('emp_id', $emp_id)->order_by('id', 'DESC')->limit(1)->get('pr_earn_leave')->row();
+				if (!empty($earn_row)) {
+					$this->db->where('id', $earn_row->id)->update('pr_earn_leave', array(
+						'earn_leave' => $earn_row->earn_leave + $refunded_days,
+						'el'         => max(0, $earn_row->el - $refunded_days)
+					));
+				}
+			}
+		}
+
+		// 5. Insert audit log into pr_leave_deleted_log
+		$now = date('Y-m-d H:i:s');
+		$user_id_val = !empty($user_id) ? $user_id : (isset($this->session) && $this->session->userdata('data') ? $this->session->userdata('data')->id : null);
+		$user_name_val = !empty($user_name) ? $user_name : (isset($this->session) && $this->session->userdata('data') ? $this->session->userdata('data')->id_number : 'System');
+
+		$delete_log_data = array(
+			'leave_id'                 => $leave->id,
+			'emp_id'                   => $leave->emp_id,
+			'unit_id'                  => $leave->unit_id,
+			'leave_type'               => $leave->leave_type,
+			'leave_start'              => $leave->leave_start,
+			'leave_end'                => $leave->leave_end,
+			'total_leave'              => $leave->total_leave,
+			'deducted_days'            => $deducted_days,
+			'refunded_days'            => $refunded_days,
+			'status_before_delete'     => $leave->status,
+			'deleted_by_id'            => $user_id_val,
+			'deleted_by_name'          => $user_name_val,
+			'deleted_at'               => $now,
+			'leave_record_json'        => json_encode($leave),
+			'restored_shift_logs_json' => json_encode($restored_logs),
+			'remarks'                  => !empty($reason) ? $reason : "Deleted by {$user_name_val}. Status: {$leave->status}. Deducted: {$deducted_days} day(s), Refunded: {$refunded_days} day(s)."
+		);
+
+		$this->db->insert('pr_leave_deleted_log', $delete_log_data);
+
+		// Also call global log_activity helper if function exists
+		if (function_exists('log_activity')) {
+			$desc = "Leave ID: {$leave->id} ({$leave->leave_type}, {$leave->total_leave} days) for Emp: {$leave->emp_id} deleted by {$user_name_val}. Status: {$leave->status}. Refunded: {$refunded_days} day(s).";
+			log_activity('Leave Deleted', $desc, $user_id_val);
+		}
+
+		// 6. Delete from pr_leave_trans
+		$this->db->where('id', $leave_id)->delete('pr_leave_trans');
+
+		// Complete transaction
+		$this->db->trans_complete();
+
+		if ($this->db->trans_status() === false) {
+			return array('status' => 'error', 'message' => 'Database transaction failed while deleting leave record.');
+		}
+
+		$message = "Leave record deleted successfully.";
+		if ($leave_status === 'approved') {
+			if ($refunded_days > 0) {
+				$message .= " {$refunded_days} day(s) previously deducted have been automatically refunded to the employee's balance.";
+			} else {
+				$message .= " The leave balance had not yet been deducted, so no extra balance was added.";
+			}
+		}
+
+		return array(
+			'status'        => 'success',
+			'message'       => $message,
+			'deducted_days' => $deducted_days,
+			'refunded_days' => $refunded_days,
+			'leave'         => $leave
+		);
+	}
+
+	private function ensure_deleted_log_table()
+	{
+		$this->db->query("CREATE TABLE IF NOT EXISTS `pr_leave_deleted_log` (
+		  `id` int(11) NOT NULL AUTO_INCREMENT,
+		  `leave_id` int(11) NOT NULL,
+		  `emp_id` varchar(100) NOT NULL,
+		  `unit_id` int(11) DEFAULT NULL,
+		  `leave_type` varchar(10) NOT NULL,
+		  `leave_start` date NOT NULL,
+		  `leave_end` date NOT NULL,
+		  `total_leave` int(11) NOT NULL,
+		  `deducted_days` int(11) NOT NULL DEFAULT 0,
+		  `refunded_days` int(11) NOT NULL DEFAULT 0,
+		  `status_before_delete` varchar(20) NOT NULL,
+		  `deleted_by_id` int(11) DEFAULT NULL,
+		  `deleted_by_name` varchar(100) DEFAULT NULL,
+		  `deleted_at` datetime NOT NULL,
+		  `leave_record_json` longtext DEFAULT NULL,
+		  `restored_shift_logs_json` longtext DEFAULT NULL,
+		  `remarks` text DEFAULT NULL,
+		  PRIMARY KEY (`id`),
+		  KEY `idx_emp_deleted` (`emp_id`),
+		  KEY `idx_leave_id` (`leave_id`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8");
+	}
 	
 }
 ?>

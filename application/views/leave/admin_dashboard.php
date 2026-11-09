@@ -1024,8 +1024,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             <div class="modal-body" style="padding: 22px;" id="adminViewBody">
                 <!-- dynamic content -->
             </div>
-            <div class="modal-footer" style="background: #f8fafc; padding: 14px 20px; border-top: 1px solid #e2e8f0;">
-                <button type="button" class="btn btn-default" data-dismiss="modal" style="border-radius: 8px; padding: 6px 18px;">Close</button>
+            <div class="modal-footer" style="background: #f8fafc; padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn btn-danger" id="btn_modal_delete_leave" style="border-radius: 8px; padding: 6px 18px; font-weight: 600; display: none;">
+                    <i class="fa fa-trash"></i> Delete Leave Record
+                </button>
+                <button type="button" class="btn btn-default" data-dismiss="modal" style="border-radius: 8px; padding: 6px 18px; margin-left: auto;">Close</button>
             </div>
         </div>
     </div>
@@ -1289,13 +1292,21 @@ function renderAdminTable(rows, page, limit, total) {
                     <button class="btn-action-modify" title="Edit Dates or Type Directly" onclick="openModifyModal(${row.id})">
                         <i class="fa fa-pencil"></i>
                     </button>
+                    <button class="btn-action-delete" title="Delete Leave Request" onclick="confirmDeleteAdminLeave(${row.id}, '${escapeHtml(empName)}', '${row.leave_type.toUpperCase()} - ${row.total_leave} day(s)', '${row.status}')" style="background:#fee2e2; border:1px solid #fca5a5; color:#b91c1c; border-radius:6px; padding:5px 8px; font-size:12px; cursor:pointer;">
+                        <i class="fa fa-trash"></i>
+                    </button>
                 </div>
             `;
         } else {
             actions = `
-                <button class="btn-action-view" onclick="viewAdminDetails(${row.id})" style="white-space: nowrap;">
-                    <i class="fa fa-eye text-primary"></i> View Details
-                </button>
+                <div class="admin-action-btn-group" style="white-space: nowrap;">
+                    <button class="btn-action-view" onclick="viewAdminDetails(${row.id})" style="white-space: nowrap;">
+                        <i class="fa fa-eye text-primary"></i> View
+                    </button>
+                    <button class="btn-action-delete" title="Delete Leave Record & Refund Balance" onclick="confirmDeleteAdminLeave(${row.id}, '${escapeHtml(empName)}', '${row.leave_type.toUpperCase()} - ${row.total_leave} day(s)', '${row.status}')" style="background:#fee2e2; border:1px solid #fca5a5; color:#b91c1c; border-radius:6px; padding:5px 10px; font-size:12px; cursor:pointer; margin-left: 4px;">
+                        <i class="fa fa-trash"></i> Delete
+                    </button>
+                </div>
             `;
         }
 
@@ -1685,5 +1696,113 @@ function renderAdminDetailsBody(leave, balances, history) {
     `;
 
     $('#adminViewBody').html(html);
+
+    // Bind Delete button in modal footer
+    $('#btn_modal_delete_leave')
+        .show()
+        .off('click')
+        .on('click', function() {
+            confirmDeleteAdminLeave(leave.id, empName, leave.leave_type.toUpperCase() + ' - ' + leave.total_leave + ' day(s)', leave.status);
+        });
+}
+
+// =========================================================================
+// DELETE LEAVE RECORD WITH AUTOMATIC BALANCE REFUND
+// =========================================================================
+function confirmDeleteAdminLeave(id, empName, summary, status) {
+    let isApproved = (status === 'approved');
+    let title = isApproved ? 'Delete Approved Leave?' : 'Delete Leave Record?';
+    let alertBanner = isApproved ? `
+        <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 12px; border-radius: 8px; color: #92400e; margin-top: 10px; font-size: 12px; line-height: 1.5;">
+            <i class="fa fa-exclamation-triangle" style="font-size: 14px; margin-right: 4px;"></i> <strong>Automatic Leave Balance Refund:</strong><br>
+            The system will automatically verify attendance records. Any leave days previously processed and deducted in attendance will be <strong>refunded immediately</strong> to the employee's balance, and shift logs will be restored from Leave status.
+        </div>
+    ` : `
+        <div style="color: #64748b; font-size: 12px; margin-top: 6px;">
+            This ${status} leave record will be permanently deleted and recorded in the audit log.
+        </div>
+    `;
+
+    let html = `
+        <div style="font-size: 13px; text-align: left;">
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                <div><strong>Employee:</strong> ${escapeHtml(empName)}</div>
+                <div style="margin-top: 2px;"><strong>Leave Details:</strong> ${summary} &bull; <span class="badge" style="background:#e2e8f0; color:#334155;">${status.toUpperCase()}</span></div>
+            </div>
+            ${alertBanner}
+            <div style="margin-top: 14px;">
+                <label style="font-weight: 600; font-size: 12px; color: #334155;">Reason / Remarks for Deletion (Optional):</label>
+                <input type="text" id="swal_admin_del_reason" class="swal2-input" placeholder="e.g., Application cancelled by employee, entered by mistake..." style="margin: 6px 0 0 0; width: 100%; font-size: 13px; height: 38px; box-sizing: border-box;">
+            </div>
+        </div>
+    `;
+
+    Swal.fire({
+        title: title,
+        html: html,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: '<i class="fa fa-trash"></i> Yes, Delete Record',
+        cancelButtonText: 'Cancel',
+        focusCancel: true,
+        preConfirm: () => {
+            let el = document.getElementById('swal_admin_del_reason');
+            return el ? el.value.trim() : '';
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            executeDeleteAdminLeave(id, result.value || '');
+        }
+    });
+}
+
+function executeDeleteAdminLeave(id, reason) {
+    Swal.fire({
+        title: 'Deleting Leave...',
+        text: 'Checking deductions, restoring shift logs, and refunding balance...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    $.ajax({
+        url: "<?= base_url('leave_con/admin_action') ?>",
+        type: "POST",
+        dataType: "json",
+        data: {
+            action: 'delete',
+            leave_id: id,
+            delete_reason: reason
+        },
+        success: function(res) {
+            if (res.status === 'success') {
+                $('#adminViewModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted Successfully!',
+                    text: res.message,
+                    timer: 4000
+                });
+                loadAdminStats();
+                loadAdminData(currentAdminPage);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Deletion Failed',
+                    text: res.message || 'Unable to delete leave record.'
+                });
+            }
+        },
+        error: function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Communication Error',
+                text: 'Server communication error while deleting leave.'
+            });
+        }
+    });
 }
 </script>
