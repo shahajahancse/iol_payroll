@@ -974,7 +974,9 @@ class Grid_model extends CI_Model{
 			$this->db->where("pr_emp_shift.shift_name NOT LIKE '%punch%'");
 		}
 
+		$this->db->order_by('emp_section.sec_name_en', 'ASC');
 		$this->db->order_by('pr_emp_com_info.emp_line_id', 'ASC');
+		$this->db->order_by('pr_emp_com_info.emp_id', 'ASC');
 
 		$query = $this->db->get()->result_array();
 		if (empty($query)) {

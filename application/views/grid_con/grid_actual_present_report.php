@@ -71,7 +71,7 @@
 			<tr>
 				<th style="padding:2px 10px;">SL</th>
 				<th style="padding:2px 10px;">ID</th>
-				<th style="padding:4px;">row Name</th>
+				<th style="padding:4px;">Employee Name</th>
 				<th style="padding:4px">Designation</th>
 				<th style="padding:4px">Section</th>
 				<th style="padding:4px">Per Shift</th>
@@ -85,17 +85,22 @@
 				<th style="padding:4px">Total OT</th>
 			</tr>
 
-			<?php $emp_sec = '';
-				foreach ($values as $key => $row) {
-					if ($emp_sec != $row['emp_sec_id']) {
-					echo "<tr bgcolor='#CCCCCC'>";
-					echo "<td colspan='17' style='font-size:16px; font-weight:bold;'>Section :".$row['sec_name_en']."</td>";
-					echo "</tr>";
-					}
-				?>
-
+			<?php
+			$groupedData = array();
+			if (!empty($values)) {
+				foreach ($values as $row) {
+					$sec_name = !empty($row['sec_name_en']) ? trim($row['sec_name_en']) : 'No Section';
+					$groupedData[$sec_name][] = $row;
+				}
+			}
+			$sl = 1;
+			foreach ($groupedData as $sec_name => $employees) { ?>
+				<tr bgcolor='#CCCCCC'>
+					<td colspan='12' style='font-size:16px; font-weight:bold; padding: 4px 8px;'>Section :<?php echo htmlspecialchars($sec_name); ?></td>
+				</tr>
+				<?php foreach ($employees as $row) { ?>
 				<tr>
-					<td style="text-align:center; padding:2px"><?php echo $key +1; ?></td>
+					<td style="text-align:center; padding:2px"><?php echo $sl++; ?></td>
 					<td style="text-align:center; padding:2px"><?php echo $row['emp_id']?></td>
 					<td style="text-align:left; padding:2px"><?php echo $row['name_en']?></td>
 					<td style="text-align:left; padding:2px"><?php echo $row['desig_name']?></td>
@@ -113,7 +118,7 @@
 					<?php $total_ot = $row['ot'] + $row['eot']; ?>
 					<td style="text-align:center; padding:2px"><?php echo $total_ot; ?></td>
 				</tr>
-				<?php $emp_sec = $row['emp_sec_id']; ?>
+				<?php } ?>
 			<?php } ?>
 		</table>
 	</div>
