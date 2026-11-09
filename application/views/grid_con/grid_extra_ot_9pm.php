@@ -141,7 +141,7 @@
 								$att_status_count = $att_status;
 							}
 						}
-						elseif(in_array($row->shift_log_date, $emp_data['weekend']) || $row->present_status == 'W') {
+						elseif(($row->present_status != 'A' && in_array($row->shift_log_date, $emp_data['weekend'])) || $row->present_status == 'W') {
 							$has_punch = (!empty($row->in_time) && $row->in_time != '00:00:00') || (!empty($row->out_time) && $row->out_time != '00:00:00');
 							if (!$has_punch) {
 								$att_status = "Work Off";

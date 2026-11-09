@@ -1462,15 +1462,16 @@ class Attn_process_model extends CI_Model{
 		}
 
 		$emp_weekend = !empty($com_weekend) ? strtolower(trim($com_weekend)) : 'friday';
+		$weekends    = array_map('trim', explode(',', $emp_weekend));
 		$day_of_week = strtolower(date('l', strtotime($att_date)));
 
 		// If this day matches employee's weekend from pr_emp_com_info
-		if ($day_of_week === $emp_weekend) {
+		if (in_array($day_of_week, $weekends)) {
 			return true;
 		}
 
 		// Friday is NOT weekend if employee's assigned weekend is NOT Friday
-		if ($day_of_week === 'friday' && $emp_weekend !== 'friday') {
+		if ($day_of_week === 'friday' && !in_array('friday', $weekends)) {
 			return false;
 		}
 
@@ -1534,10 +1535,13 @@ class Attn_process_model extends CI_Model{
 
     function check_bridge_absent($emp_id, $date)
     {
-        // Bridge Absent Policy for Weekend:
-        // If employee did not work and was absent on previous scheduled working day, weekend becomes Absent (A)
+        // 1. Check backward: find the working day immediately before the weekend (skipping consecutive weekends)
         $prev_date = date('Y-m-d', strtotime("$date - 1 days"));
         for ($i = 0; $i < 7; $i++) {
+            if ($this->check_weekend($emp_id, $prev_date)) {
+                $prev_date = date('Y-m-d', strtotime("$prev_date - 1 days"));
+                continue;
+            }
             $log = $this->db->select('present_status, in_time, out_time')
                             ->where('emp_id', $emp_id)
                             ->where('shift_log_date', $prev_date)
@@ -1546,27 +1550,40 @@ class Attn_process_model extends CI_Model{
 
             if (!empty($log)) {
                 $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
-                if ($has_punch) {
-                    return false;
-                }
-                $status = strtoupper(trim($log->present_status));
-                if ($status === 'A') {
-                    // Preceding working day was absent without punch -> triggers bridge absent!
+                if (!$has_punch && strtoupper(trim($log->present_status)) === 'A') {
+                    // Preceding working day was absent without punch -> Rule 3 triggers absent!
                     return true;
                 }
-                if ($status === 'W' || $status === 'H') {
-                    // Preceding day was another off-day -> step back further
-                    $prev_date = date('Y-m-d', strtotime("$prev_date - 1 days"));
-                    continue;
-                }
-                // Preceding day was Leave (L), Outside Duty (OD), etc. -> not unexcused absent
-                return false;
-            } else {
-                break;
             }
+            break;
         }
+
+        // 2. Check forward: find the working day immediately after the weekend (skipping consecutive weekends)
+        $next_date = date('Y-m-d', strtotime("$date + 1 days"));
+        for ($i = 0; $i < 7; $i++) {
+            if ($this->check_weekend($emp_id, $next_date)) {
+                $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
+                continue;
+            }
+            $log = $this->db->select('present_status, in_time, out_time')
+                            ->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $next_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+
+            if (!empty($log)) {
+                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                if (!$has_punch && strtoupper(trim($log->present_status)) === 'A') {
+                    // Succeeding working day is absent without punch -> Rule 4 triggers absent!
+                    return true;
+                }
+            }
+            break;
+        }
+
         return false;
     }
+
 
     function is_next_day_absent($date, $emp_id)
     {
@@ -1814,74 +1831,163 @@ class Attn_process_model extends CI_Model{
 
     function bridge_consecutive_subsequent_weekends_holidays($emp_id, $absent_date)
     {
+        // Rule 3: If an employee is Absent immediately before a weekend, mark relevant consecutive weekend days as Absent
         $next_date = date('Y-m-d', strtotime("$absent_date + 1 days"));
         for ($i = 0; $i < 7; $i++) {
-            $log = $this->db->where('emp_id', $emp_id)
-                            ->where('shift_log_date', $next_date)
-                            ->get('pr_emp_shift_log')
-                            ->row();
-            if (!empty($log)) {
-                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
-                if ($has_punch) {
-                    break;
-                }
-                $is_wk = $this->check_weekend($emp_id, $next_date, false);
-                if ($is_wk || $log->present_status === 'W') {
-                    $this->db->where('emp_id', $emp_id)
-                             ->where('shift_log_date', $next_date)
-                             ->update('pr_emp_shift_log', array(
-                                 'present_status' => 'A',
-                                 'in_time'        => '00:00:00',
-                                 'out_time'       => '00:00:00',
-                                 'tot'            => 0,
-                                 'ot'             => 0,
-                                 'eot'            => 0,
-                                 'late_status'    => 0,
-                                 'deduction_hour' => 0,
-                                 'weekly_allo'    => 0,
-                                 'holiday_allo'   => 0
-                             ));
-                    $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
-                } else {
-                    break;
-                }
-            } else {
+            if (!$this->check_weekend($emp_id, $next_date)) {
                 break;
             }
+            // Safeguards (Rule 7): Do not overwrite Present, approved Leave, Holiday, or manual adjustments
+            if ($this->leave_chech($next_date, $emp_id) || $this->check_holiday($emp_id, $next_date)) {
+                break;
+            }
+            $log = $this->db->where('emp_id', $emp_id)->where('shift_log_date', $next_date)->get('pr_emp_shift_log')->row();
+            if (!empty($log)) {
+                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                if ($has_punch || in_array(strtoupper(trim($log->present_status)), array('P', 'L', 'H'))) {
+                    break;
+                }
+                $this->db->where('emp_id', $emp_id)
+                         ->where('shift_log_date', $next_date)
+                         ->update('pr_emp_shift_log', array(
+                             'present_status' => 'A',
+                             'in_time'        => '00:00:00',
+                             'out_time'       => '00:00:00',
+                             'tot'            => 0,
+                             'ot'             => 0,
+                             'eot'            => 0,
+                             'late_status'    => 0,
+                             'deduction_hour' => 0,
+                             'weekly_allo'    => 0,
+                             'holiday_allo'   => 0
+                         ));
+            } else {
+                $emp_com = $this->db->select('emp_shift')->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+                $shift_id = !empty($emp_com) ? $emp_com->emp_shift : 1;
+                $sh_row = $this->db->select('schedule_id')->where('id', $shift_id)->get('pr_emp_shift')->row();
+                $schedule_id = !empty($sh_row) ? $sh_row->schedule_id : 1;
+
+                $this->db->insert('pr_emp_shift_log', array(
+                    'emp_id'         => $emp_id,
+                    'shift_id'       => $shift_id,
+                    'schedule_id'    => $schedule_id,
+                    'shift_log_date' => $next_date,
+                    'present_status' => 'A',
+                    'in_time'        => '00:00:00',
+                    'out_time'       => '00:00:00',
+                    'tot'            => 0,
+                    'ot'             => 0,
+                    'eot'            => 0,
+                    'late_status'    => 0,
+                    'deduction_hour' => 0,
+                    'weekly_allo'    => 0,
+                    'holiday_allo'   => 0,
+                    'modify_eot'     => 0
+                ));
+            }
+            $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
+        }
+
+        // Rule 4: If an employee is Absent immediately after a weekend, mark relevant consecutive weekend days as Absent
+        $prev_date = date('Y-m-d', strtotime("$absent_date - 1 days"));
+        for ($i = 0; $i < 7; $i++) {
+            if (!$this->check_weekend($emp_id, $prev_date)) {
+                break;
+            }
+            // Safeguards (Rule 7): Do not overwrite Present, approved Leave, Holiday, or manual adjustments
+            if ($this->leave_chech($prev_date, $emp_id) || $this->check_holiday($emp_id, $prev_date)) {
+                break;
+            }
+            $log = $this->db->where('emp_id', $emp_id)->where('shift_log_date', $prev_date)->get('pr_emp_shift_log')->row();
+            if (!empty($log)) {
+                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                if ($has_punch || in_array(strtoupper(trim($log->present_status)), array('P', 'L', 'H'))) {
+                    break;
+                }
+                $this->db->where('emp_id', $emp_id)
+                         ->where('shift_log_date', $prev_date)
+                         ->update('pr_emp_shift_log', array(
+                             'present_status' => 'A',
+                             'in_time'        => '00:00:00',
+                             'out_time'       => '00:00:00',
+                             'tot'            => 0,
+                             'ot'             => 0,
+                             'eot'            => 0,
+                             'late_status'    => 0,
+                             'deduction_hour' => 0,
+                             'weekly_allo'    => 0,
+                             'holiday_allo'   => 0
+                         ));
+            } else {
+                $emp_com = $this->db->select('emp_shift')->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+                $shift_id = !empty($emp_com) ? $emp_com->emp_shift : 1;
+                $sh_row = $this->db->select('schedule_id')->where('id', $shift_id)->get('pr_emp_shift')->row();
+                $schedule_id = !empty($sh_row) ? $sh_row->schedule_id : 1;
+
+                $this->db->insert('pr_emp_shift_log', array(
+                    'emp_id'         => $emp_id,
+                    'shift_id'       => $shift_id,
+                    'schedule_id'    => $schedule_id,
+                    'shift_log_date' => $prev_date,
+                    'present_status' => 'A',
+                    'in_time'        => '00:00:00',
+                    'out_time'       => '00:00:00',
+                    'tot'            => 0,
+                    'ot'             => 0,
+                    'eot'            => 0,
+                    'late_status'    => 0,
+                    'deduction_hour' => 0,
+                    'weekly_allo'    => 0,
+                    'holiday_allo'   => 0,
+                    'modify_eot'     => 0
+                ));
+            }
+            $prev_date = date('Y-m-d', strtotime("$prev_date - 1 days"));
         }
     }
 
     function unbridge_consecutive_subsequent_weekends_holidays($emp_id, $present_date)
     {
-        $next_date = date('Y-m-d', strtotime("$present_date + 1 days"));
+        // When an employee becomes Present on present_date, check backward connected weekends
+        $prev_date = date('Y-m-d', strtotime("$present_date - 1 days"));
         for ($i = 0; $i < 7; $i++) {
-            $log = $this->db->where('emp_id', $emp_id)
-                            ->where('shift_log_date', $next_date)
-                            ->get('pr_emp_shift_log')
-                            ->row();
-            if (!empty($log)) {
-                $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
-                if ($has_punch) {
-                    break;
-                }
-                $is_wk = $this->check_weekend($emp_id, $next_date, false);
-                $is_hol = $this->check_holiday($emp_id, $next_date);
-                if ($is_hol) {
-                    $this->db->where('emp_id', $emp_id)
-                             ->where('shift_log_date', $next_date)
-                             ->update('pr_emp_shift_log', array('present_status' => 'H'));
-                    $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
-                } elseif ($is_wk) {
-                    $this->db->where('emp_id', $emp_id)
-                             ->where('shift_log_date', $next_date)
-                             ->update('pr_emp_shift_log', array('present_status' => 'W'));
-                    $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
-                } else {
-                    break;
-                }
-            } else {
+            if (!$this->check_weekend($emp_id, $prev_date)) {
                 break;
             }
+            // If the other side of this weekend is NOT absent, restore weekend to 'W'
+            if (!$this->check_bridge_absent($emp_id, $prev_date)) {
+                $log = $this->db->where('emp_id', $emp_id)->where('shift_log_date', $prev_date)->get('pr_emp_shift_log')->row();
+                if (!empty($log) && $log->present_status === 'A') {
+                    $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                    if (!$has_punch) {
+                        $this->db->where('emp_id', $emp_id)
+                                 ->where('shift_log_date', $prev_date)
+                                 ->update('pr_emp_shift_log', array('present_status' => 'W'));
+                    }
+                }
+            }
+            $prev_date = date('Y-m-d', strtotime("$prev_date - 1 days"));
+        }
+
+        // When an employee becomes Present on present_date, check forward connected weekends
+        $next_date = date('Y-m-d', strtotime("$present_date + 1 days"));
+        for ($i = 0; $i < 7; $i++) {
+            if (!$this->check_weekend($emp_id, $next_date)) {
+                break;
+            }
+            // If the other side of this weekend is NOT absent, restore weekend to 'W'
+            if (!$this->check_bridge_absent($emp_id, $next_date)) {
+                $log = $this->db->where('emp_id', $emp_id)->where('shift_log_date', $next_date)->get('pr_emp_shift_log')->row();
+                if (!empty($log) && $log->present_status === 'A') {
+                    $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                    if (!$has_punch) {
+                        $this->db->where('emp_id', $emp_id)
+                                 ->where('shift_log_date', $next_date)
+                                 ->update('pr_emp_shift_log', array('present_status' => 'W'));
+                    }
+                }
+            }
+            $next_date = date('Y-m-d', strtotime("$next_date + 1 days"));
         }
     }
 
