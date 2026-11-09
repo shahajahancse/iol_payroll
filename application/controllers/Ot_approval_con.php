@@ -58,13 +58,10 @@ class Ot_approval_con extends CI_Controller
     }
 
     /**
-     * Determine if current user has permission for Daily OT Approval (ACL ID 218 or Admin)
+     * Determine if current user has permission for Daily OT Approval (ACL ID 218)
      */
     public function has_permission()
     {
-        if ($this->is_admin()) {
-            return true;
-        }
         $user_id = isset($this->data['user_data']->id) ? $this->data['user_data']->id : 0;
         $acl = check_acl_list($user_id);
         return in_array(218, $acl);
