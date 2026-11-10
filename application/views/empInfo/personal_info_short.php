@@ -690,6 +690,10 @@ function emp_id_search(id = null) {
                     $('#unit_id').val(data.unit_id);
                 }
 
+                if (data.weekend) {
+                    $('#weekend').val(data.weekend).trigger('change');
+                }
+
                 if (data.emp_dept_id) {
                     $('#emp_dept_id').val(data.emp_dept_id);
                     load_sections(data.emp_dept_id, data.emp_sec_id, function() {

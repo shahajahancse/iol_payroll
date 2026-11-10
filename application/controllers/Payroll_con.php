@@ -42,7 +42,10 @@ class Payroll_con extends CI_Controller {
 
 	function first_body()
 	{
-		$this->load->view('id_proxi_ins');
+		$this->data['title'] = 'Support';
+		$this->data['username'] = isset($this->data['user_data']->id_number) ? $this->data['user_data']->id_number : '';
+		$this->data['subview'] = 'id_proxi_ins';
+		$this->load->view('layout/template', $this->data);
 	}
 
 	function footer()

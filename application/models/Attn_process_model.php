@@ -85,11 +85,17 @@ class Attn_process_model extends CI_Model{
 					}
 				}
 
+				$emp_shift = $this->emp_shift_check_process($emp_id, $shift_id, $schedule_id, $process_date);
+				$shift_id    = $emp_shift->shift_id;
+				$schedule_id = $emp_shift->schedule_id;
+				if (!empty($emp_shift->shift_name)) {
+					$shift_name = $emp_shift->shift_name;
+				}
+
 				$is_billing_shift = (strtolower(trim($shift_name)) == 'billing' || strtolower(trim($sec_name)) == 'billing');
 				$sh_name_trim = strtolower(trim($shift_name));
 				$is_12_shift = in_array($sh_name_trim, array('shift 12 morning', 'shift 12 night', '12 morning', '12 night', 'shift12 morning', 'shift12 night', 'shift 12morning', 'shift 12night')) || strpos($sh_name_trim, '12 morning') !== false || strpos($sh_name_trim, '12 night') !== false;
 
-				$emp_shift = $this->emp_shift_check_process($emp_id, $shift_id, $schedule_id, $process_date);
 				$schedule  = $this->get_emp_schedule($emp_shift->schedule_id);
 
 				$in_start_time	= $schedule[0]["in_start"];
@@ -395,10 +401,7 @@ class Attn_process_model extends CI_Model{
 					}
 				}elseif ($process_date == $weekend || $weekend === true){
 					$has_punch = (!empty($in_time) && $in_time != '00:00:00') || (!empty($out_time) && $out_time != '00:00:00');
-					if ($has_punch && $ot_entitle == 1) {
-						// For ot_entitle == 1, working on weekend counts as normal duty day
-						$attn_status = "P";
-					} elseif (!$has_punch && ($this->check_bridge_absent($emp_id, $process_date) || $this->is_weekend_holiday_between_leave_and_absent($emp_id, $process_date))) {
+					if (!$has_punch && ($this->check_bridge_absent($emp_id, $process_date) || $this->is_weekend_holiday_between_leave_and_absent($emp_id, $process_date))) {
 						// Bridge Rule & Sandwich Rule: Weekend preceded by Absent or falling between Leave and Absent becomes Absent ('A')
 						$attn_status = "A";
 						$in_time = '00:00:00';
@@ -409,7 +412,7 @@ class Attn_process_model extends CI_Model{
 					// dd($out_time);
 
 					} else {
-						// Weekend off day (without punches or ot_entitle==0)
+						// Weekend off day: always sets present_status to "W"
 						$attn_status = "W";
 					}
 					if (empty($in_time) || $in_time == '00:00:00') {
@@ -1313,7 +1316,7 @@ class Attn_process_model extends CI_Model{
 
 			// Present status
 			if ($is_weekend_holiday) {
-				$present_status = ($ot_entitle == 1) ? 'P' : (($date == $holiday || $holiday === true) ? 'H' : 'W');
+				$present_status = ($date == $holiday || $holiday === true) ? 'H' : 'W';
 			} else {
 				if ($final_in != '00:00:00' && $final_out != '00:00:00' && $final_in != $final_out) {
 					$present_status = 'P';
@@ -2041,16 +2044,18 @@ class Attn_process_model extends CI_Model{
 
 	// employee shift check from pr_emp_shift_log table
 	function emp_shift_check_process($emp_id, $shift_id, $schedule_id, $process_date){
-		$this->db->select("shift_id, schedule_id");
+		$this->db->select("pr_emp_shift_log.shift_id, pr_emp_shift_log.schedule_id, pr_emp_shift.shift_name");
 		$this->db->from("pr_emp_shift_log");
-		$this->db->where("emp_id", $emp_id);
-		$this->db->where("shift_log_date", $process_date);
+		$this->db->join("pr_emp_shift", "pr_emp_shift.id = pr_emp_shift_log.shift_id", "left");
+		$this->db->where("pr_emp_shift_log.emp_id", $emp_id);
+		$this->db->where("pr_emp_shift_log.shift_log_date", $process_date);
 		$query = $this->db->get();
 		$data = new stdClass();
 		if($query->num_rows() > 0 ){
 			$row = 		$query->row();
 			$data->shift_id    = $row->shift_id;
 			$data->schedule_id = $row->schedule_id;
+			$data->shift_name  = $row->shift_name;
 			return $data;
 		} else {
 			$infos = array(
@@ -2064,6 +2069,8 @@ class Attn_process_model extends CI_Model{
 
 			$data->shift_id    = $shift_id;
 			$data->schedule_id = $schedule_id;
+			$shift_row = $this->db->select("shift_name")->where("id", $shift_id)->get("pr_emp_shift")->row();
+			$data->shift_name  = !empty($shift_row) ? $shift_row->shift_name : '';
 			return $data;
 		}
 	}

@@ -1427,6 +1427,10 @@ function emp_id_search(id = null) {
                     $('#unit_id').val(data.unit_id);
                 }
 
+                if (data.weekend) {
+                    $('#weekend').val(data.weekend).trigger('change');
+                }
+
                 if (data.emp_dept_id) {
                     $('#emp_dept_id').val(data.emp_dept_id);
                     if ($('#emp_dept_id').data('select2')) $('#emp_dept_id').select2('val', data.emp_dept_id);

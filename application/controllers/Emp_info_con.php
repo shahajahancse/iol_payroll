@@ -94,6 +94,7 @@ class Emp_info_con extends CI_Controller {
 		$this->form_validation->set_rules('personal_mobile', 'Personal Mobile', 'trim|required');
 		$this->form_validation->set_rules('bank_bkash_no', 'Bank Account', 'trim|required');
 		$this->form_validation->set_rules('emp_per_shift', 'Emp Permanent Shift', 'trim');
+		$this->form_validation->set_rules('weekend', 'Off Day / Weekend', 'trim');
 
 		$this->form_validation->set_error_delimiters("","");
 

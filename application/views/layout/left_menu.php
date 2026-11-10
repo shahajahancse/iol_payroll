@@ -663,7 +663,7 @@
       </li>
       <?php } ?>
 
-      <li class="start">
+      <li class="start <?= activate_method('first_body') ?>">
          <a href="<?=base_url('payroll_con/first_body')?>"> <i class="fa fa-phone"></i>  <span class="title">Support</span></a>
       </li>
       <li class="start"><a href="<?=base_url('logout_FE')?>"> <i class="fa fa-power-off"></i>  <span class="title">Log Out</span></a>

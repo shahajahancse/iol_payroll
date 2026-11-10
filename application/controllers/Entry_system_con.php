@@ -716,11 +716,29 @@ class Entry_system_con extends CI_Controller
         // dd($shift);
         $schedule_id=$shift->schedule_id;
 
+        $is_no_punch = !empty($shift->shift_name) && in_array(strtolower(trim($shift->shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'));
+
         foreach($emp_ids as $emp_id){
-            $this->db->where('emp_id',$emp_id)
-            ->where('shift_log_date >=',$first_date)
-            ->where('shift_log_date <=',$second_date)
-            ->update('pr_emp_shift_log',array('schedule_id'=>$schedule_id,'shift_id'=>$shift->id));
+            $update_data = array('schedule_id'=>$schedule_id,'shift_id'=>$shift->id);
+            if ($is_no_punch) {
+                // For No Punch shift, working days marked 'A' or 'P(Error)' become 'P'
+                $this->db->where('emp_id', $emp_id)
+                    ->where('shift_log_date >=', $first_date)
+                    ->where('shift_log_date <=', $second_date)
+                    ->where_not_in('present_status', array('W', 'H', 'L'))
+                    ->update('pr_emp_shift_log', array_merge($update_data, array('present_status' => 'P', 'late_status' => 0, 'early_exit' => 0, 'deduction_hour' => 0)));
+
+                $this->db->where('emp_id', $emp_id)
+                    ->where('shift_log_date >=', $first_date)
+                    ->where('shift_log_date <=', $second_date)
+                    ->where_in('present_status', array('W', 'H', 'L'))
+                    ->update('pr_emp_shift_log', $update_data);
+            } else {
+                $this->db->where('emp_id',$emp_id)
+                ->where('shift_log_date >=',$first_date)
+                ->where('shift_log_date <=',$second_date)
+                ->update('pr_emp_shift_log', $update_data);
+            }
         };
         echo 'success';
 
