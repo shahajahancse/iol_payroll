@@ -210,15 +210,26 @@ class Attn_process_model extends CI_Model{
             		// Check both in_time and out_time independently so single punch (in only or out only) is captured
             		$in_time  = $this->time_check_in($in_start_dt, $in_end_dt, $emp_id, 'ASC', $table);
             		$out_time = $this->time_check_in($out_start_dt, $out_end_dt, $emp_id, 'DESC', $table);
-
-            		// Priority for manual entry from Entry System (device_id = 0)
+					// dd($in_start_dt.'='.$in_end_dt.'='.$out_start_dt.'='.$out_end_dt.'='.$emp_id.'='.$table);
+					// dd($out_start_dt.'='.$out_end_dt.'='.$emp_id.'='.$table);
+					// dd($out_time); //2026-11-07 06:06:23 
+            		// Check manual entry (device_id = 0):
+            		// Rule: Take first (earliest) time for in_time and last (latest) time for out_time
             		$manual_in = $this->time_check_manual($process_date, $emp_id, 1, $table);
             		if (!empty($manual_in)) {
-            			$in_time = $manual_in;
+            			if (empty($in_time) || $in_time == '00:00:00') {
+            				$in_time = $manual_in;
+            			} elseif (strtotime($manual_in) < strtotime($in_time)) {
+            				$in_time = $manual_in;
+            			}
             		}
             		$manual_out = $this->time_check_manual($process_date, $emp_id, 2, $table, $out_end_date);
             		if (!empty($manual_out)) {
-            			$out_time = $manual_out;
+            			if (empty($out_time) || $out_time == '00:00:00') {
+            				$out_time = $manual_out;
+            			} elseif (strtotime($manual_out) > strtotime($out_time)) {
+            				$out_time = $manual_out;
+            			}
             		}
 
             		// 12-Hour Shift Rules:
@@ -240,21 +251,28 @@ class Attn_process_model extends CI_Model{
             			$out_time = '00:00:00';
             		}
             	}
+				// dd($out_time); //2026-11-06 22:30:00
+
 
             	// Strict Policy: No punch within the in_time range [in_start_dt, in_end_dt] can be accepted as out_time!
             	// If no punch falls in the designated out_start to out_end range, out_time must remain '00:00:00'.
+				// dd($out_time);
+
             	if (!empty($out_time) && $out_time != '00:00:00') {
             		$out_ts = strtotime($out_time);
             		$in_start_ts = strtotime($in_start_dt);
             		$in_end_ts   = strtotime($in_end_dt);
+					// dd($out_time .'>='. $in_start_dt .'&&'. $out_time .'<='. $in_end_dt);
             		if ($out_ts >= $in_start_ts && $out_ts <= $in_end_ts) {
             			$out_time = '00:00:00';
+						// dd('lo');
             		}
             		if (!empty($in_time) && $in_time != '00:00:00' && $out_ts <= strtotime($in_time)) {
             			$out_time = '00:00:00';
+						// dd('lo;');
+
             		}
             	}
-				// dd($out_time);
 
             	if (!$leaves && !empty($in_time) && empty($out_time) && date('t',strtotime($process_date))==date('d',strtotime($process_date))) {
             		$next_day = date('Y-m-d', strtotime($out_date. ' + 1 days'));
@@ -388,6 +406,8 @@ class Attn_process_model extends CI_Model{
 						$tot_hour = 0;
 						$ot_hour = 0;
 						$eot_hour = 0;
+					// dd($out_time);
+
 					} else {
 						// Weekend off day (without punches or ot_entitle==0)
 						$attn_status = "W";
@@ -469,6 +489,7 @@ class Attn_process_model extends CI_Model{
 					$early_exit = 1;
 				}
 				//============= Check employee attendance status =============
+					// dd($out_time);
 
 				//============= Working day/Weeked/Holiday OT Calculation =============
 				if ($ot_entitle == 1) {
@@ -639,6 +660,8 @@ class Attn_process_model extends CI_Model{
 					'alert_msg'			=> $alert_msg
 				);
 				// dd($data);
+				// dd($out_time);
+
 				$this->db->where('shift_log_date', $process_date);
 				$this->db->where('emp_id', $emp_id);
 				$this->db->update('pr_emp_shift_log', $data);
