@@ -39,18 +39,47 @@ echo $date_format;
 	border-top:1px solid;
 	 width:170px;
 }
+
+@media screen {
+    table.sal {
+        margin-bottom: 35px;
+    }
+    .page-break {
+        display: block;
+        height: 40px;
+        margin: 30px auto;
+        /* border-bottom: 2px dashed #999; */
+        width: 13.5in;
+    }
+}
+
+@media print {
+    table.sal {
+        margin-bottom: 0 !important;
+    }
+    .page-break {
+        display: block !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+}
 </style>
 
 </head>
 
-<body">
+<body>
 
 <?php 
 // echo "<pre>";print_r($value);exit;
+$per_page = 8;
 $row_count=count($value);
-if($row_count >7)
+if($row_count > $per_page)
 {
-$page=ceil($row_count/7);
+$page=ceil($row_count/$per_page);
 }
 else
 {
@@ -86,10 +115,10 @@ $k = 0;
 for ( $counter = 1; $counter <= $page; $counter ++){
 ?>
 
-<table height="auto" class="sal" border="1" cellspacing="0" cellpadding="0" style="font-size:13px; width:13.5in; position: relative; font-family:SutonnyMJ, SolaimanLipi;">
+<table height="auto" class="sal" border="1" cellspacing="0" cellpadding="0" style="font-size:13px; width:13.5in; position: relative; font-family:SutonnyMJ, SolaimanLipi; page-break-inside: avoid; break-inside: avoid;">
 
 <tr height="90px">
-<td colspan="37" align="center">
+<td colspan="39" align="center">
 
 <div style="width:90%; font-family:Arial, Helvetica, sans-serif;">
 <?php 
@@ -167,6 +196,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 	 <?php }else{ ?>
 <!--	  <td colspan="5" height="20px"><div align="center"><strong>কর্তন</strong></div></td>
 -->	  <?php } ?> 
+    <td rowspan="2" width="22" height="20px"><div align="center"><strong>বকেয়া বিল</strong></div></td>
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>সর্বমোট টাকা</strong></div></td>
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>অগ্রীম কর্তন</strong></div></td>
     <td rowspan="2" width="22" height="20px"><div align="center"><strong>পেনাল্টি কর্তন</strong></div></td>
@@ -199,14 +229,18 @@ for ( $counter = 1; $counter <= $page; $counter ++){
    </tr>
 <?php
 			
-	if($counter == $page)
+	if($row_count == 0)
+	{
+		$per_page_row = -1;
+	}
+	elseif($counter == $page)
   	{
-   		$modulus = ($row_count-1) % 7;
+   		$modulus = ($row_count-1) % $per_page;
     	$per_page_row=$modulus;
 	}
    	else
    	{
-    	$per_page_row=6;
+    	$per_page_row = $per_page - 1;
    	}
   	
    $total_basic_salary 		= 0;
@@ -235,9 +269,9 @@ for ( $counter = 1; $counter <= $page; $counter ++){
    $in_total_sum			= 0;
    $total_arrear_amount		= 0;
 
-	for($p=0; $p<=$per_page_row;$p++)
+	for($p=0; $p<=$per_page_row && $k < $row_count; $p++)
 	{
-		echo "<tr height='75' style='text-align:center;' >";
+		echo "<tr height='65' style='text-align:center;' >";
 		echo "<td >";
 		echo $k+1;
 		echo "</td>";
@@ -247,11 +281,11 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo "</td>";
 		
 		echo "<td colspan='6' style='font-family:Arial, Helvetica, sans-serif; text-align:left; padding-left:5px;'>";
-		echo "<span  style='font-weight:bold;'>";
+		echo "<span  style='font-weight:bold;white-space:nowrap;'>";
 		print_r($value[$k]->name_en);
 		echo "</span>";
 		echo '<br>';
-		echo "<span  style='font-size:10px;'>";
+		echo "<span  style='font-size:10px;white-space:nowrap;'>";
 
 		print_r($value[$k]->desig_name);
 		echo '<br>';
@@ -262,9 +296,6 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		echo '<br>';
 		echo "Grade: ";print_r ($value[$k]->gr_name);
 		echo '<br>';
-		if (!empty($value[$k]->arrear_amount) && $value[$k]->arrear_amount > 0) {
-			echo "<span style='font-size:10px; font-weight:bold; color:#0c74bf;'>বকেয়া: " . number_format($value[$k]->arrear_amount) . "</span><br>";
-		}
 		if($grid_status == 4)
 		{
 			$resign_date = $this->grid_model->get_resign_date_by_empid($value[$k]->emp_id);
@@ -432,6 +463,9 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		$arrear_amount 				= isset($value[$k]->arrear_amount) ? (float)$value[$k]->arrear_amount : 0;
 		$total_arrear_amount 		= $total_arrear_amount + $arrear_amount;
 		$grand_total_arrear_amount 	= $grand_total_arrear_amount + $arrear_amount;
+		echo "<td>";
+		echo $arrear_amount;
+		echo "</td>";
 
 		$total_sum =  $net_wages + $att_bonus + $ot_amount + $arrear_amount; 
 		$in_total_sum = $in_total_sum  + $total_sum;
@@ -515,6 +549,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
          <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_ot_hour);?></strong></td>
           <td align="right" colspan="1"></td>
         <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_ot_eot_amount);?></strong></td>
+        <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_arrear_amount);?></strong></td>
         <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($in_total_sum);?></strong></td>
           <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_adv_deduct);?></strong></td>
           <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($total_penalty_deduct);?></strong></td>
@@ -550,6 +585,7 @@ for ( $counter = 1; $counter <= $page; $counter ++){
          <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_ot_hour);?></strong></td>
             <td align="right" colspan="1"></td>
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_ot_eot_amount);?></strong></td>
+            <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_arrear_amount);?></strong></td>
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_sum);?></strong></td>
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_adv_deduct);?></strong></td>
             <td align="right" style="font-size:14px;"><strong><?php echo $english_format_number = number_format($grand_total_penalty_deduct);?></strong></td>
@@ -559,20 +595,20 @@ for ( $counter = 1; $counter <= $page; $counter ++){
             
             </tr>
 			<?php } ?>
-			<tr>
-				<td colspan="38">
-					<?php 
-					$siginfo['unit_id'] = $unit_id;
-					$this->load->view("authorised_signature", $siginfo);?>
-				</td>
-			</tr>
 		</table>
-		<!-- <div style="page-break-after: always; margin: 10px; padding:0px;"></div> -->
+		<div style="width: 13.5in; margin: 25px auto 10px auto;">
+			<?php 
+			$siginfo['unit_id'] = $unit_id;
+			$siginfo['page_break'] = false;
+			$this->load->view("authorised_signature", $siginfo);?>
+		</div>
+		<?php if ($counter < $page) { ?>
+			<div class="page-break"></div>
+		<?php } ?>
 		<?php
 	}
 ?>
 </body>
 </html>
 
-<br><br><br>
 <?php exit(); ?>
