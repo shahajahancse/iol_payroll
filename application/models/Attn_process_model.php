@@ -155,6 +155,15 @@ class Attn_process_model extends CI_Model{
             		$out_end_dt   = "$out_end_date $out_end_time";
             	}
 
+            	// Overnight out-punch window for 12-hour shifts or off-days (Friday / weekend / holiday):
+            	// Employees on 12-hour shifts or working on off-days can work up to 24 hours (overnight until next morning).
+            	// If out_end_date is same as process_date, extend search window to next day morning up to 08:00:00 so next-day punch-out is captured.
+            	$is_friday_day = (strtolower(date('l', strtotime($process_date))) === 'friday');
+            	if (($is_12_shift || $is_friday_day || $process_date == $weekend || $weekend === true || $process_date == $holiday || $holiday === true) && $out_end_date == $process_date) {
+            		$next_out_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
+            		$out_end_dt = "$next_out_date 08:00:00";
+            	}
+
             	$out_date = $out_end_date;
 
             	// OT start time define
@@ -509,7 +518,7 @@ class Attn_process_model extends CI_Model{
 
                 		$start_date_time = strtotime($in_time);
 						$end_date_time 	 = strtotime($out_time);
-						if ($end_date_time < $start_date_time) {
+						if ($end_date_time < $start_date_time || ($end_date_time - $start_date_time) < 7200) {
 							$end_date_time = strtotime("+1 day", $end_date_time);
 						}
 						$minute = round(($end_date_time - $start_date_time)/60);
@@ -537,8 +546,8 @@ class Attn_process_model extends CI_Model{
 						if (!empty($ot_last_hour) && ($minute % 60) >= $ot_last_hour) {
 							$eot_hour = $eot_hour + 1;
 						}
-						// Per day maximum OT limit: Friday capped at max 24 hours; other off days capped at 16 hours
-						$max_cap = $is_friday ? 24 : 16;
+						// Per day maximum OT limit: Friday and off days (weekend/holiday) full duty counted as OT, capped at max 24 hours
+						$max_cap = 24;
 						if ($eot_hour > $max_cap) {
 							$eot_hour = $max_cap;
 						}
@@ -1378,7 +1387,8 @@ class Attn_process_model extends CI_Model{
 					if (!empty($ot_last_hour) && ($minute % 60) >= $ot_last_hour) {
 						$eot_hour += 1;
 					}
-					$max_cap = $is_friday ? 24 : 16;
+					// Per day maximum OT limit: Friday and off days (weekend/holiday) full duty counted as OT, capped at max 24 hours
+					$max_cap = 24;
 					if ($eot_hour > $max_cap) {
 						$eot_hour = $max_cap;
 					}

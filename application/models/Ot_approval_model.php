@@ -125,8 +125,8 @@ class Ot_approval_model extends CI_Model
         // Condition 1: OT Eligible (ot_entitle == 0 or com_ot_entitle == 0)
         $this->db->where('(c.ot_entitle = 0 OR c.com_ot_entitle = 0)');
 
-        // Condition 2: Actual OT recorded (tot > 0 OR ot > 0 OR eot > 0)
-        $this->db->where('(s.tot > 0 OR s.ot > 0 OR s.eot > 0)');
+        // Condition 2: Actual OT recorded or off-day duty
+        $this->db->where('(s.tot > 0 OR s.ot > 0 OR s.eot > 0 OR s.present_status = "W" OR s.present_status = "H")');
 
         // Condition 3: Complete and valid attendance punches
         $this->db->where('s.in_time IS NOT NULL');
@@ -149,20 +149,38 @@ class Ot_approval_model extends CI_Model
         foreach ($records as $row) {
             $emp_id = $row->emp_id;
             $row_unit = !empty($row->unit_id) ? $row->unit_id : 1;
+            $row_date = $row->shift_log_date;
 
-            // Calculate actual OT hours
-            $actual_ot = ($row->tot > 0) ? (float)$row->tot : ((float)$row->ot + (float)$row->eot);
+            // Check if off-day (Friday, weekend 'W', holiday 'H')
+            $day_of_week = date('l', strtotime($row_date));
+            $is_friday = (strtolower($day_of_week) === 'friday');
+            $is_off_day = ($row->present_status === 'W' || $row->present_status === 'H' || $is_friday);
+
+            if ($is_off_day) {
+                // On off-day (weekend/holiday/Friday), regular working hours are 0 and full duty duration is OT (up to 24 hrs)
+                $regular_hours = 0.00;
+                $in_ts = strtotime($row->in_time);
+                $out_ts = strtotime($row->out_time);
+                if ($out_ts <= $in_ts || ($out_ts - $in_ts) < 7200) {
+                    $out_ts = strtotime("+1 day", $out_ts);
+                }
+                $diff_minutes = round(($out_ts - $in_ts) / 60);
+                $calc_ot = floor($diff_minutes / 60);
+                if (($diff_minutes % 60) >= 50) {
+                    $calc_ot += 1;
+                }
+                if ($calc_ot > 24) {
+                    $calc_ot = 24;
+                }
+                $actual_ot = max((float)$row->tot, (float)$calc_ot);
+            } else {
+                $regular_hours = $this->get_regular_hours_by_shift($row->shift_id, $row->shift_name);
+                $actual_ot = ($row->tot > 0) ? (float)$row->tot : ((float)$row->ot + (float)$row->eot);
+            }
+
             if ($actual_ot <= 0) {
                 continue;
             }
-
-            // On weekend or holiday, regular working hours are 0 (full time is OT)
-            if ($row->present_status === 'W' || $row->present_status === 'H') {
-                $regular_hours = 0.00;
-            } else {
-                $regular_hours = $this->get_regular_hours_by_shift($row->shift_id, $row->shift_name);
-            }
-            $row_date = $row->shift_log_date;
 
             // Check if record already exists
             $existing = $this->db->where('emp_id', $emp_id)
