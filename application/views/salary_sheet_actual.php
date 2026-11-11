@@ -438,12 +438,9 @@ echo "টাকা প্রদানের তারিখ : "."<span style=''>
 
 
 		if($value[$k]->ot_entitle==1 && $value[$k]->com_ot_entitle ==1){
-
 			$eot_hour = 0;
 			$ot_hour  = 0;
-
-		}elseif($value[$k]->ot_entitle==0 && $value[$k]->com_ot_entitle ==0){
-
+		}else{
 			$ot = $this->db->select("
 				SUM('ot') as ot_hour, SUM('eot') as eot_hour,
 			")->where('emp_id', $value[$k]->emp_id)->where('shift_log_date BETWEEN "'.$from_date.'" AND "'.$to_date.'"')->get('pr_emp_shift_log')->row();
@@ -451,11 +448,6 @@ echo "টাকা প্রদানের তারিখ : "."<span style=''>
 			$ot_hour = $ot->ot_hour;
 			$eot_hour = $ot->eot_hour;
 		}
-		else{
-			$eot_hour = 0;
-			$ot_hour  = 0;
-		}
-
 
 		$total_ot_eot = $ot_hour + $eot_hour;
 		echo $ot_hour."<br>".$eot_hour."<br>"."= <br>".$total_ot_eot;
@@ -468,17 +460,10 @@ echo "টাকা প্রদানের তারিখ : "."<span style=''>
 		print_r($value[$k]->ot_rate);
 		echo "</td>";
 
-
 		if($value[$k]->ot_entitle==1 && $value[$k]->com_ot_entitle==1){
-
 			$ot_amount = 0;
-
-		}elseif($value[$k]->ot_entitle==0 && $value[$k]->com_ot_entitle==0){
-
+		}else{
 			$ot_amount =  $value[$k]->ot_amount + $value[$k]->eot_amount;
-		}
-		else{
-			$ot_amount = 0;
 		}
 
 

@@ -28,6 +28,12 @@ class Processdb extends CI_Model{
 		}
 	}
 
+	private function _resolve_ot_entitle() {
+		$raw_ot     = $this->input->post('ot_entitle');
+		$raw_com_ot = $this->input->post('com_ot_entitle');
+		return (($raw_ot !== null && $raw_ot === '0') || ($raw_com_ot !== null && $raw_com_ot === '0')) ? 0 : 1;
+	}
+
 	//==================================Employee Information Insert==============================
 	//=========================================================================================
 	function insert_emp_info()
@@ -68,8 +74,8 @@ class Processdb extends CI_Model{
 			'com_gross_sal'		=> $this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : ($this->input->post('gross_sal') ? $this->input->post('gross_sal') : 0),
 			'monitor_con'		=> 2,
 
-			'ot_entitle'		=> $this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : ($this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : 1),
-			'com_ot_entitle'    => $this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : ($this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : 1),
+			'ot_entitle'		=> $this->_resolve_ot_entitle(),
+			'com_ot_entitle'    => $this->_resolve_ot_entitle(),
 			'lunch'				=> $this->input->post('lunch') ? $this->input->post('lunch') : 1,
 			'transport'			=> $this->input->post('transport') ? $this->input->post('transport') : 1,
 			'salary_draw'		=> $this->input->post('salary_draw') ? $this->input->post('salary_draw') : 1,
@@ -273,8 +279,8 @@ class Processdb extends CI_Model{
 			'com_gross_sal'		=> $this->input->post('gross_sal'),
 			'monitor_con'		=> 2,
 
-			'ot_entitle'		=> $this->input->post('ot_entitle'),
-			'com_ot_entitle'    => $this->input->post('com_ot_entitle'),
+			'ot_entitle'		=> $this->_resolve_ot_entitle(),
+			'com_ot_entitle'    => $this->_resolve_ot_entitle(),
 			'lunch'				=> $this->input->post('lunch'),
 			'transport'			=> $this->input->post('transport'),
 			'salary_draw'		=> $this->input->post('salary_draw'),
@@ -336,9 +342,9 @@ class Processdb extends CI_Model{
 			'lunch'				=> $this->input->post('lunch') ? $this->input->post('lunch') : 1,
 			'transport'			=> $this->input->post('transport') ? $this->input->post('transport') : 1,
 			'gross_sal'			=> $this->input->post('gross_sal') ? $this->input->post('gross_sal') : ($this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : 0),
-			'ot_entitle'		=> $this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : ($this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : 1),
 			'com_gross_sal'		=> $this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : ($this->input->post('gross_sal') ? $this->input->post('gross_sal') : 0),
-			'com_ot_entitle'    => $this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : ($this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : 1),
+			'ot_entitle'		=> $this->_resolve_ot_entitle(),
+			'com_ot_entitle'    => $this->_resolve_ot_entitle(),
 
 		);
 
@@ -597,8 +603,8 @@ class Processdb extends CI_Model{
 			'gross_sal'			=> $this->input->post('gross_sal') ? $this->input->post('gross_sal') : ($this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : 0),
 			'com_gross_sal'		=> $this->input->post('com_gross_sal') ? $this->input->post('com_gross_sal') : ($this->input->post('gross_sal') ? $this->input->post('gross_sal') : 0),
 
-			'ot_entitle'		=> $this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : ($this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : 1),
-			'com_ot_entitle'    => $this->input->post('com_ot_entitle') !== null ? $this->input->post('com_ot_entitle') : ($this->input->post('ot_entitle') !== null ? $this->input->post('ot_entitle') : 1),
+			'ot_entitle'		=> $this->_resolve_ot_entitle(),
+			'com_ot_entitle'    => $this->_resolve_ot_entitle(),
 			'lunch'				=> $this->input->post('lunch') ? $this->input->post('lunch') : 1,
 			'transport'			=> $this->input->post('transport') ? $this->input->post('transport') : 1,
 			'salary_draw'		=> $this->input->post('salary_draw') ? $this->input->post('salary_draw') : 1,
@@ -899,7 +905,8 @@ class Processdb extends CI_Model{
 			'emp_shift'  		=> $this->input->post('empshift'),
 			'gross_sal'  		=> $this->input->post('text8'),
 			'com_gross_sal'  	=> $this->input->post('text9'),
-			'ot_entitle'  		=> $this->input->post('otentitle'),
+			'ot_entitle'  		=> ($this->input->post('otentitle') !== null && $this->input->post('otentitle') == 0) ? 0 : 1,
+			'com_ot_entitle'  	=> ($this->input->post('otentitle') !== null && $this->input->post('otentitle') == 0) ? 0 : 1,
 			'transport'  		=> $this->input->post('transport'),
 			'lunch'  			=> $this->input->post('lunch'),
 			'att_bonus'  		=> $this->input->post('attbonus'),

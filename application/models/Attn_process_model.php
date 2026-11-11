@@ -381,8 +381,8 @@ class Attn_process_model extends CI_Model{
 					$alert_msg = 0;
 				}elseif ($process_date == $holiday || $holiday === true){
 					$has_punch = (!empty($in_time) && $in_time != '00:00:00') || (!empty($out_time) && $out_time != '00:00:00');
-					if ($has_punch && $ot_entitle == 1) {
-						// For ot_entitle == 1, working on holiday counts as normal duty day
+					if ($has_punch && $ot_entitle == 1 && $com_ot_entitle == 1) {
+						// For ot_entitle == 1 (Staff), working on holiday counts as normal duty day
 						$attn_status = "P";
 					} elseif (!$has_punch && $this->is_weekend_holiday_between_leave_and_absent($emp_id, $process_date)) {
 						// Sandwich Rule: Holiday falling between Leave and Absent becomes Absent ('A')
@@ -495,7 +495,7 @@ class Attn_process_model extends CI_Model{
 					// dd($out_time);
 
 				//============= Working day/Weeked/Holiday OT Calculation =============
-				if ($ot_entitle == 1) {
+				if ($ot_entitle == 1 && $com_ot_entitle == 1) {
 					// Ineligible for OT (Staff): all hours count as normal duty, no OT generated
 					$tot_hour    = 0;
 					$ot_hour     = 0;
@@ -503,8 +503,9 @@ class Attn_process_model extends CI_Model{
 					$ot_eot_4pm  = 0;
 					$ot_eot_12am = 0;
 				} elseif ($attn_status != 'A' && $attn_status != 'L' && $in_time != "" && $in_time != "00:00:00" && $out_time !="" && $out_time != "00:00:00" && $in_time != $out_time) {
-					//======= Weeked/Holiday Extra OT Calculation==========
-					if($process_date == $weekend || $weekend === true || $process_date == $holiday || $holiday === true){
+					//======= Friday / Weekend / Holiday Extra OT Calculation ==========
+					$is_friday = (strtolower(date('l', strtotime($process_date))) === 'friday');
+					if($is_friday || $process_date == $weekend || $weekend === true || $process_date == $holiday || $holiday === true){
 
                 		$start_date_time = strtotime($in_time);
 						$end_date_time 	 = strtotime($out_time);
@@ -531,14 +532,15 @@ class Attn_process_model extends CI_Model{
 							$minute = 0;
 						}
 
-						// Full time duty on off day / weekend / holiday is counted as OT (capped at max 16 hours per day)
+						// Full time duty on Friday / off day / weekend / holiday is counted as OT
 						$eot_hour = floor($minute / 60);
 						if (!empty($ot_last_hour) && ($minute % 60) >= $ot_last_hour) {
 							$eot_hour = $eot_hour + 1;
 						}
-						// Per day maximum OT limit = 16 hours
-						if ($eot_hour > 16) {
-							$eot_hour = 16;
+						// Per day maximum OT limit: Friday capped at max 24 hours; other off days capped at 16 hours
+						$max_cap = $is_friday ? 24 : 16;
+						if ($eot_hour > $max_cap) {
+							$eot_hour = $max_cap;
 						}
 						$tot_hour = $eot_hour;
 						$ot_hour  = 0;
@@ -619,9 +621,9 @@ class Attn_process_model extends CI_Model{
 				// Allowances: All allowances disabled as per company policy
 				$night_allo = 0;
 
-				// Late Status check: No late count for 12-hour shifts
+				// Late Status check: No late count for 12-hour shifts or Friday / off days
 				$late_start_time = "$process_date $late_start_time";
-				if ($is_billing_shift || $is_12_shift || $attn_status == 'W' || $attn_status == 'H' || $attn_status == 'L' || $attn_status == 'OD' || in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))) {
+				if ($is_friday || $is_billing_shift || $is_12_shift || $attn_status == 'W' || $attn_status == 'H' || $attn_status == 'L' || $attn_status == 'OD' || in_array(strtolower(trim($shift_name)), array('no punch', 'nopunch', 'no_punch', 'no-punch'))) {
 					$late_status = 0;
 				} elseif ($in_time > $late_start_time && $in_time != '' && $in_time != '00:00:00') {
 					$late_status = 1;
@@ -1294,6 +1296,7 @@ class Attn_process_model extends CI_Model{
 			// Get employee shift and schedule
 			$com_info = $this->db->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
 			$ot_entitle = !empty($com_info) ? (int)$com_info->ot_entitle : 0;
+			$com_ot_entitle = !empty($com_info) && isset($com_info->com_ot_entitle) ? (int)$com_info->com_ot_entitle : 0;
 			$shift_id = !empty($shift_log->shift_id) ? $shift_log->shift_id : (!empty($com_info) ? $com_info->emp_shift : 1);
 			$schedule_id = !empty($shift_log->schedule_id) ? $shift_log->schedule_id : (!empty($com_info) ? $com_info->emp_sh_sched : 1);
 
@@ -1351,8 +1354,9 @@ class Attn_process_model extends CI_Model{
 			$ot_eot_4pm = 0;
 			$ot_eot_12am = 0;
 
-			if ($ot_entitle != 1 && $final_in != '00:00:00' && $final_out != '00:00:00' && $final_in != $final_out) {
-				if ($is_weekend_holiday) {
+			$is_friday = (strtolower(date('l', strtotime($date))) === 'friday');
+			if (!($ot_entitle == 1 && $com_ot_entitle == 1) && $final_in != '00:00:00' && $final_out != '00:00:00' && $final_in != $final_out) {
+				if ($is_friday || $is_weekend_holiday) {
 					$start_dt = strtotime("$date $final_in");
 					$end_dt   = strtotime("$date $final_out");
 					if ($end_dt < $start_dt) {
@@ -1374,8 +1378,9 @@ class Attn_process_model extends CI_Model{
 					if (!empty($ot_last_hour) && ($minute % 60) >= $ot_last_hour) {
 						$eot_hour += 1;
 					}
-					if ($eot_hour > 16) {
-						$eot_hour = 16;
+					$max_cap = $is_friday ? 24 : 16;
+					if ($eot_hour > $max_cap) {
+						$eot_hour = $max_cap;
 					}
 					$tot_hour = $eot_hour;
 					$ot_hour = 0;

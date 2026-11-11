@@ -53,7 +53,7 @@ class Salary_process_model extends CI_Model{
 		//print_r($result);
 	  $arr = array('1003247','1004461','1004448','1004447','3001134','3001112');
 		
-		$this->db->select("emp_id,gross_sal,emp_sal_gra_id,emp_desi_id,emp_join_date,salary_type,emp_sec_id,ot_entitle,com_gross_sal,emp_dept_id,emp_line_id,emp_cat_id,");
+		$this->db->select("emp_id,gross_sal,emp_sal_gra_id,emp_desi_id,emp_join_date,salary_type,emp_sec_id,ot_entitle,com_ot_entitle,com_gross_sal,emp_dept_id,emp_line_id,emp_cat_id,");
 		$this->db->where("unit_id",$unit_id);
 		$this->db->where_in("emp_id",$grid_emp_id);
 		// $this->db->where("emp_id","2005818");
@@ -93,7 +93,7 @@ class Salary_process_model extends CI_Model{
 				$doj 			= $rows->emp_join_date;
 				$gross_sal 		= $rows->gross_sal;
 				$gross_sal_com 	= $rows->com_gross_sal;
-				$ot_check 		= $rows->ot_entitle;
+				$ot_check 		= ($rows->ot_entitle == 0 || (isset($rows->com_ot_entitle) && $rows->com_ot_entitle == 0)) ? 0 : 1;
 				
 				$salary_process_eligibility = $this->salary_process_eligibility($emp_id, $start_date);
 				
@@ -1060,7 +1060,7 @@ class Salary_process_model extends CI_Model{
 		//print_r($result);
 	  $arr = array('1003247','1004461','1004448','1004447','3001134','3001112');
 		
-		$this->db->select("emp_id,gross_sal,emp_sal_gra_id,emp_desi_id,emp_join_date,salary_type,emp_sec_id,ot_entitle,com_gross_sal,emp_dept_id,emp_line_id,emp_cat_id,");
+		$this->db->select("emp_id,gross_sal,emp_sal_gra_id,emp_desi_id,emp_join_date,salary_type,emp_sec_id,ot_entitle,com_ot_entitle,com_gross_sal,emp_dept_id,emp_line_id,emp_cat_id,");
 		$this->db->where("unit_id",$unit_id);
 		$this->db->where_in("emp_id",$grid_emp_id);
 		// $this->db->where("emp_id","2005818");
@@ -1099,7 +1099,7 @@ class Salary_process_model extends CI_Model{
 				$doj 			= $rows->emp_join_date;
 				$gross_sal 		= $rows->gross_sal;
 				$gross_sal_com 	= $rows->com_gross_sal;
-				$ot_check 		= $rows->ot_entitle;
+				$ot_check 		= ($rows->ot_entitle == 0 || (isset($rows->com_ot_entitle) && $rows->com_ot_entitle == 0)) ? 0 : 1;
 				
 				$salary_process_eligibility = $this->salary_process_eligibility($emp_id, $start_date);
 				

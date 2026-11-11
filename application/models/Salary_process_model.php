@@ -496,8 +496,9 @@ class Salary_process_model extends CI_Model{
 					//=================================================================
 
 					//OT CALCULATION
-					$ot_rate = ($rows->ot_entitle != 1) ? $ss['ot_rate'] : 0;
-					if (!empty($attendances->ot) && $rows->ot_entitle != 1) {
+					$is_ot_entitled = ($rows->ot_entitle == 0 || (isset($rows->com_ot_entitle) && $rows->com_ot_entitle == 0));
+					$ot_rate = ($is_ot_entitled) ? $ss['ot_rate'] : 0;
+					if (!empty($attendances->ot) && $is_ot_entitled) {
 						$ot_hour = $attendances->ot;
 						$ot_amount = $attendances->ot * $ot_rate;
 					} else {
@@ -548,7 +549,7 @@ class Salary_process_model extends CI_Model{
 					$data["salary_month"] 		= $salary_month;
 
 					// dd($eot_hour_for_sa);
-					if($rows->ot_entitle != 1){
+					if($is_ot_entitled){
 						$data["ot_hour"] 			= $ot_hour;
 						$data["ot_amount"] 			= $ot_amount;
 						$data["ot_rate"] 			= $ot_rate;
@@ -582,7 +583,7 @@ class Salary_process_model extends CI_Model{
 					$data_com["salary_month"] 		= $salary_month;
 
 					//COMPLIENCE
-					if($rows->com_ot_entitle != 1){
+					if($is_ot_entitled){
 						$data_com["ot_hour"] 			= $ot_hour;
 						$data_com["ot_amount"] 			= $ot_amount;
 						$data_com["ot_rate"] 			= $ot_rate;

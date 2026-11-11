@@ -930,6 +930,15 @@ function get_last_id() {
 get_last_id();
 
 $(document).ready(function() {
+    $(document).on('change', 'input[name="ot_entitle"]', function() {
+        var v = $(this).val();
+        $('input[name="com_ot_entitle"][value="' + v + '"]').prop('checked', true);
+    });
+    $(document).on('change', 'input[name="com_ot_entitle"]', function() {
+        var v = $(this).val();
+        $('input[name="ot_entitle"][value="' + v + '"]').prop('checked', true);
+    });
+
     var urlParams = new URLSearchParams(window.location.search);
     var emp_id = urlParams.get('emp_id');
     if (emp_id) {

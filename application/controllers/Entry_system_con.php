@@ -239,7 +239,8 @@ class Entry_system_con extends CI_Controller
 
             // over time calculation
             $ot_amount = 0;
-            if (!empty($attendances->ot) && $info->ot_entitle != 1 && $ot == 1) {
+            $is_ot_entitled = ($info->ot_entitle == 0 || (isset($info->com_ot_entitle) && $info->com_ot_entitle == 0));
+            if (!empty($attendances->ot) && $is_ot_entitled && $ot == 1) {
                 $ot_rate = $ot_rate;
                 $ot_amount = $attendances->ot * $ot_rate;
             }
@@ -1406,7 +1407,7 @@ class Entry_system_con extends CI_Controller
 		}
 		// final process check end
         $com_info=$this->db->where('emp_id',$emp_id)->get('pr_emp_com_info')->row();
-        if($com_info->ot_entitle!=0){
+        if ($com_info->ot_entitle == 0 || (isset($com_info->com_ot_entitle) && $com_info->com_ot_entitle == 0)) {
             $this->db->where("shift_log_date BETWEEN '$first_date' and '$second_date'")->where('emp_id', $emp_id);
             if ($this->db->where('unit_id', $unit_id)->update('pr_emp_shift_log', array('modify_eot' => $eot))) {
                 echo 'success';

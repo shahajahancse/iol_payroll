@@ -122,8 +122,8 @@ class Ot_approval_model extends CI_Model
             $this->db->where('s.shift_log_date <=', $end_date);
         }
 
-        // Condition 1: OT Eligible (strictly ot_entitle == 0)
-        $this->db->where('c.ot_entitle', 0);
+        // Condition 1: OT Eligible (ot_entitle == 0 or com_ot_entitle == 0)
+        $this->db->where('(c.ot_entitle = 0 OR c.com_ot_entitle = 0)');
 
         // Condition 2: Actual OT recorded (tot > 0 OR ot > 0 OR eot > 0)
         $this->db->where('(s.tot > 0 OR s.ot > 0 OR s.eot > 0)');
@@ -294,7 +294,7 @@ class Ot_approval_model extends CI_Model
 
         // Total OT Eligible Employees
         $this->db->from('pr_emp_com_info');
-        $this->db->where('ot_entitle', 0);
+        $this->db->where('(ot_entitle = 0 OR com_ot_entitle = 0)');
         if (!empty($unit_id)) {
             $this->db->where('unit_id', $unit_id);
         }
@@ -310,7 +310,7 @@ class Ot_approval_model extends CI_Model
             $this->db->where('s.shift_log_date >=', $start_date);
             $this->db->where('s.shift_log_date <=', $end_date);
         }
-        $this->db->where('c.ot_entitle', 0);
+        $this->db->where('(c.ot_entitle = 0 OR c.com_ot_entitle = 0)');
         $this->db->where('(s.tot > 0 OR s.ot > 0 OR s.eot > 0)');
         $this->db->where('s.in_time IS NOT NULL AND s.out_time IS NOT NULL AND s.in_time != "00:00:00" AND s.out_time != "00:00:00" AND s.in_time != s.out_time');
         if (!empty($unit_id)) {
@@ -375,7 +375,7 @@ class Ot_approval_model extends CI_Model
         $sort_dir  = !empty($params['sort_dir']) && strtolower($params['sort_dir']) === 'asc' ? 'ASC' : 'DESC';
 
         $apply_filters = function($builder) use ($start_date, $end_date, $unit_id, $search, $dept_id, $sec_id, $desig_id, $shift_id, $status) {
-            $builder->where('c.ot_entitle', 0);
+            $builder->where('(c.ot_entitle = 0 OR c.com_ot_entitle = 0)');
             if ($start_date === $end_date) {
                 $builder->where('o.ot_date', $start_date);
             } else {
