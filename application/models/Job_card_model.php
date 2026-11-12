@@ -376,12 +376,9 @@ class Job_card_model extends CI_Model{
 		foreach ($query as $row) {
 			$is_leave = false;
 			$leave_type = '';
-			if (isset($leaves[$row->shift_log_date])) {
+			if (strtoupper(trim($row->present_status)) != 'A' && (isset($leaves[$row->shift_log_date]) || in_array(strtoupper(trim($row->present_status)), $leave_codes))) {
 				$is_leave = true;
-				$leave_type = $leaves[$row->shift_log_date];
-			} elseif (in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
-				$is_leave = true;
-				$leave_type = strtoupper(trim($row->present_status));
+				$leave_type = isset($leaves[$row->shift_log_date]) ? $leaves[$row->shift_log_date] : strtoupper(trim($row->present_status));
 				if ($leave_type == 'L') {
 					$lt = $this->get_leave_type($row->shift_log_date, $emp_id);
 					$leave_type = !empty($lt) ? $lt : 'L';
@@ -655,12 +652,9 @@ class Job_card_model extends CI_Model{
 			$is_leave = false;
 			$leave_type = '';
 
-			if (isset($data['leave'][$row->shift_log_date])) {
+			if (strtoupper(trim($row->present_status)) != 'A' && (isset($data['leave'][$row->shift_log_date]) || in_array(strtoupper(trim($row->present_status)), $leave_codes))) {
 				$is_leave = true;
-				$leave_type = $data['leave'][$row->shift_log_date];
-			} elseif (in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
-				$is_leave = true;
-				$leave_type = strtoupper(trim($row->present_status));
+				$leave_type = isset($data['leave'][$row->shift_log_date]) ? $data['leave'][$row->shift_log_date] : strtoupper(trim($row->present_status));
 				if ($leave_type == 'L') {
 					$lt = $this->get_leave_type($row->shift_log_date, $emp_id);
 					$leave_type = !empty($lt) ? $lt : 'L';

@@ -997,8 +997,13 @@ class Leave_con extends CI_Controller
                 $cur_time = strtotime($from_date);
                 $end_time = strtotime($to_date);
 
+                $this->load->model('Attn_process_model');
                 while ($cur_time <= $end_time) {
                     $curr_date = date('Y-m-d', $cur_time);
+
+                    // If subsequent day is absent, leave is marked 'A' per policy; otherwise 'L'
+                    $is_abs = $this->Attn_process_model->is_next_day_absent($curr_date, $leave->emp_id);
+                    $status_to_set = $is_abs ? 'A' : 'L';
 
                     // Update shift log if it exists for this date
                     $slog = $this->db->where('emp_id', $leave->emp_id)
@@ -1008,7 +1013,7 @@ class Leave_con extends CI_Controller
 
                     if (!empty($slog)) {
                         $this->db->where('id', $slog->id)->update('pr_emp_shift_log', array(
-                            'present_status' => 'L',
+                            'present_status' => $status_to_set,
                             'in_time'        => '00:00:00',
                             'out_time'       => '00:00:00',
                             'tot'            => 0,
@@ -1031,7 +1036,7 @@ class Leave_con extends CI_Controller
                     if ($m_exists > 0) {
                         $this->db->where('emp_id', $leave->emp_id)
                                  ->like('att_month', $ym)
-                                 ->update('pr_attn_monthly', array($col => 'L'));
+                                 ->update('pr_attn_monthly', array($col => $status_to_set));
                     }
 
                     $cur_time = strtotime('+1 day', $cur_time);

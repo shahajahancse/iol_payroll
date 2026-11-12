@@ -340,7 +340,11 @@ class Attn_process_model extends CI_Model{
 				//============= Check employee attendance status & Special Shift Policies =============
 				$attn_status = 'A';
 				if($leaves){
-					$attn_status = "L";
+					if ($this->is_next_day_absent($process_date, $emp_id)) {
+						$attn_status = "A";
+					} else {
+						$attn_status = "L";
+					}
 					$in_time = '00:00:00';
 					$out_time = '00:00:00';
 					$tot_hour = 0;
@@ -680,9 +684,10 @@ class Attn_process_model extends CI_Model{
 				// The preceding consecutive leave days are forfeited in attendance log (marked 'A'),
 				// while remaining counted/deducted in pr_leave_trans.
 				if ($attn_status == 'A') {
-					// Approved leave must always remain 'L' and not be forfeited into absent
+					$this->forfeit_consecutive_preceding_leaves($emp_id, $process_date);
 					$this->bridge_consecutive_subsequent_weekends_holidays($emp_id, $process_date);
 				} elseif ($attn_status == 'P') {
+					$this->restore_consecutive_preceding_leaves($emp_id, $process_date);
 					$this->unbridge_consecutive_subsequent_weekends_holidays($emp_id, $process_date);
 				}
 			}

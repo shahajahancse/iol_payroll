@@ -110,12 +110,9 @@
 						$is_leave = false;
 						$leave_name = '';
 
-						if (isset($emp_data['leave'][$row->shift_log_date])) {
+						if (strtoupper(trim($row->present_status)) != 'A' && (in_array(strtoupper(trim($row->present_status)), $leave_codes) || isset($emp_data['leave'][$row->shift_log_date]))) {
 							$is_leave = true;
-							$leave_name = $emp_data['leave'][$row->shift_log_date];
-						} elseif (in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
-							$is_leave = true;
-							$leave_name = strtoupper(trim($row->present_status));
+							$leave_name = isset($emp_data['leave'][$row->shift_log_date]) ? $emp_data['leave'][$row->shift_log_date] : strtoupper(trim($row->present_status));
 							if ($leave_name == 'L') {
 								$lt = $this->job_card_model->get_leave_type($row->shift_log_date, $value->emp_id);
 								$leave_name = !empty($lt) ? $lt : 'L';

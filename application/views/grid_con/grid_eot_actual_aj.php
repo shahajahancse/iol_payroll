@@ -94,7 +94,7 @@
                         foreach ($emp_data['emp_data'] as $key => $row) {
 
                             $leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
-                            if(in_array(strtoupper(trim($row->present_status)), $leave_codes) || (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date]))){
+                            if(strtoupper(trim($row->present_status)) != 'A' && (in_array(strtoupper(trim($row->present_status)), $leave_codes) || (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date])))){
                                 $leave_type = (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date])) ? $emp_data['leave'][$row->shift_log_date] : $this->job_card_model->get_leave_type($row->shift_log_date,$value->emp_id);
                                 $att_status_count = "Leave";
                                 $att_status = !empty($leave_type) ? $leave_type : $row->present_status;
