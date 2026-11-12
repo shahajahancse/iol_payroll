@@ -989,6 +989,54 @@ class Leave_con extends CI_Controller
                 );
 
                 $this->db->where('id', $leave_id)->update('pr_leave_trans', $update_data);
+
+                // Update attendance logs to present_status = 'L' for the approved leave period
+                $from_date = !empty($leave->leave_start) && $leave->leave_start != '0000-00-00' ? $leave->leave_start : $leave->start_date;
+                $to_date   = !empty($leave->leave_end) && $leave->leave_end != '0000-00-00' ? $leave->leave_end : $from_date;
+
+                $cur_time = strtotime($from_date);
+                $end_time = strtotime($to_date);
+
+                while ($cur_time <= $end_time) {
+                    $curr_date = date('Y-m-d', $cur_time);
+
+                    // Update shift log if it exists for this date
+                    $slog = $this->db->where('emp_id', $leave->emp_id)
+                                     ->where('shift_log_date', $curr_date)
+                                     ->get('pr_emp_shift_log')
+                                     ->row();
+
+                    if (!empty($slog)) {
+                        $this->db->where('id', $slog->id)->update('pr_emp_shift_log', array(
+                            'present_status' => 'L',
+                            'in_time'        => '00:00:00',
+                            'out_time'       => '00:00:00',
+                            'tot'            => 0,
+                            'ot'             => 0,
+                            'eot'            => 0,
+                            'com_ot'         => 0,
+                            'com_eot'        => 0,
+                            'late_status'    => 0,
+                            'deduction_hour' => 0,
+                            'weekly_allo'    => 0,
+                            'holiday_allo'   => 0
+                        ));
+                    }
+
+                    // Update monthly attendance table if row exists
+                    $ym = date('Y-m', strtotime($curr_date));
+                    $d_num = date('d', strtotime($curr_date));
+                    $col = "date_{$d_num}";
+                    $m_exists = $this->db->where('emp_id', $leave->emp_id)->like('att_month', $ym)->get('pr_attn_monthly')->num_rows();
+                    if ($m_exists > 0) {
+                        $this->db->where('emp_id', $leave->emp_id)
+                                 ->like('att_month', $ym)
+                                 ->update('pr_attn_monthly', array($col => 'L'));
+                    }
+
+                    $cur_time = strtotime('+1 day', $cur_time);
+                }
+
                 log_activity('Admin Approved Leave', "Leave ID: {$leave_id} approved for Emp: {$leave->emp_id}", $admin_id);
                 $msg = 'Leave request approved successfully.';
                 break;

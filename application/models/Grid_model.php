@@ -3529,6 +3529,7 @@ class Grid_model extends CI_Model{
 				$this->db->select("leave_type");
 				$this->db->where("emp_id", $emp_id);
 				$this->db->where("start_date", $day);
+				$this->db->where("(status = 'approved' OR status IS NULL)");
 				$query1 = $this->db->get("pr_leave_trans");
 				$row = $query1->row();
 				$status = $row->leave_type;
@@ -3682,6 +3683,7 @@ class Grid_model extends CI_Model{
 				$this->db->select("leave_type");
 				$this->db->where("emp_id", $emp_id);
 				$this->db->where("start_date", $day);
+				$this->db->where("(status = 'approved' OR status IS NULL)");
 				$query1 = $this->db->get("pr_leave_trans");
 				$row = $query1->row();
 				$status = $row->leave_type;
@@ -3827,6 +3829,7 @@ class Grid_model extends CI_Model{
 				$this->db->select("leave_type");
 				$this->db->where("emp_id", $emp_id);
 				$this->db->where("start_date", $day);
+				$this->db->where("(status = 'approved' OR status IS NULL)");
 				$query1 = $this->db->get("pr_leave_trans");
 				if ($query1->num_rows() > 0) {
 					$status_val = $query1->row()->leave_type;
@@ -4398,7 +4401,8 @@ class Grid_model extends CI_Model{
 		$this->db->select("emp_id");
 		$this->db->from("pr_leave_trans");
 		$this->db->where_in("emp_id", $grid_emp_id);
-		$this->db->where("start_date", $report_date);
+		$this->db->where("((leave_start <= '$report_date' AND leave_end >= '$report_date') OR start_date = '$report_date')");
+		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$this->db->group_by('emp_id');
 		$data['all_leave'] = $this->db->get()->num_rows();
 
@@ -5731,14 +5735,23 @@ class Grid_model extends CI_Model{
 
 	function leave_per_emp($sStartDate, $sEndDate, $emp_id)
 	{
-		$this->db->select("start_date");
-		$this->db->where("start_date BETWEEN '$sStartDate' AND '$sEndDate'");
+		$this->db->select("start_date, leave_type, leave_start, leave_end");
+		$this->db->where("((leave_start <= '$sEndDate' AND leave_end >= '$sStartDate') OR (start_date BETWEEN '$sStartDate' AND '$sEndDate'))");
 		$this->db->where("emp_id = '$emp_id'");
+		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$query = $this->db->get("pr_leave_trans");
 		$leave = array();
 		foreach ($query->result() as $row)
 		{
-			$leave[] = $row->start_date;
+			$start = !empty($row->leave_start) && $row->leave_start != '0000-00-00' ? $row->leave_start : $row->start_date;
+			$end   = !empty($row->leave_end) && $row->leave_end != '0000-00-00' ? $row->leave_end : $start;
+			$cur   = max(strtotime($sStartDate), strtotime($start));
+			$end_t = min(strtotime($sEndDate), strtotime($end));
+			while ($cur <= $end_t) {
+				$d = date('Y-m-d', $cur);
+				$leave[$d] = strtoupper(trim($row->leave_type));
+				$cur = strtotime('+1 day', $cur);
+			}
 		}
 		return $leave;
 	}
@@ -11308,7 +11321,7 @@ function grid_emp_job_application($grid_emp_id){
    		$this->db->select('leave_type');
 		$this->db->where('emp_id', $emp_id);
 		$this->db->where("((leave_start <= '$shift_log_date' AND leave_end >= '$shift_log_date') OR start_date = '$shift_log_date')");
-		$this->db->where("(status != 'rejected' AND status != 'returned' OR status IS NULL)");
+		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$query = $this->db->get('pr_leave_trans');
 		$row = $query->row();
 		if (!empty($row) && !empty($row->leave_type)) {

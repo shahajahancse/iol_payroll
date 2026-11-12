@@ -1843,6 +1843,7 @@ class Processdb extends CI_Model{
 		$this->db->select("start_date,leave_type");
 		$this->db->where("start_date = '$date'");
 		$this->db->where("emp_id = '$emp_id'");
+		$this->db->where("(status = 'approved' OR status IS NULL)");
 		$query = $this->db->get("pr_leave_trans");
 		$leave = array();
 		foreach ($query->result() as $row)
