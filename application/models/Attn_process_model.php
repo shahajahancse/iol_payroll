@@ -1637,6 +1637,14 @@ class Attn_process_model extends CI_Model{
                             ->row();
             if (!empty($log)) {
                 $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+                if (!$has_punch) {
+                    $table = 'att_' . date('Y_m', strtotime($next_date));
+                    if ($this->db->table_exists($table)) {
+                        $com_p = $this->db->select('proxi_id')->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+                        $pid = !empty($com_p) ? $com_p->proxi_id : $emp_id;
+                        $has_punch = ($this->db->where('proxi_id', $pid)->like('date_time', $next_date)->get($table)->num_rows() > 0);
+                    }
+                }
                 if ($has_punch) {
                     return false;
                 }
@@ -1740,8 +1748,16 @@ class Attn_process_model extends CI_Model{
                             ->get('pr_emp_shift_log')
                             ->row();
             $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+            if (!$has_punch) {
+                $table = 'att_' . date('Y_m', strtotime($curr_date));
+                if ($this->db->table_exists($table)) {
+                    $com_p = $this->db->select('proxi_id')->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+                    $pid = !empty($com_p) ? $com_p->proxi_id : $emp_id;
+                    $has_punch = ($this->db->where('proxi_id', $pid)->like('date_time', $curr_date)->get($table)->num_rows() > 0);
+                }
+            }
             if ($has_punch) {
-                break;
+                break; // Worked day! Stop!
             }
             $is_w = $this->check_weekend($emp_id, $curr_date);
             $is_h = $this->check_holiday($emp_id, $curr_date);
@@ -1760,7 +1776,27 @@ class Attn_process_model extends CI_Model{
                 $curr_date = date('Y-m-d', strtotime("$curr_date - 1 days"));
                 continue;
             }
-            // If weekend/holiday between multiple leaves (e.g. Leave -> Weekend -> Leave)
+
+            // Check if this date had punches or was worked
+            $log = $this->db->select('in_time, out_time, present_status')
+                            ->where('emp_id', $emp_id)
+                            ->where('shift_log_date', $curr_date)
+                            ->get('pr_emp_shift_log')
+                            ->row();
+            $has_punch = (!empty($log->in_time) && $log->in_time != '00:00:00') || (!empty($log->out_time) && $log->out_time != '00:00:00');
+            if (!$has_punch) {
+                $table = 'att_' . date('Y_m', strtotime($curr_date));
+                if ($this->db->table_exists($table)) {
+                    $com_p = $this->db->select('proxi_id')->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+                    $pid = !empty($com_p) ? $com_p->proxi_id : $emp_id;
+                    $has_punch = ($this->db->where('proxi_id', $pid)->like('date_time', $curr_date)->get($table)->num_rows() > 0);
+                }
+            }
+            if ($has_punch) {
+                break; // Worked day / punches found! Do NOT cross into earlier leaves!
+            }
+
+            // If weekend/holiday between multiple leaves (e.g. Leave -> Weekend -> Leave) WITHOUT punches
             $is_w = $this->check_weekend($emp_id, $curr_date);
             $is_h = $this->check_holiday($emp_id, $curr_date);
             if ($is_w || $is_h) {
