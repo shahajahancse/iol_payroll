@@ -520,6 +520,8 @@ class Job_card_model extends CI_Model{
 						if (strtoupper(trim($row->present_status)) == 'A' || empty($row->present_status)) {
 							$row->present_status = 'P';
 						}
+						// Admin approved OT must not have penalty deduction
+						$row->deduction_hour = 0;
 					} else {
 						// Pending or Rejected: only Admin-approved OT is shown in Job Card
 						$row->ot      = 0;
@@ -798,6 +800,8 @@ class Job_card_model extends CI_Model{
 						if (strtoupper(trim($row->present_status)) == 'A' || empty($row->present_status)) {
 							$row->present_status = 'P';
 						}
+						// Admin approved OT must not have penalty deduction
+						$row->deduction_hour = 0;
 					} else {
 						// Pending or Rejected: only Admin-approved OT is shown in Job Card
 						$row->ot      = 0;
