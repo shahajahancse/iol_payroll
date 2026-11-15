@@ -133,7 +133,7 @@ class Ot_approval_model extends CI_Model
         $this->db->where('s.out_time IS NOT NULL');
         $this->db->where("s.in_time != '00:00:00'");
         $this->db->where("s.out_time != '00:00:00'");
-        $this->db->where("s.in_time != s.out_time");
+        $this->db->where("(s.in_time != s.out_time OR s.tot > 0 OR s.ot > 0 OR s.eot > 0)");
 
         if (!empty($unit_id)) {
             $this->db->where('s.unit_id', $unit_id);
@@ -330,7 +330,7 @@ class Ot_approval_model extends CI_Model
         }
         $this->db->where('(c.ot_entitle = 0 OR c.com_ot_entitle = 0)');
         $this->db->where('(s.tot > 0 OR s.ot > 0 OR s.eot > 0)');
-        $this->db->where('s.in_time IS NOT NULL AND s.out_time IS NOT NULL AND s.in_time != "00:00:00" AND s.out_time != "00:00:00" AND s.in_time != s.out_time');
+        $this->db->where('s.in_time IS NOT NULL AND s.out_time IS NOT NULL AND s.in_time != "00:00:00" AND s.out_time != "00:00:00" AND (s.in_time != s.out_time OR s.tot > 0 OR s.ot > 0 OR s.eot > 0)');
         if (!empty($unit_id)) {
             $this->db->where('s.unit_id', $unit_id);
         }
