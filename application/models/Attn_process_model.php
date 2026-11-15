@@ -157,11 +157,18 @@ class Attn_process_model extends CI_Model{
 
             	// Overnight out-punch window for 12-hour shifts or off-days (Friday / weekend / holiday):
             	// Employees on 12-hour shifts or working on off-days can work up to 24 hours (overnight until next morning).
-            	// If out_end_date is same as process_date, extend search window to next day morning up to 08:00:00 so next-day punch-out is captured.
+            	// Dynamically determine out_end window from shift schedule instead of a static hour.
             	$is_friday_day = (strtolower(date('l', strtotime($process_date))) === 'friday');
             	if (($is_12_shift || $is_friday_day || $process_date == $weekend || $weekend === true || $process_date == $holiday || $holiday === true) && $out_end_date == $process_date) {
             		$next_out_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
-            		$out_end_dt = "$next_out_date 08:00:00";
+            		$dyn_out_end = '12:00:00';
+            		if ($is_12_shift) {
+            			$night_sched = $this->db->select('out_end')->where('id', 8)->or_like('sh_type', '12 Night')->get('pr_emp_shift_schedule')->row();
+            			if (!empty($night_sched) && !empty($night_sched->out_end)) {
+            				$dyn_out_end = $night_sched->out_end;
+            			}
+            		}
+            		$out_end_dt = "$next_out_date $dyn_out_end";
             	}
 
             	$out_date = $out_end_date;
@@ -248,12 +255,26 @@ class Attn_process_model extends CI_Model{
             		}
 
             		// 12-Hour Shift Rules:
-            		// Rule 1: In-time within 4 hours after scheduled in-time is counted as scheduled in-time (unless manually entered)
+            		// Rule 1: In-time within scheduled in-window (up to in_end or 4 hours after scheduled in-time) is counted as scheduled in-time (unless manually entered)
             		if ($is_12_shift && !empty($in_time) && $in_time != '00:00:00' && empty($manual_in)) {
             			$sched_in_dt = "$process_date " . $schedule[0]["in_time"];
-            			$snap_end_dt = date('Y-m-d H:i:s', strtotime("$sched_in_dt + 4 hours"));
-            			if (strtotime($in_time) <= strtotime($snap_end_dt)) {
+            			$sched_in_end = (!empty($schedule[0]["in_end"]) && $schedule[0]["in_end"] != '00:00:00') ? "$process_date " . $schedule[0]["in_end"] : date('Y-m-d H:i:s', strtotime("$sched_in_dt + 4 hours"));
+            			$snap_end_dt = max(strtotime("$sched_in_dt + 4 hours"), strtotime($sched_in_end));
+            			if (strtotime($in_time) <= $snap_end_dt) {
             				$in_time = $sched_in_dt;
+            			}
+            		}
+
+            		// Rule 2: 12-Hour Shift Continuous Overnight Duty Capping
+            		// If a 12-hour morning shift employee continues overnight and punches next morning past 06:00:00 (e.g. at 10:03 AM),
+            		// the previous day's shift completes at next day 06:00:00 (full 24-hr duty), and the 10:03 AM punch becomes next day's in-time.
+            		if ($is_12_shift && !empty($out_time) && $out_time != '00:00:00') {
+            			$next_day_date = date('Y-m-d', strtotime($process_date . ' + 1 days'));
+            			if (date('Y-m-d', strtotime($out_time)) == $next_day_date) {
+            				$is_morning_shift = strpos(strtolower(trim($shift_name)), 'morning') !== false;
+            				if ($is_morning_shift && strtotime($out_time) > strtotime("$next_day_date 06:00:00")) {
+            					$out_time = "$next_day_date 06:00:00";
+            				}
             			}
             		}
 
