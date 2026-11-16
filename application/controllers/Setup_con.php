@@ -26,8 +26,14 @@ class Setup_con extends CI_Controller
             unit_add_bangla = '১১/১ তারাবো, রূপগঞ্জ, নারায়ণগঞ্জ'
             WHERE unit_id = 1 AND unit_name != 'Islam Oxygen Limited'");
 
-        if (!check_acl_list($this->data['user_data']->id, 2)) {
-            echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
+        $user_id = $this->data['user_data']->id;
+        $u_name = !empty($this->data['user_data']->id_number) ? strtolower(trim($this->data['user_data']->id_number)) : '';
+        $u_level = !empty($this->data['user_data']->level) ? $this->data['user_data']->level : '';
+        $setup_acls = array_merge(array(5, 34, 35, 38, 39, 40, 42, 43, 55, 56, 57, 58, 59), range(141, 155));
+
+        $is_admin = ($u_name === 'admin' || $u_level === 'All');
+        if (!$is_admin && !check_acl_list($user_id, $setup_acls)) {
+            echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Access Denied');</SCRIPT>";
             redirect("payroll_con");
             exit;
         }

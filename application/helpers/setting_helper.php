@@ -131,13 +131,15 @@ if ( ! function_exists('check_acl_list'))
 
 	 	$data = array();
 		array_walk($query, function($entry) use (&$data) {
-		    $data[] = $entry["acl_id"];
+		    $data[] = (int)$entry["acl_id"];
 		});
 
-		if (!empty($acl_level) && in_array($acl_level, $data)) {
-			return true;
-		} else if (!empty($acl_level)) {
-			return false;
+		if (!empty($acl_level)) {
+			if (is_array($acl_level)) {
+				$check_levels = array_map('intval', $acl_level);
+				return !empty(array_intersect($check_levels, $data));
+			}
+			return in_array((int)$acl_level, $data);
 		} else {
 			return $data;
 		}

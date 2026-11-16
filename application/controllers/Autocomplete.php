@@ -10,8 +10,14 @@ class Autocomplete extends CI_Controller {
 		}
 
 		$this->data['user_data'] = $this->session->userdata('data');
-		if (!check_acl_list($this->data['user_data']->id,1)) {
-			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
+		$user_id = $this->data['user_data']->id;
+		$u_name = !empty($this->data['user_data']->id_number) ? strtolower(trim($this->data['user_data']->id_number)) : '';
+		$u_level = !empty($this->data['user_data']->level) ? $this->data['user_data']->level : '';
+
+		$is_admin = ($u_name === 'admin' || $u_level === 'All');
+		$user_acls = check_acl_list($user_id);
+		if (!$is_admin && empty($user_acls)) {
+			echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Access Denied');</SCRIPT>";
 			redirect("payroll_con");
 			exit;
 		}

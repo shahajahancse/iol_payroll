@@ -21,8 +21,14 @@ class Attn_process_con extends CI_Controller {
             redirect("authentication");
         }
         $this->data['user_data'] = $this->session->userdata('data');
-        if (!check_acl_list($this->data['user_data']->id, 4)) {
-            echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
+        $user_id = $this->data['user_data']->id;
+        $u_name = !empty($this->data['user_data']->id_number) ? strtolower(trim($this->data['user_data']->id_number)) : '';
+        $u_level = !empty($this->data['user_data']->level) ? $this->data['user_data']->level : '';
+        $attn_acls = array_merge(array(3, 28, 29, 30, 52, 53, 218), range(62, 136));
+
+        $is_admin = ($u_name === 'admin' || $u_level === 'All');
+        if (!$is_admin && !check_acl_list($user_id, $attn_acls)) {
+            echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Access Denied');</SCRIPT>";
             redirect("payroll_con");
             exit;
         }

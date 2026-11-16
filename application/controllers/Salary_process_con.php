@@ -19,12 +19,17 @@ class Salary_process_con extends CI_Controller {
             redirect("authentication");
         }
         $this->data['user_data'] = $this->session->userdata('data');
-        if (!check_acl_list($this->data['user_data']->id, 7)) {
-            echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Acess Deny');</SCRIPT>";
+        $user_id = $this->data['user_data']->id;
+        $u_name = !empty($this->data['user_data']->id_number) ? strtolower(trim($this->data['user_data']->id_number)) : '';
+        $u_level = !empty($this->data['user_data']->level) ? $this->data['user_data']->level : '';
+        $payroll_acls = array(4, 31, 32, 33, 54, 184, 185, 186, 187, 188, 189, 190, 191, 195, 202, 203, 204, 205, 206, 207, 211);
+
+        $is_admin = ($u_name === 'admin' || $u_level === 'All');
+        if (!$is_admin && !check_acl_list($user_id, $payroll_acls)) {
+            echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('Sorry! Access Denied');</SCRIPT>";
             redirect("payroll_con");
             exit;
         }
-
 	}
 
 	function salary_process_form(){

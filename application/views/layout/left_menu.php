@@ -21,7 +21,17 @@
       ?>
 
       <!-- Personal -->
-      <?php if(in_array(1,$acl)) { ?>
+      <?php 
+        $has_hrm_menu = (
+          $u_username === 'admin' || 
+          (isset($user_session->level) && $user_session->level === 'All') ||
+          in_array(1, $acl) || 
+          in_array(11, $acl) || 
+          in_array(12, $acl) || 
+          in_array(50, $acl)
+        );
+        if ($has_hrm_menu) { 
+      ?>
       <li class="start <?= activate_class('emp_info_con') ?>"> <a href="javascript:;"> <i class="fa fa-users"></i>
         <span class="title">HRM</span> <span class="selected"></span> <span class="arrow <?= arrow_open('emp_info_con') ?>"></span> </a>
         <ul class="sub-menu">
@@ -59,7 +69,23 @@
       <?php } ?>
 
       <!-- Enty System -->
-      <?php if(in_array(2,$acl)) { ?>
+      <?php 
+        $has_entry_menu = (
+          $u_username === 'admin' || 
+          (isset($user_session->level) && $user_session->level === 'All') ||
+          in_array(2, $acl) || 
+          in_array(13, $acl) || 
+          in_array(14, $acl) || 
+          in_array(15, $acl) || 
+          in_array(16, $acl) || 
+          in_array(21, $acl) || 
+          in_array(22, $acl) || 
+          in_array(23, $acl) || 
+          in_array(24, $acl) || 
+          in_array(51, $acl)
+        );
+        if ($has_entry_menu) { 
+      ?>
       <?php 
         $u_data = $this->session->userdata('data');
         $u_username = $u_data ? strtolower(trim($u_data->id_number)) : '';
@@ -238,7 +264,22 @@
       <?php } ?>
 
       <!-- Attendance -->
-      <?php if(in_array(3,$acl) || in_array(28,$acl) || in_array(29,$acl) || in_array(30,$acl) || in_array(218,$acl) || in_array(52,$acl) || in_array(53,$acl)) { ?>
+      <?php 
+        $has_attn_reports = !empty(array_intersect($acl, range(62, 136)));
+        $has_attn_menu = (
+          $u_username === 'admin' || 
+          (isset($user_session->level) && $user_session->level === 'All') ||
+          in_array(3, $acl) || 
+          in_array(28, $acl) || 
+          in_array(29, $acl) || 
+          in_array(30, $acl) || 
+          in_array(218, $acl) || 
+          in_array(52, $acl) || 
+          in_array(53, $acl) ||
+          $has_attn_reports
+        );
+        if ($has_attn_menu) { 
+      ?>
       <li class="start <?= activate_class(array('attn_process_con', 'iclock', 'ot_approval_con', 'attn_regularization_con', 'od_management_con')) ?>">
         <a href="javascript:;">
           <i class="fa fa-clock-o"></i>
@@ -272,7 +313,7 @@
             </li>
           <?php } ?>
 
-          <?php if(in_array(30,$acl)) { ?>
+          <?php if(in_array(30,$acl) || in_array(3,$acl) || $has_attn_reports || $u_username === 'admin') { ?>
             <li class="<?= activate_method('grid_window') ?>">
               <a href="<?=base_url('attn_process_con/grid_window')?>" class="anchor_cls">
                 <i class="fa fa-bar-chart"></i> Reports
@@ -305,11 +346,23 @@
       <?php } ?>
 
       <!-- Payroll -->
-      <?php if(in_array(4,$acl)) { ?>
+      <?php 
+        $has_payroll_menu = (
+          $u_username === 'admin' || 
+          (isset($user_session->level) && $user_session->level === 'All') ||
+          in_array(4, $acl) || 
+          in_array(31, $acl) || 
+          in_array(32, $acl) || 
+          in_array(33, $acl) || 
+          in_array(54, $acl) ||
+          !empty(array_intersect($acl, array(184, 185, 186, 187, 188, 189, 190, 191, 195, 202, 203, 204, 205, 206, 207, 211)))
+        );
+        if ($has_payroll_menu) { 
+      ?>
       <li class="start <?= activate_class(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con', 'penalty_con', 'palanty_con']) ?>"> <a href="javascript:;"> <i class="fa fa-money"></i>
         <span class="title">Payroll </span> <span class="selected"></span> <span class="arrow <?= arrow_open(['salary_process_con', 'arrear_salary_con', 'advanced_salary_con', 'penalty_con', 'palanty_con']) ?>"></span> </a>
         <ul class="sub-menu">
-          <?php if(in_array(31,$acl)) { ?>
+          <?php if(in_array(31,$acl) || in_array(204,$acl) || in_array(205,$acl) || $u_username === 'admin') { ?>
             <li class="<?= activate_method('salary_process_form') ?>">
               <a href="<?=base_url('salary_process_con/salary_process_form')?>" class="anchor_cls" id="acl">
                 <i class="fa fa-cogs"></i> Process
@@ -341,7 +394,16 @@
           </li>
           <?php } ?>
 
-          <?php if(in_array(33,$acl)) { ?>
+          <?php 
+            $has_reports_link = (
+              $u_username === 'admin' || 
+              (isset($user_session->level) && $user_session->level === 'All') ||
+              in_array(33, $acl) || 
+              in_array(4, $acl) ||
+              !empty(array_intersect($acl, array(184, 185, 186, 187, 188, 189, 190, 191, 195, 206, 207, 211)))
+            );
+            if ($has_reports_link) { 
+          ?>
             <li class="<?= activate_method('grid_salary_report') ?>">
               <a href="<?=base_url('salary_process_con/grid_salary_report')?>" class="anchor_cls">
                 <i class="fa fa-bar-chart"></i> Reports
@@ -421,7 +483,15 @@
       -->
 
       <!-- Setup -->
-      <?php if(in_array(5,$acl)) { ?>
+      <?php 
+        $has_setup_menu = (
+          $u_username === 'admin' || 
+          (isset($user_session->level) && $user_session->level === 'All') ||
+          in_array(5, $acl) || 
+          !empty(array_intersect($acl, array(34, 35, 38, 39, 40, 42, 43, 55, 56, 57, 58, 59)))
+        );
+        if ($has_setup_menu) { 
+      ?>
       <li class="start <?= activate_class('setup_con') ?>"> <a href="javascript:;"> <i class="fa fa-cog"></i>
         <span class="title">Setup Section </span> <span class="selected"></span> <span class="arrow <?= arrow_open('setup_con') ?>"></span> </a>
         <ul class="sub-menu">
