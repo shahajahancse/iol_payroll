@@ -17,65 +17,79 @@ class Advanced_salary_model extends CI_Model
      */
     public function ensure_schema()
     {
-        // 1. Table: advanced_salaries
-        if (!$this->db->table_exists($this->table_advances)) {
-            $sql = "CREATE TABLE IF NOT EXISTS `{$this->table_advances}` (
-                `id` INT(11) NOT NULL AUTO_INCREMENT,
-                `advance_id` VARCHAR(50) NOT NULL,
-                `unit_id` INT(11) NULL DEFAULT 1,
-                `emp_id` VARCHAR(64) NOT NULL,
-                `advance_date` DATE NOT NULL,
-                `advance_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-                `effective_month` VARCHAR(20) NOT NULL,
-                `deduction_method` ENUM('one_time', 'installment') NOT NULL DEFAULT 'installment',
-                `monthly_deduction_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-                `total_deducted` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-                `outstanding_balance` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-                `remarks` TEXT NULL,
-                `status` ENUM('Pending', 'Approved', 'Disbursed', 'Partially Deducted', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Approved',
-                `created_by` VARCHAR(100) NULL,
-                `approved_by` VARCHAR(100) NULL,
-                `created_at` DATETIME NOT NULL,
-                `updated_at` DATETIME NOT NULL,
-                PRIMARY KEY (`id`),
-                UNIQUE KEY `uq_advance_id` (`advance_id`),
-                KEY `idx_emp_id` (`emp_id`),
-                KEY `idx_effective_month` (`effective_month`),
-                KEY `idx_status` (`status`),
-                KEY `idx_unit_id` (`unit_id`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-            $this->db->query($sql);
-        }
+        $db_debug = $this->db->db_debug;
+        $this->db->db_debug = FALSE;
 
-        // 2. Table: advanced_salary_deductions
-        if (!$this->db->table_exists($this->table_deductions)) {
-            $sql = "CREATE TABLE IF NOT EXISTS `{$this->table_deductions}` (
-                `id` INT(11) NOT NULL AUTO_INCREMENT,
-                `advanced_salary_id` INT(11) NOT NULL,
-                `emp_id` VARCHAR(64) NOT NULL,
-                `salary_month` VARCHAR(20) NOT NULL,
-                `deduction_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-                `remaining_balance` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-                `salary_reference_id` VARCHAR(100) NULL,
-                `deduction_date` DATETIME NOT NULL,
-                `created_by` VARCHAR(100) NULL,
-                `created_at` DATETIME NOT NULL,
-                `updated_at` DATETIME NOT NULL,
-                PRIMARY KEY (`id`),
-                UNIQUE KEY `uq_adv_salary_month` (`advanced_salary_id`, `salary_month`),
-                KEY `idx_ded_emp_month` (`emp_id`, `salary_month`),
-                KEY `idx_advanced_salary_id` (`advanced_salary_id`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-            $this->db->query($sql);
-        }
+        try {
+            // 1. Table: advanced_salaries
+            if (!$this->db->table_exists($this->table_advances)) {
+                $sql = "CREATE TABLE IF NOT EXISTS `{$this->table_advances}` (
+                    `id` INT(11) NOT NULL AUTO_INCREMENT,
+                    `advance_id` VARCHAR(50) NOT NULL,
+                    `unit_id` INT(11) NULL DEFAULT 1,
+                    `emp_id` VARCHAR(64) NOT NULL,
+                    `advance_date` DATE NOT NULL,
+                    `advance_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    `effective_month` VARCHAR(20) NOT NULL,
+                    `deduction_method` ENUM('one_time', 'installment') NOT NULL DEFAULT 'installment',
+                    `monthly_deduction_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    `total_deducted` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    `outstanding_balance` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    `remarks` TEXT NULL,
+                    `status` ENUM('Pending', 'Approved', 'Disbursed', 'Partially Deducted', 'Completed', 'Cancelled') NOT NULL DEFAULT 'Approved',
+                    `created_by` VARCHAR(100) NULL,
+                    `approved_by` VARCHAR(100) NULL,
+                    `created_at` DATETIME NOT NULL,
+                    `updated_at` DATETIME NOT NULL,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `uq_advance_id` (`advance_id`),
+                    KEY `idx_emp_id` (`emp_id`),
+                    KEY `idx_effective_month` (`effective_month`),
+                    KEY `idx_status` (`status`),
+                    KEY `idx_unit_id` (`unit_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+                $this->db->query($sql);
+            }
+        } catch (Throwable $e) {}
 
-        // 3. Ensure adv_deduct column exists in salary sheet tables
-        if ($this->db->table_exists('pay_salary_sheet') && !$this->db->field_exists('adv_deduct', 'pay_salary_sheet')) {
-            $this->db->query("ALTER TABLE `pay_salary_sheet` ADD COLUMN `adv_deduct` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `deduct_amount`");
-        }
-        if ($this->db->table_exists('pay_salary_sheet_com') && !$this->db->field_exists('adv_deduct', 'pay_salary_sheet_com')) {
-            $this->db->query("ALTER TABLE `pay_salary_sheet_com` ADD COLUMN `adv_deduct` DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER `deduct_amount`");
-        }
+        try {
+            // 2. Table: advanced_salary_deductions
+            if (!$this->db->table_exists($this->table_deductions)) {
+                $sql = "CREATE TABLE IF NOT EXISTS `{$this->table_deductions}` (
+                    `id` INT(11) NOT NULL AUTO_INCREMENT,
+                    `advanced_salary_id` INT(11) NOT NULL,
+                    `emp_id` VARCHAR(64) NOT NULL,
+                    `salary_month` VARCHAR(20) NOT NULL,
+                    `deduction_amount` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    `remaining_balance` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                    `salary_reference_id` VARCHAR(100) NULL,
+                    `deduction_date` DATETIME NOT NULL,
+                    `created_by` VARCHAR(100) NULL,
+                    `created_at` DATETIME NOT NULL,
+                    `updated_at` DATETIME NOT NULL,
+                    PRIMARY KEY (`id`),
+                    UNIQUE KEY `uq_adv_salary_month` (`advanced_salary_id`, `salary_month`),
+                    KEY `idx_ded_emp_month` (`emp_id`, `salary_month`),
+                    KEY `idx_advanced_salary_id` (`advanced_salary_id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+                $this->db->query($sql);
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            // 3. Ensure adv_deduct column exists in salary sheet tables
+            if ($this->db->table_exists('pay_salary_sheet') && !$this->db->field_exists('adv_deduct', 'pay_salary_sheet')) {
+                $this->db->query("ALTER TABLE `pay_salary_sheet` ADD `adv_deduct` DECIMAL(10,2) NOT NULL DEFAULT '0.00'");
+            }
+        } catch (Throwable $e) {}
+
+        try {
+            if ($this->db->table_exists('pay_salary_sheet_com') && !$this->db->field_exists('adv_deduct', 'pay_salary_sheet_com')) {
+                $this->db->query("ALTER TABLE `pay_salary_sheet_com` ADD `adv_deduct` DECIMAL(10,2) NOT NULL DEFAULT '0.00'");
+            }
+        } catch (Throwable $e) {}
+
+        $this->db->db_debug = $db_debug;
     }
 
     /**
@@ -96,7 +110,17 @@ class Advanced_salary_model extends CI_Model
         } else {
             $seq = 1;
         }
-        return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+
+        // Loop to guarantee unique advance_id without collision
+        do {
+            $candidate = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            $exists = $this->db->where('advance_id', $candidate)->count_all_results($this->table_advances);
+            if ($exists > 0) {
+                $seq++;
+            }
+        } while ($exists > 0);
+
+        return $candidate;
     }
 
     /**
@@ -175,21 +199,21 @@ class Advanced_salary_model extends CI_Model
             'updated_at'               => $now,
         );
 
-        $this->db->insert($this->table_advances, $insert_data);
+        $insert_ok = $this->db->insert($this->table_advances, $insert_data);
+        if (!$insert_ok) {
+            $err = $this->db->error();
+            return array(
+                'status'  => false,
+                'message' => 'Database error: ' . (!empty($err['message']) ? $err['message'] : 'Failed to save advance record.')
+            );
+        }
         $new_id = $this->db->insert_id();
 
-        // Check if salary for effective_month is already processed in pay_salary_sheet. If so, auto-sync!
-        $synced = false;
-        if (in_array($status, array('Approved', 'Disbursed', 'Partially Deducted'))) {
-            $synced = $this->sync_to_processed_salary_sheet($emp_id, $effective_month);
-        }
-
         return array(
-            'status'        => true,
-            'id'            => $new_id,
-            'advance_id'    => $advance_id,
-            'message'       => "Advanced Salary {$advance_id} for Employee {$emp_id} created successfully.",
-            'auto_synced'   => $synced,
+            'status'     => true,
+            'id'         => $new_id,
+            'advance_id' => $advance_id,
+            'message'    => "Advanced Salary {$advance_id} for Employee {$emp_id} created successfully.",
         );
     }
 

@@ -1535,9 +1535,25 @@ function submitAdvanceForm(e) {
                 Swal.fire('Error', res.message, 'error');
             }
         },
-        error: function() {
+        error: function(xhr, status, error) {
             $('#btn_save_advance').prop('disabled', false).html('<i class="fa fa-check"></i> Save & Approve Advance');
-            Swal.fire('Error', 'An error occurred while saving the advance.', 'error');
+            var errorMsg = 'An error occurred while saving the advance.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            } else if (xhr.responseText) {
+                try {
+                    var parsed = JSON.parse(xhr.responseText);
+                    if (parsed && parsed.message) errorMsg = parsed.message;
+                } catch(e) {
+                    var match = xhr.responseText.match(/<p>(.*?)<\/p>/i) || xhr.responseText.match(/<h1>(.*?)<\/h1>/i);
+                    if (match && match[1]) {
+                        errorMsg = match[1].replace(/<[^>]+>/g, '');
+                    } else if (xhr.status) {
+                        errorMsg = 'Server Error (' + xhr.status + ' ' + (error || '') + ')';
+                    }
+                }
+            }
+            Swal.fire('Error', errorMsg, 'error');
         }
     });
 }
@@ -1691,6 +1707,13 @@ function submitEditForm(e) {
             } else {
                 Swal.fire('Error', res.message, 'error');
             }
+        },
+        error: function(xhr, status, error) {
+            var errorMsg = 'An error occurred while updating the advance.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            Swal.fire('Error', errorMsg, 'error');
         }
     });
 }

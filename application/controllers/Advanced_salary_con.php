@@ -171,10 +171,16 @@ class Advanced_salary_con extends CI_Controller
             'status'                   => !empty($id) && !empty($status) ? $status : 'Approved',
         );
 
-        if (!empty($id)) {
-            $res = $this->Advanced_salary_model->update_advance((int)$id, $payload, $this->data['username']);
-        } else {
-            $res = $this->Advanced_salary_model->save_advance($payload, $this->data['username']);
+        try {
+            if (!empty($id)) {
+                $res = $this->Advanced_salary_model->update_advance((int)$id, $payload, $this->data['username']);
+            } else {
+                $res = $this->Advanced_salary_model->save_advance($payload, $this->data['username']);
+            }
+        } catch (Throwable $e) {
+            $res = array('status' => false, 'message' => 'Error: ' . $e->getMessage());
+        } catch (Exception $e) {
+            $res = array('status' => false, 'message' => 'Error: ' . $e->getMessage());
         }
 
         return $this->output->set_content_type('application/json')->set_output(json_encode($res));
@@ -185,9 +191,13 @@ class Advanced_salary_con extends CI_Controller
      */
     public function cancel($id)
     {
-        $id = (int)$id;
-        $reason = trim((string)$this->input->post('reason'));
-        $res = $this->Advanced_salary_model->cancel_advance($id, $this->data['username'], $reason);
+        try {
+            $id = (int)$id;
+            $reason = trim((string)$this->input->post('reason'));
+            $res = $this->Advanced_salary_model->cancel_advance($id, $this->data['username'], $reason);
+        } catch (Throwable $e) {
+            $res = array('status' => false, 'message' => 'Error: ' . $e->getMessage());
+        }
         return $this->output->set_content_type('application/json')->set_output(json_encode($res));
     }
 
@@ -196,8 +206,12 @@ class Advanced_salary_con extends CI_Controller
      */
     public function delete($id)
     {
-        $id = (int)$id;
-        $res = $this->Advanced_salary_model->delete_advance($id);
+        try {
+            $id = (int)$id;
+            $res = $this->Advanced_salary_model->delete_advance($id);
+        } catch (Throwable $e) {
+            $res = array('status' => false, 'message' => 'Error: ' . $e->getMessage());
+        }
         return $this->output->set_content_type('application/json')->set_output(json_encode($res));
     }
 
