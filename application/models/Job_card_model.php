@@ -357,7 +357,10 @@ class Job_card_model extends CI_Model{
 			} elseif (!empty($row->remarks)) {
 				$clean = trim($row->remarks);
 				if (!empty($row->reg_reason) && stripos($clean, trim($row->reg_reason) . ':') === 0) {
-					$clean = trim(substr($clean, strlen(trim($row->reg_reason)) + 1));
+					$extracted_rem = trim(substr($clean, strlen(trim($row->reg_reason)) + 1));
+					if (!empty($extracted_rem)) {
+						$clean = $extracted_rem;
+					}
 				} elseif (strpos($clean, ': ') !== false) {
 					$parts = explode(': ', $clean, 2);
 					if (!empty($parts[1])) {
@@ -365,10 +368,24 @@ class Job_card_model extends CI_Model{
 					}
 				}
 			}
+			if (empty($clean) && !empty($row->reg_reason)) {
+				$clean = trim($row->reg_reason);
+			}
 			if (!empty($clean)) {
 				$clean = preg_replace('/\s*\(waived\)\s*$/i', '', $clean);
 			}
 			$row->remarks = $clean;
+
+			$has_admin_remark = (!empty($clean) || !empty($row->reg_remarks) || !empty($row->remarks) || !empty($row->reg_reason) || !empty($row->is_waived));
+			if ($has_admin_remark) {
+				if ($row->late_status == 1) {
+					$row->late_status = 0;
+				}
+				if ($row->present_status == 'P(Error)') {
+					$row->present_status = 'P';
+				}
+				$row->deduction_hour = 0;
+			}
 		}
 
 		$leaves = $this->leave_per_emp($start_date, $end_date, $emp_id);
@@ -635,7 +652,10 @@ class Job_card_model extends CI_Model{
 			} elseif (!empty($row->remarks)) {
 				$clean = trim($row->remarks);
 				if (!empty($row->reg_reason) && stripos($clean, trim($row->reg_reason) . ':') === 0) {
-					$clean = trim(substr($clean, strlen(trim($row->reg_reason)) + 1));
+					$extracted_rem = trim(substr($clean, strlen(trim($row->reg_reason)) + 1));
+					if (!empty($extracted_rem)) {
+						$clean = $extracted_rem;
+					}
 				} elseif (strpos($clean, ': ') !== false) {
 					$parts = explode(': ', $clean, 2);
 					if (!empty($parts[1])) {
@@ -643,10 +663,24 @@ class Job_card_model extends CI_Model{
 					}
 				}
 			}
+			if (empty($clean) && !empty($row->reg_reason)) {
+				$clean = trim($row->reg_reason);
+			}
 			if (!empty($clean)) {
 				$clean = preg_replace('/\s*\(waived\)\s*$/i', '', $clean);
 			}
 			$row->remarks = $clean;
+
+			$has_admin_remark = (!empty($clean) || !empty($row->reg_remarks) || !empty($row->remarks) || !empty($row->reg_reason) || !empty($row->is_waived));
+			if ($has_admin_remark) {
+				if ($row->late_status == 1) {
+					$row->late_status = 0;
+				}
+				if ($row->present_status == 'P(Error)') {
+					$row->present_status = 'P';
+				}
+				$row->deduction_hour = 0;
+			}
 		}
 
 		$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');

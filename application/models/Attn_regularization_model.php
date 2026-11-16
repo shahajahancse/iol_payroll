@@ -272,6 +272,12 @@ class Attn_regularization_model extends CI_Model
             'regularization_id' => $reg_id
         );
 
+        if ($is_waived) {
+            $update_data['deduction_hour'] = 0;
+            $update_data['late_status'] = 0;
+            $update_data['present_status'] = 'P';
+        }
+
         if (!empty($adj_in) && $adj_in !== '00:00:00') {
             $update_data['in_time'] = $adj_in;
         }
@@ -727,6 +733,12 @@ class Attn_regularization_model extends CI_Model
             'is_waived'         => $waive_deduction ? 1 : 0,
             'regularization_id' => $reg_id,
         );
+
+        if ($waive_deduction) {
+            $shift_update['deduction_hour'] = 0;
+            $shift_update['late_status'] = 0;
+            $shift_update['present_status'] = 'P';
+        }
 
         if (!empty($adj_in) && $adj_in !== '00:00:00') {
             $shift_update['in_time'] = $adj_in;

@@ -93,6 +93,36 @@
 						</tr>";
                         foreach ($emp_data['emp_data'] as $key => $row) {
 
+                            // Extract and sanitize admin/user remarks
+                            $user_remark = '';
+                            if (!empty($row->reg_remarks)) {
+                                $user_remark = trim($row->reg_remarks);
+                            } elseif (!empty($row->remarks)) {
+                                $user_remark = trim($row->remarks);
+                                if (!empty($row->reg_reason) && stripos($user_remark, trim($row->reg_reason) . ':') === 0) {
+                                    $extracted_rem = trim(substr($user_remark, strlen(trim($row->reg_reason)) + 1));
+                                    if (!empty($extracted_rem)) {
+                                        $user_remark = $extracted_rem;
+                                    }
+                                } elseif (strpos($user_remark, ': ') !== false) {
+                                    $parts = explode(': ', $user_remark, 2);
+                                    if (!empty($parts[1])) {
+                                        $user_remark = trim($parts[1]);
+                                    }
+                                }
+                            }
+                            if (empty($user_remark) && !empty($row->reg_reason)) {
+                                $user_remark = trim($row->reg_reason);
+                            }
+                            if (!empty($user_remark)) {
+                                $user_remark = preg_replace('/\s*\(waived\)\s*$/i', '', $user_remark);
+                            }
+
+                            $has_admin_remark = (!empty($user_remark) || !empty($row->reg_remarks) || !empty($row->remarks) || !empty($row->reg_reason) || !empty($row->is_waived));
+                            if ($has_admin_remark && $row->late_status == 1) {
+                                $row->late_status = 0;
+                            }
+
                             $leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
                             if(strtoupper(trim($row->present_status)) != 'A' && (in_array(strtoupper(trim($row->present_status)), $leave_codes) || (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date])))){
                                 $leave_type = (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date])) ? $emp_data['leave'][$row->shift_log_date] : $this->job_card_model->get_leave_type($row->shift_log_date,$value->emp_id);
@@ -153,12 +183,17 @@
                                 $att_status = "P";
                                 $att_status_count = "P";
                             }
+                            elseif($has_admin_remark && ($row->in_time !='00:00:00' or $row->out_time !='00:00:00')){
+                                // Single punch with admin remark: show P instead of P(Error)
+                                $att_status = "P";
+                                $att_status_count = "P";
+                            }
                             elseif($row->in_time !='00:00:00' or $row->out_time !='00:00:00'){
                                 // Other shifts: show P(Error) as normal
                                 $att_status = "P(Error)";
                                 $att_status_count = "P(Error)";
                             }
-                            elseif($row->present_status == 'P'){
+                            elseif($row->present_status == 'P' || ($has_admin_remark && $row->present_status == 'P(Error)')){
                                 $att_status = "P";
                                 $att_status_count = "P";
                             }
@@ -167,6 +202,12 @@
                                 $att_status_count = "A";
                                 $row->ot = 0;
                                 $row->eot = 0;
+                            }
+
+                            // If an admin remark is present, never treat as P(Error)
+                            if ($has_admin_remark && ($att_status == "P(Error)" || $att_status_count == "P(Error)")) {
+                                $att_status = "P";
+                                $att_status_count = "P";
                             }
 
                             $schedule = $this->job_card_model->schedule_check($row->schedule_id);
@@ -244,26 +285,10 @@
                                 elseif($att_status == "Holiday"){
                                     $holiday_count++;
                                 }
-                                $user_remark = '';
-                                if (!empty($row->reg_remarks)) {
-                                    $user_remark = trim($row->reg_remarks);
-                                } elseif (!empty($row->remarks)) {
-                                    $user_remark = trim($row->remarks);
-                                    if (!empty($row->reg_reason) && stripos($user_remark, trim($row->reg_reason) . ':') === 0) {
-                                        $user_remark = trim(substr($user_remark, strlen(trim($row->reg_reason)) + 1));
-                                    } elseif (strpos($user_remark, ': ') !== false) {
-                                        $parts = explode(': ', $user_remark, 2);
-                                        if (!empty($parts[1])) {
-                                            $user_remark = trim($parts[1]);
-                                        }
-                                    }
-                                }
-                                if (!empty($user_remark)) {
-                                    $user_remark = preg_replace('/\s*\(waived\)\s*$/i', '', $user_remark);
-                                }
-
                                 if (!empty($user_remark)) {
                                     $remark = $user_remark;
+                                } elseif ($has_admin_remark) {
+                                    $remark = !empty($row->reg_reason) ? trim($row->reg_reason) : (!empty($row->remarks) ? trim($row->remarks) : "Approved");
                                 } elseif ($att_status_count != "Leave" && !in_array($att_status, $leave_codes) && $row->late_status == 1) {
                                     $remark = "Late";
                                     if (empty($row->is_waived)) {

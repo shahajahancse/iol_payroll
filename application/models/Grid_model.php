@@ -5510,6 +5510,8 @@ class Grid_model extends CI_Model{
 								   pr_emp_shift_log.eot,
 								   pr_emp_shift_log.present_status,
 								   pr_emp_shift_log.late_status,
+								   pr_emp_shift_log.remarks,
+								   pr_emp_shift_log.is_waived,
 								   pr_emp_shift.shift_name');
 				$this->db->from('pr_emp_shift_log');
 				$this->db->join('pr_emp_shift', 'pr_emp_shift.id = pr_emp_shift_log.shift_id', 'left');
@@ -5563,8 +5565,18 @@ class Grid_model extends CI_Model{
 						$att_status = "P";
 						$att_status_count = "P";
 					}
-					elseif(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('single', 'single punch', 'single_punch', 'single-punch')) && ($row->in_time !='00:00:00' or $row->out_time !='00:00:00')){
+					$has_admin_remark = (!empty($row->remarks) || !empty($row->is_waived));
+					if ($has_admin_remark && $row->late_status == 1) {
+						$row->late_status = 0;
+					}
+
+					if(isset($row->shift_name) && in_array(strtolower(trim($row->shift_name)), array('single', 'single punch', 'single_punch', 'single-punch')) && ($row->in_time !='00:00:00' or $row->out_time !='00:00:00')){
 						// Single punch shift only: show P instead of P(Error)
+						$att_status = "P";
+						$att_status_count = "P";
+					}
+					elseif($has_admin_remark && ($row->in_time !='00:00:00' or $row->out_time !='00:00:00')){
+						// Single punch with admin remark: show P instead of P(Error)
 						$att_status = "P";
 						$att_status_count = "P";
 					}
@@ -5573,13 +5585,18 @@ class Grid_model extends CI_Model{
 						$att_status = "P(Error)";
 						$att_status_count = "P(Error)";
 					}
-					elseif($row->present_status == 'P'){
+					elseif($row->present_status == 'P' || ($has_admin_remark && $row->present_status == 'P(Error)')){
 						$att_status = "P";
 						$att_status_count = "P";
 					}
 					else{
 						$att_status = "A";
 						$att_status_count = "A";
+					}
+
+					if ($has_admin_remark && ($att_status == "P(Error)" || $att_status_count == "P(Error)")) {
+						$att_status = "P";
+						$att_status_count = "P";
 					}
 
 					if($att_status !="Leave" and $att_status !="Holiday" and $att_status !="Weekend" and $att_status !="A" and $att_status !="OD" ){
@@ -5621,7 +5638,10 @@ class Grid_model extends CI_Model{
 					$end_time   	=  $schedule[0]["in_end"];
 					$out_start_time	=  $schedule[0]["out_start"];
 					$out_end_time	=  $schedule[0]["out_end"];
-					if($row->late_status == 1 ){
+					if(!empty($row->remarks)){
+						$remark = trim($row->remarks);
+					}
+					elseif($row->late_status == 1 ){
 						$remark = "Late";
 					}
 					else{
