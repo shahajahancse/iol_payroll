@@ -176,6 +176,9 @@ class Advanced_salary_con extends CI_Controller
                 $res = $this->Advanced_salary_model->update_advance((int)$id, $payload, $this->data['username']);
             } else {
                 $res = $this->Advanced_salary_model->save_advance($payload, $this->data['username']);
+                if (!empty($res['status'])) {
+                    $this->Advanced_salary_model->sync_to_processed_salary_sheet($payload['emp_id'], $payload['effective_month']);
+                }
             }
         } catch (Throwable $e) {
             $res = array('status' => false, 'message' => 'Error: ' . $e->getMessage());

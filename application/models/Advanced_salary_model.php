@@ -565,32 +565,75 @@ class Advanced_salary_model extends CI_Model
         $emp_id = trim((string)$emp_id);
         $clean_month = $this->format_month($salary_month);
         $salary_month_date = $clean_month . '-01';
+        $now = date('Y-m-d H:i:s');
 
-        // Find active advances eligible for deduction
-        // Effective month must be <= current salary month
+        $total_deducted_this_month = 0.00;
+        $deducted_adv_ids = array();
+
+        // 1. Check existing deductions already recorded for this employee and month
+        $existing_deductions = $this->db->where('emp_id', $emp_id)
+            ->where("(salary_month = '{$clean_month}' OR salary_month = '{$salary_month_date}')")
+            ->get($this->table_deductions)
+            ->result();
+
+        foreach ($existing_deductions as $ed) {
+            $total_deducted_this_month += (float)$ed->deduction_amount;
+            if (!empty($ed->advanced_salary_id)) {
+                $deducted_adv_ids[] = (int)$ed->advanced_salary_id;
+            }
+        }
+
+        // 2. Fallback check: if an advance has effective_month == clean_month and total_deducted > 0,
+        // but no deduction record exists in advanced_salary_deductions for this month
+        $all_advances = $this->db->where('emp_id', $emp_id)
+            ->where_in('status', array('Approved', 'Disbursed', 'Partially Deducted', 'Completed'))
+            ->get($this->table_advances)
+            ->result();
+
+        foreach ($all_advances as $adv) {
+            $adv_eff_month = $this->format_month($adv->effective_month);
+            if ($adv_eff_month === $clean_month && !in_array((int)$adv->id, $deducted_adv_ids)) {
+                if ((float)$adv->total_deducted > 0) {
+                    $ded_amount = (float)$adv->monthly_deduction_amount;
+                    if ($adv->deduction_method === 'one_time' || $ded_amount <= 0 || $ded_amount > (float)$adv->total_deducted) {
+                        $ded_amount = (float)$adv->total_deducted;
+                    }
+                    $ded_amount = round($ded_amount, 2);
+
+                    if ($ded_amount > 0) {
+                        $this->db->insert($this->table_deductions, array(
+                            'advanced_salary_id'  => $adv->id,
+                            'emp_id'              => $emp_id,
+                            'salary_month'        => $clean_month,
+                            'deduction_amount'    => $ded_amount,
+                            'remaining_balance'   => (float)$adv->outstanding_balance,
+                            'salary_reference_id' => $salary_ref,
+                            'deduction_date'      => $now,
+                            'created_by'          => $username,
+                            'created_at'          => $now,
+                            'updated_at'          => $now,
+                        ));
+
+                        $total_deducted_this_month += $ded_amount;
+                        $deducted_adv_ids[] = (int)$adv->id;
+                    }
+                }
+            }
+        }
+
+        // 3. Process remaining active advances with outstanding balance > 0
         $this->db->where('emp_id', $emp_id);
         $this->db->where_in('status', array('Approved', 'Disbursed', 'Partially Deducted'));
         $this->db->where('outstanding_balance >', 0);
-        $advances = $this->db->get($this->table_advances)->result();
+        if (!empty($deducted_adv_ids)) {
+            $this->db->where_not_in('id', $deducted_adv_ids);
+        }
+        $active_advances = $this->db->get($this->table_advances)->result();
 
-        $total_deducted_this_month = 0.00;
-        $now = date('Y-m-d H:i:s');
-
-        foreach ($advances as $adv) {
+        foreach ($active_advances as $adv) {
             $eff_month = $this->format_month($adv->effective_month);
-            // Rule 1: No deduction before Effective Month
+            // Rule: No deduction before Effective Month
             if ($clean_month < $eff_month) {
-                continue;
-            }
-
-            // Rule 2: Check if already deducted in this salary month
-            $this->db->where('advanced_salary_id', $adv->id);
-            $this->db->where("(salary_month = '{$clean_month}' OR salary_month = '{$salary_month_date}')");
-            $existing_ded = $this->db->get($this->table_deductions)->row();
-
-            if ($existing_ded) {
-                // Idempotent: Already recorded for this salary run, simply tally it
-                $total_deducted_this_month += (float)$existing_ded->deduction_amount;
                 continue;
             }
 
@@ -668,18 +711,19 @@ class Advanced_salary_model extends CI_Model
         $adv_deduct = $this->process_salary_deduction_for_employee($emp_id, $clean_month, 'AUTO_SYNC');
 
         // Recalculate total deduction & net pay for pay_salary_sheet
-        $abs_deduct    = (float)$sheet->abs_deduction;
-        $late_deduct   = (float)$sheet->late_deduct;
-        $others_deduct = (float)$sheet->others_deduct;
-        $tax_deduct    = (float)$sheet->tax_deduct;
-        $stamp         = (float)$sheet->stamp;
+        $abs_deduct     = (float)$sheet->abs_deduction;
+        $late_deduct    = (float)$sheet->late_deduct;
+        $others_deduct  = (float)$sheet->others_deduct;
+        $tax_deduct     = (float)$sheet->tax_deduct;
+        $stamp          = (float)$sheet->stamp;
+        $penalty_deduct = isset($sheet->penalty_deduct) ? (float)$sheet->penalty_deduct : (isset($sheet->palanty_deduct) ? (float)$sheet->palanty_deduct : 0.00);
 
-        $new_total_ded = $adv_deduct + $abs_deduct + $late_deduct + $others_deduct + $tax_deduct + $stamp;
-        $gross         = (float)$sheet->gross_sal;
-        $att_bonus     = (float)$sheet->att_bonus;
-        $ot_amount     = (float)$sheet->ot_amount;
-        $arrear        = isset($sheet->arrear_amount) ? (float)$sheet->arrear_amount : 0.00;
-        $new_net_pay   = round($gross + $att_bonus + $ot_amount + $arrear - $new_total_ded, 2);
+        $new_total_ded  = $adv_deduct + $abs_deduct + $late_deduct + $others_deduct + $tax_deduct + $stamp + $penalty_deduct;
+        $gross          = (float)$sheet->gross_sal;
+        $att_bonus      = (float)$sheet->att_bonus;
+        $ot_amount      = (float)$sheet->ot_amount;
+        $arrear         = isset($sheet->arrear_amount) ? (float)$sheet->arrear_amount : 0.00;
+        $new_net_pay    = round($gross + $att_bonus + $ot_amount + $arrear - $new_total_ded, 2);
 
         $this->db->where('id', $sheet->id)->update('pay_salary_sheet', array(
             'adv_deduct'   => $adv_deduct,
@@ -693,18 +737,19 @@ class Advanced_salary_model extends CI_Model
                               ->get('pay_salary_sheet_com')
                               ->row();
         if ($sheet_com) {
-            $abs_deduct_com    = (float)$sheet_com->abs_deduction;
-            $late_deduct_com   = (float)$sheet_com->late_deduct;
-            $others_deduct_com = (float)$sheet_com->others_deduct;
-            $tax_deduct_com    = (float)$sheet_com->tax_deduct;
-            $stamp_com         = (float)$sheet_com->stamp;
+            $abs_deduct_com     = (float)$sheet_com->abs_deduction;
+            $late_deduct_com    = (float)$sheet_com->late_deduct;
+            $others_deduct_com  = (float)$sheet_com->others_deduct;
+            $tax_deduct_com     = (float)$sheet_com->tax_deduct;
+            $stamp_com          = (float)$sheet_com->stamp;
+            $penalty_deduct_com = isset($sheet_com->penalty_deduct) ? (float)$sheet_com->penalty_deduct : (isset($sheet_com->palanty_deduct) ? (float)$sheet_com->palanty_deduct : 0.00);
 
-            $new_total_ded_com = $adv_deduct + $abs_deduct_com + $late_deduct_com + $others_deduct_com + $tax_deduct_com + $stamp_com;
-            $gross_com         = (float)$sheet_com->gross_sal;
-            $att_bonus_com     = (float)$sheet_com->att_bonus;
-            $ot_amount_com     = (float)$sheet_com->ot_amount;
-            $arrear_com        = isset($sheet_com->arrear_amount) ? (float)$sheet_com->arrear_amount : 0.00;
-            $new_net_pay_com   = round($gross_com + $att_bonus_com + $ot_amount_com + $arrear_com - $new_total_ded_com, 2);
+            $new_total_ded_com  = $adv_deduct + $abs_deduct_com + $late_deduct_com + $others_deduct_com + $tax_deduct_com + $stamp_com + $penalty_deduct_com;
+            $gross_com          = (float)$sheet_com->gross_sal;
+            $att_bonus_com      = (float)$sheet_com->att_bonus;
+            $ot_amount_com      = (float)$sheet_com->ot_amount;
+            $arrear_com         = isset($sheet_com->arrear_amount) ? (float)$sheet_com->arrear_amount : 0.00;
+            $new_net_pay_com    = round($gross_com + $att_bonus_com + $ot_amount_com + $arrear_com - $new_total_ded_com, 2);
 
             $this->db->where('id', $sheet_com->id)->update('pay_salary_sheet_com', array(
                 'adv_deduct'   => $adv_deduct,
