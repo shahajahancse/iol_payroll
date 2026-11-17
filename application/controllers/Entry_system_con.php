@@ -313,28 +313,49 @@ class Entry_system_con extends CI_Controller
     }
     function attendance_check($emp_id,$start_date,$end_date)
     {
+        $has_reg = $this->db->table_exists('pr_attn_regularization');
+        $remark_cond = "((s.remarks IS NOT NULL AND TRIM(s.remarks) != '')" 
+            . ($has_reg ? " OR (reg.remarks IS NOT NULL AND TRIM(reg.remarks) != '') OR (reg.reason_type IS NOT NULL AND TRIM(reg.reason_type) != '')" : "") 
+            . " OR s.is_waived = 1)";
+
         $this->db->select("
-                COALESCE(SUM(CASE WHEN present_status = 'P' THEN 1 ELSE 0 END ), 0) AS attend,
-                COALESCE(SUM(CASE WHEN present_status = 'A' THEN 1 ELSE 0 END ), 0) AS absent,
-                COALESCE(SUM(CASE WHEN present_status = 'W' THEN 1 ELSE 0 END ), 0) AS weekend,
-                COALESCE(SUM(CASE WHEN present_status = 'H' THEN 1 ELSE 0 END ), 0) AS holiday,
-                COALESCE(SUM(CASE WHEN present_status = 'L' THEN 1 ELSE 0 END ), 0) AS total_leave,
-                COALESCE(SUM(CASE WHEN late_status   = '1' THEN 1 ELSE 0 END ), 0) AS late_status,
-                COALESCE(SUM(CASE WHEN holiday_allo = '1' THEN 1 ELSE 0 END ), 0) AS holiday_allo,
-                COALESCE(SUM(CASE WHEN weekly_allo  = '1' THEN 1 ELSE 0 END ), 0) AS weekly_allo,
-                COALESCE(SUM(CASE WHEN night_allo   = '1' THEN 1 ELSE 0 END ), 0) AS night_allo,
-                COALESCE(SUM(CASE WHEN tiffin_allo  = '1' THEN 1 ELSE 0 END ), 0) AS tiffin_allo,
-                COALESCE(SUM(ot), 0) AS ot,
-                COALESCE(SUM(eot), 0) AS eot,
-                COALESCE(SUM(ot_eot_4pm), 0) AS ot_eot_4pm,
-                COALESCE(SUM(ot_eot_12am), 0) AS ot_eot_12am,
-                COALESCE(SUM(modify_eot), 0) AS modify_eot,
-                COALESCE(SUM(deduction_hour), 0) AS deduction_hour,
+                COALESCE(SUM(CASE 
+                    WHEN s.present_status = 'P' OR s.present_status = 'OD' 
+                         OR (LOWER(TRIM(s.present_status)) = 'p(error)' AND $remark_cond) 
+                    THEN 1 ELSE 0 
+                END ), 0) AS attend,
+                COALESCE(SUM(CASE WHEN s.present_status = 'A' THEN 1 ELSE 0 END ), 0) AS absent,
+                COALESCE(SUM(CASE WHEN s.present_status = 'W' THEN 1 ELSE 0 END ), 0) AS weekend,
+                COALESCE(SUM(CASE WHEN s.present_status = 'H' THEN 1 ELSE 0 END ), 0) AS holiday,
+                COALESCE(SUM(CASE WHEN s.present_status = 'L' THEN 1 ELSE 0 END ), 0) AS total_leave,
+                COALESCE(SUM(CASE 
+                    WHEN s.late_status = '1' AND (s.is_waived = 0 OR s.is_waived IS NULL) 
+                         AND NOT (LOWER(TRIM(s.present_status)) = 'p(error)' AND $remark_cond) 
+                    THEN 1 ELSE 0 
+                END ), 0) AS late_status,
+                COALESCE(SUM(CASE WHEN s.holiday_allo = '1' THEN 1 ELSE 0 END ), 0) AS holiday_allo,
+                COALESCE(SUM(CASE WHEN s.weekly_allo  = '1' THEN 1 ELSE 0 END ), 0) AS weekly_allo,
+                COALESCE(SUM(CASE WHEN s.night_allo   = '1' THEN 1 ELSE 0 END ), 0) AS night_allo,
+                COALESCE(SUM(CASE WHEN s.tiffin_allo  = '1' THEN 1 ELSE 0 END ), 0) AS tiffin_allo,
+                COALESCE(SUM(s.ot), 0) AS ot,
+                COALESCE(SUM(s.eot), 0) AS eot,
+                COALESCE(SUM(s.ot_eot_4pm), 0) AS ot_eot_4pm,
+                COALESCE(SUM(s.ot_eot_12am), 0) AS ot_eot_12am,
+                COALESCE(SUM(s.modify_eot), 0) AS modify_eot,
+                COALESCE(SUM(CASE 
+                    WHEN LOWER(TRIM(s.present_status)) = 'p(error)' AND $remark_cond 
+                    THEN 0 
+                    ELSE s.deduction_hour 
+                END ), 0) AS deduction_hour,
             ");
 
-        $this->db->where('emp_id',$emp_id);
-        $this->db->where("shift_log_date BETWEEN '$start_date' AND '$end_date'");
-        $query = $this->db->get('pr_emp_shift_log')->row();
+        $this->db->from('pr_emp_shift_log s');
+        if ($has_reg) {
+            $this->db->join('pr_attn_regularization reg', 'reg.emp_id = s.emp_id AND reg.att_date = s.shift_log_date', 'left');
+        }
+        $this->db->where('s.emp_id',$emp_id);
+        $this->db->where("s.shift_log_date BETWEEN '$start_date' AND '$end_date'");
+        $query = $this->db->get()->row();
         return $query;
     }
 	function get_emp_allowances($desi_id)
