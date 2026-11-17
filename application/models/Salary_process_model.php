@@ -9,6 +9,17 @@ class Salary_process_model extends CI_Model{
 		/* Standard Libraries */
 		$this->load->model('pf_model');
 		$this->load->model('common_model');
+
+		// Ensure pay_days column allows decimal values for half-day punch error calculations (e.g. 30.5)
+		if ($this->db->table_exists('pay_salary_sheet')) {
+			$col = $this->db->query("SHOW COLUMNS FROM pay_salary_sheet WHERE Field = 'pay_days'")->row();
+			if ($col && strpos(strtolower($col->Type), 'decimal') === false && strpos(strtolower($col->Type), 'float') === false) {
+				$this->db->query("ALTER TABLE pay_salary_sheet MODIFY COLUMN pay_days DECIMAL(5,1) NOT NULL DEFAULT 0.0");
+				if ($this->db->table_exists('pay_salary_sheet_com')) {
+					$this->db->query("ALTER TABLE pay_salary_sheet_com MODIFY COLUMN pay_days DECIMAL(5,1) NOT NULL DEFAULT 0.0");
+				}
+			}
+		}
 	}
 
 	function salary_process($unit_id,$process_month,$grid_emp_id)
@@ -267,7 +278,8 @@ class Salary_process_model extends CI_Model{
 					$consecutive_late_absent = $this->get_consecutive_late_absent($emp_id, $start_date, $end_date);
 					$total_absent_days = $absent + $consecutive_late_absent;
 					$num_working_days = $num_of_days - $holiday - $weekend - $before_after_absent;
-					$pay_days 		  = max(0, ($attend + $weekend + $holiday + $total_pay_leave) - $consecutive_late_absent);
+					$punch_error_deduct_days = (!empty($attendances->deduction_hour) ? ($attendances->deduction_hour / 8) : 0);
+					$pay_days 		  = max(0, ($attend + $weekend + $holiday + $total_pay_leave) - $consecutive_late_absent - $punch_error_deduct_days);
 
 					$attend_data = array(
 						'total_days' 	 => $num_of_days,
@@ -289,7 +301,6 @@ class Salary_process_model extends CI_Model{
 						'pay_days' 		 => $pay_days,
 						'late_deduct' 	 => $consecutive_late_absent,
 					);
-					// dd($attend_data);
 
 					$data_com['total_days'] 	 = $num_of_days;
 					$data_com['num_of_workday']  = $num_working_days;
@@ -517,12 +528,8 @@ class Salary_process_model extends CI_Model{
 						$ot_eot_12am_hour = $attendances->ot_eot_12am;
 						$ot_eot_4pm_hour  = $attendances->ot_eot_4pm;
 						$modify_eot_hour  = $attendances->modify_eot;
-						if ($is_emp_billing) {
-							// Billing Shift: half-day penalty is deducted directly from basic salary, so EOT is not penalized twice
-							$eot_hour = $collect_eot_hour + $modify_eot_hour;
-						} else {
-							$eot_hour = $collect_eot_hour + $modify_eot_hour - $deduct_hour;
-						}
+						// Punch error deduction is handled via pay_days and abs_deduction, NEVER deducted from approved OT or EOT
+						$eot_hour = $collect_eot_hour + $modify_eot_hour;
 						if ($eot_hour < 0) {
 							$eot_hour = 0;
 						}
@@ -954,6 +961,7 @@ class Salary_process_model extends CI_Model{
     {
 		// dd($emp_id.'==='.$start_date.'=='.$end_date);
         $has_reg = $this->db->table_exists('pr_attn_regularization');
+
         $remark_cond = "((s.remarks IS NOT NULL AND TRIM(s.remarks) != '')" 
             . ($has_reg ? " OR (reg.remarks IS NOT NULL AND TRIM(reg.remarks) != '') OR (reg.reason_type IS NOT NULL AND TRIM(reg.reason_type) != '')" : "") 
             . " OR s.is_waived = 1)";
@@ -961,7 +969,8 @@ class Salary_process_model extends CI_Model{
         $this->db->select("
                 COALESCE(SUM(CASE 
                     WHEN s.present_status = 'P' OR s.present_status = 'OD' 
-                         OR ((LOWER(TRIM(s.present_status)) = 'p(error)' OR s.present_status = 'A') AND $remark_cond) 
+                         OR LOWER(TRIM(s.present_status)) = 'p(error)'
+                         OR (s.present_status = 'A' AND $remark_cond) 
                     THEN 1 ELSE 0 
                 END ), 0) AS attend,
                 COALESCE(SUM(CASE 

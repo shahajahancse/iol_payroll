@@ -1128,7 +1128,7 @@ class Grid_model extends CI_Model{
 			$salary_structure 			= $this->common_model->salary_structure($rows->gross_sal);
 			$ot_rate 					= $salary_structure['ot_rate'];
 			$data['ot_hour'] []			= $rows->ot;
-			$extra_eot 					= $rows->eot + $rows->modify_eot - $rows->deduction_hour;
+			$extra_eot 					= $rows->eot + $rows->modify_eot;
 			$data['extra_ot_hour'][] 	= $extra_eot;
 			$data['ot_rate'][] 			= $ot_rate;
 			$data['night_allo'][] 		= $rows->night_allo;
