@@ -162,7 +162,7 @@ echo "Payment Date : $date";
     <td rowspan="2" width="15" height="20px"><div align="center"><strong>Conveyance Allowance</strong></div></td>
     <td rowspan="2" width="15" height="20px"><div align="center"><strong>Food Allowance</strong></div></td>
     <td rowspan="2" width="35" height="20px"><div align="center"><strong>Gross Salary</strong></div></td>
-    <td colspan="4" width="30" height="20px"><div align="center"><strong>Present Status</strong></div></td>
+    <td colspan="5" width="30" height="20px"><div align="center"><strong>Present Status</strong></div></td>
 	<td colspan="5" height="20px"><div align="center"><strong>Leave Status</strong></div></td>
     <td rowspan="2" width="25" height="20px"><div align="center"><strong>Wor. Days</strong></div></td>
     <td rowspan="2" width="25" height="20px"><div align="center"><strong>Pay Days</strong></div></td>
@@ -181,6 +181,7 @@ echo "Payment Date : $date";
   	<td width="15" style="font-size:8px;"><div align="center"><strong>P. Days</strong></div></td>
 	<td width="15" style="font-size:8px;"><div align="center"><strong>Off Days</strong></div></td>
 	<td width="15" style="font-size:8px;"><div align="center"><strong>Abs. Days</strong></div></td>
+	<td width="15" style="font-size:8px;"><div align="center"><strong>Late Ded.</strong></div></td>
     <td width="15" style="font-size:8px;"><div align="center"><strong>B/A Abs. Days</strong></div></td>
   	<td width="15"><div align="center"><strong>C/L</strong></div></td>
 	<td width="15"><div align="center"><strong>S/L</strong></div></td>
@@ -337,6 +338,10 @@ echo "Payment Date : $date";
 		
 		echo "<td>";
 		print_r ($value[$k]->absent_days);
+		echo "</td>";
+		
+		echo "<td>";
+		print_r (!empty($value[$k]->late_deduct) ? $value[$k]->late_deduct : 0);
 		echo "</td>";
 		
 		echo "<td>";
@@ -509,7 +514,7 @@ echo "Payment Date : $date";
 		 <td colspan="3"></td>
 		 <?php } ?>-->
           <td align="right"><strong><?php echo $english_format_number = number_format($total_gross_salary);?></strong></td>
-         <td align="right" colspan="11"></td>
+         <td align="right" colspan="12"></td>
           <td align="right"><strong><?php echo $english_format_number = number_format($total_adv_deduct);?></strong></td>
          <td align="right"><strong><?php echo $english_format_number = number_format($total_abs_deduction);?></strong></td>
         <td align="right"><strong><?php echo $english_format_number = number_format($total_late_deduction);?></strong></td>
@@ -538,7 +543,7 @@ echo "Payment Date : $date";
 			 <?php } ?>
 			<strong>Grand Total Amount Tk</strong></td>
              <td align="right"><strong><?php echo $english_format_number = number_format($grand_total_gross_salary);?></strong></td>
-         <td align="right" colspan="11"></td>
+         <td align="right" colspan="12"></td>
             
             <td align="right"><strong><?php echo $english_format_number = number_format($grand_total_adv_deduct);?></strong></td>
          <td align="right"><strong><?php echo $english_format_number = number_format($grand_total_abs_deduction);?></strong></td>
@@ -558,7 +563,7 @@ echo "Payment Date : $date";
 			</tr>
 			<?php } ?>
 			<tr>
-				<td colspan="38">
+				<td colspan="39">
 					<?php $this->load->view("authorised_signature");?>
 				</td>
 			</tr>

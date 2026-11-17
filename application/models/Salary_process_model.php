@@ -274,8 +274,8 @@ class Salary_process_model extends CI_Model{
 					// pay days calculation
 					$actual_log_leave = $attendances->total_leave;
 					$total_pay_leave  = min($cas_leave + $sick_leave + $sp_leave, $actual_log_leave);
-					// Consecutive Late Rule: 3 consecutive late days = 1 day Absent
-					$consecutive_late_absent = $this->get_consecutive_late_absent($emp_id, $start_date, $end_date);
+					// Late Rule: 3 late days = 1 day Absent/Deduct
+					$consecutive_late_absent = (int) floor($attendances->late_status / 3);
 					$total_absent_days = $absent + $consecutive_late_absent;
 					$num_working_days = $num_of_days - $holiday - $weekend - $before_after_absent;
 					$punch_error_deduct_days = (!empty($attendances->deduction_hour) ? ($attendances->deduction_hour / 8) : 0);
@@ -285,7 +285,7 @@ class Salary_process_model extends CI_Model{
 						'total_days' 	 => $num_of_days,
 						'num_of_workday' => $num_working_days,
 						'att_days' 		 => $attend,
-						'absent_days' 	 => $total_absent_days,
+						'absent_days' 	 => $absent,
 						'ba_absent' 	 => $before_after_absent,
 						'c_l' 		 	 => $cas_leave,
 						's_l' 		 	 => $sick_leave,
@@ -305,7 +305,7 @@ class Salary_process_model extends CI_Model{
 					$data_com['total_days'] 	 = $num_of_days;
 					$data_com['num_of_workday']  = $num_working_days;
 					$data_com['att_days'] 		 = $attend;
-					$data_com['absent_days'] 	 = $total_absent_days;
+					$data_com['absent_days'] 	 = $absent;
 					$data_com['before_after_absent'] 	= $before_after_absent;
 					$data_com['c_l']		 	 = $cas_leave;
 					$data_com['s_l']		 	 = $sick_leave;
@@ -323,7 +323,7 @@ class Salary_process_model extends CI_Model{
 					$data['total_days'] 	     = $num_of_days;
 					$data['num_of_workday']      = $num_working_days;
 					$data['att_days'] 		     = $attend;
-					$data['absent_days'] 	     = $total_absent_days;
+					$data['absent_days'] 	     = $absent;
 					$data['before_after_absent'] = $before_after_absent;
 					$data['c_l']		 	     = $cas_leave;
 					$data['s_l']		 	     = $sick_leave;
@@ -352,16 +352,16 @@ class Salary_process_model extends CI_Model{
 					if( $start_date < '30-04-2024'){
 						$num_of_day = $num_of_days; // calculation based on actual days of month
 						if($pay_days != 0){
-							$absent = $absent + $wp_leave + $consecutive_late_absent;
+							$total_deduct_days = $absent + $wp_leave + $consecutive_late_absent;
 							$before_after_deduct = ($gross_sal / $num_of_days) * $before_after_absent;
 							if($resign_check != false or $left_check != false){
-								$abs_deduction = ($gross_sal / $num_of_days) * $absent;
+								$abs_deduction = ($gross_sal / $num_of_days) * $total_deduct_days;
 								$abs_deduction = round($abs_deduction + $before_after_deduct);
 							}else if($salary_month == $join_month){
-								$abs_deduction = ($gross_sal / $num_of_days) * $absent;
+								$abs_deduction = ($gross_sal / $num_of_days) * $total_deduct_days;
 								$abs_deduction = round($abs_deduction + $before_after_deduct);
 							}else{
-								$abs_deduction = ($gross_sal / $num_of_days) * $absent;
+								$abs_deduction = ($gross_sal / $num_of_days) * $total_deduct_days;
 								$abs_deduction = round($abs_deduction);
 							}
 						} else{
@@ -370,20 +370,21 @@ class Salary_process_model extends CI_Model{
 						//ABSENT DEDUCTION FOR COMPLIANCE
 						if($pay_days != 0)
 						{
+							$total_deduct_days_com = $absent + $wp_leave + $consecutive_late_absent;
 							$before_after_deduct_com = ($gross_sal_com / $num_of_days) * $before_after_absent;
 							if($resign_check != false or $left_check != false)
 							{
-								$abs_deduction_com = ($gross_sal_com / $num_of_days) * $absent;
+								$abs_deduction_com = ($gross_sal_com / $num_of_days) * $total_deduct_days_com;
 								$abs_deduction_com = round($abs_deduction_com + $before_after_deduct_com);
 							}
 							else if($salary_month == $join_month)
 							{
-								$abs_deduction_com = ($gross_sal_com / $num_of_days) * $absent;
+								$abs_deduction_com = ($gross_sal_com / $num_of_days) * $total_deduct_days_com;
 								$abs_deduction_com = round($abs_deduction_com + $before_after_deduct_com);
 							}
 							else
 							{
-								$abs_deduction_com = ($gross_sal_com / $num_of_days) * $absent;
+								$abs_deduction_com = ($gross_sal_com / $num_of_days) * $total_deduct_days_com;
 								$abs_deduction_com = round($abs_deduction_com);
 							}
 						}
@@ -1909,37 +1910,10 @@ class Salary_process_model extends CI_Model{
 
 	function get_consecutive_late_absent($emp_id, $start_date, $end_date)
 	{
-		// Consecutive Late Rule: 3 consecutive late days = 1 day Absent
-		$logs = $this->db->select('shift_log_date, present_status, in_time, late_status, is_waived, remarks')
-		                 ->where('emp_id', $emp_id)
-		                 ->where("shift_log_date BETWEEN '$start_date' AND '$end_date'")
-		                 ->order_by('shift_log_date', 'ASC')
-		                 ->get('pr_emp_shift_log')
-		                 ->result();
-
-		$consecutive_late = 0;
-		$late_deduct_days = 0;
-
-		foreach ($logs as $log) {
-			// Unworked weekend or holiday does not break consecutive working-day streak
-			if (in_array($log->present_status, array('W', 'H')) && ($log->in_time == '00:00:00' || empty($log->in_time))) {
-				continue;
-			}
-
-			$has_remark = (!empty($log->is_waived) || (!empty($log->remarks) && trim($log->remarks) != ''));
-			$is_late = ($log->late_status == 1 && !$has_remark);
-			if ($is_late) {
-				$consecutive_late++;
-				if ($consecutive_late == 3) {
-					$late_deduct_days++;
-					$consecutive_late = 0; // reset streak after 3 consecutive lates
-				}
-			} else {
-				$consecutive_late = 0; // streak broken by on-time attendance, absent, or leave
-			}
-		}
-
-		return $late_deduct_days;
+		// Late Rule: 3 late days = 1 day Absent/Deduct
+		$attn = $this->attendance_check($emp_id, $start_date, $end_date);
+		$late_count = !empty($attn->late_status) ? $attn->late_status : 0;
+		return (int) floor($late_count / 3);
 	}
 
 }

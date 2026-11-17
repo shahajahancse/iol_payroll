@@ -105,9 +105,9 @@ for ( $counter = 1; $counter <= $page; $counter ++)
 <tr height="85px">
 
 <?php if($deduct_status == "Yes"){?> 
-<td colspan="38" align="center">
+<td colspan="39" align="center">
 <?php }else{ ?>
-<td colspan="36" align="center">
+<td colspan="37" align="center">
 <?php } ?>
 
 <div style="text-align:left; position:relative; top:20px; padding-left:10px;">
@@ -154,6 +154,7 @@ echo $date_format;
     <td rowspan="2" width="31" height="20px"><div align="center"><strong>Total Days</strong></div></td>
 	<td rowspan="2" width="31" ><div align="center"><strong>Total Att.</strong></div></td>
     <td rowspan="2" width="31" ><div align="center"><strong>Total Abs.</strong></div></td>
+    <td rowspan="2" width="31" ><div align="center"><strong>Late Ded.</strong></div></td>
     
     <td colspan="4" height="20px"><div align="center"><strong>Leave Status</strong></div></td>
     <td colspan="5" height="20px"><div align="center"><strong>Salary</strong></div></td>
@@ -306,6 +307,10 @@ echo $date_format;
 		
 		//print_r ($value[$k]->absent_days);
 		echo $absent;
+		echo "</td>";
+		
+		echo "<td>";
+		echo !empty($value[$k]->late_deduct) ? $value[$k]->late_deduct : 0;
 		echo "</td>";
 		
 		echo "<td>";
@@ -525,7 +530,7 @@ echo $date_format;
 	}
 	?>
 	<tr style='font-size:14px;'>
-		<td align="center" colspan="20" ><strong>Total Per Page</strong></td>
+		<td align="center" colspan="21" ><strong>Total Per Page</strong></td>
         <td align="right" ><strong><?php echo $english_format_number = number_format($total_gross_sal_per_page);?></strong></td>
 		<td align="right"><strong><?php echo $english_format_number = number_format($total_att_bonus);?></strong></td>
 		<?php if($deduct_status == "Yes"){?>
@@ -548,7 +553,7 @@ echo $date_format;
 	if($counter == $page)
    		{?>
 			<tr height="10" style='font-size:14px;'>
-			<td colspan="20" align="center" ><strong>Grand Total</strong></td>
+			<td colspan="21" align="center" ><strong>Grand Total</strong></td>
             <td align="right"><strong><?php echo $english_format_number = number_format($grand_gross_sal);?></strong></td>
             <td align="right" ><strong><?php echo $english_format_number = number_format($grand_total_att_bonus);?></strong></td>
             <?php if($deduct_status == "Yes"){?>
