@@ -956,16 +956,19 @@ class Salary_process_model extends CI_Model{
         $this->db->select("
                 COALESCE(SUM(CASE 
                     WHEN s.present_status = 'P' OR s.present_status = 'OD' 
-                         OR (LOWER(TRIM(s.present_status)) = 'p(error)' AND $remark_cond) 
+                         OR ((LOWER(TRIM(s.present_status)) = 'p(error)' OR s.present_status = 'A') AND $remark_cond) 
                     THEN 1 ELSE 0 
                 END ), 0) AS attend,
-                COALESCE(SUM(CASE WHEN s.present_status = 'A' THEN 1 ELSE 0 END ), 0) AS absent,
+                COALESCE(SUM(CASE 
+                    WHEN s.present_status = 'A' AND NOT $remark_cond 
+                    THEN 1 ELSE 0 
+                END ), 0) AS absent,
                 COALESCE(SUM(CASE WHEN s.present_status = 'W' THEN 1 ELSE 0 END ), 0) AS weekend,
                 COALESCE(SUM(CASE WHEN s.present_status = 'H' THEN 1 ELSE 0 END ), 0) AS holiday,
                 COALESCE(SUM(CASE WHEN s.present_status = 'L' THEN 1 ELSE 0 END ), 0) AS total_leave,
                 COALESCE(SUM(CASE 
                     WHEN s.late_status = '1' AND (s.is_waived = 0 OR s.is_waived IS NULL) 
-                         AND NOT (LOWER(TRIM(s.present_status)) = 'p(error)' AND $remark_cond) 
+                         AND NOT ((LOWER(TRIM(s.present_status)) = 'p(error)' OR s.present_status = 'A') AND $remark_cond) 
                     THEN 1 ELSE 0 
                 END ), 0) AS late_status,
                 COALESCE(SUM(CASE WHEN s.holiday_allo = '1' THEN 1 ELSE 0 END ), 0) AS holiday_allo,
@@ -979,7 +982,7 @@ class Salary_process_model extends CI_Model{
                 COALESCE(SUM(s.ot_eot_12am), 0) AS ot_eot_12am,
                 COALESCE(SUM(s.modify_eot), 0) AS modify_eot,
                 COALESCE(SUM(CASE 
-                    WHEN LOWER(TRIM(s.present_status)) = 'p(error)' AND $remark_cond 
+                    WHEN (LOWER(TRIM(s.present_status)) = 'p(error)' OR s.present_status = 'A') AND $remark_cond 
                     THEN 0 
                     ELSE s.deduction_hour 
                 END ), 0) AS deduction_hour,

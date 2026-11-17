@@ -5585,7 +5585,11 @@ class Grid_model extends CI_Model{
 						$att_status = "P(Error)";
 						$att_status_count = "P(Error)";
 					}
-					elseif($row->present_status == 'P' || ($has_admin_remark && $row->present_status == 'P(Error)')){
+					elseif($row->present_status == 'P' || ($has_admin_remark && ($row->present_status == 'P(Error)' || $row->present_status == 'A'))){
+						$att_status = "P";
+						$att_status_count = "P";
+					}
+					elseif($has_admin_remark){
 						$att_status = "P";
 						$att_status_count = "P";
 					}
@@ -5594,7 +5598,7 @@ class Grid_model extends CI_Model{
 						$att_status_count = "A";
 					}
 
-					if ($has_admin_remark && ($att_status == "P(Error)" || $att_status_count == "P(Error)")) {
+					if ($has_admin_remark && ($att_status == "P(Error)" || $att_status_count == "P(Error)" || $att_status == "A" || $att_status_count == "A")) {
 						$att_status = "P";
 						$att_status_count = "P";
 					}

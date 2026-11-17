@@ -381,7 +381,7 @@ class Job_card_model extends CI_Model{
 				if ($row->late_status == 1) {
 					$row->late_status = 0;
 				}
-				if ($row->present_status == 'P(Error)') {
+				if ($row->present_status == 'P(Error)' || $row->present_status == 'A') {
 					$row->present_status = 'P';
 				}
 				$row->deduction_hour = 0;
@@ -676,7 +676,7 @@ class Job_card_model extends CI_Model{
 				if ($row->late_status == 1) {
 					$row->late_status = 0;
 				}
-				if ($row->present_status == 'P(Error)') {
+				if ($row->present_status == 'P(Error)' || $row->present_status == 'A') {
 					$row->present_status = 'P';
 				}
 				$row->deduction_hour = 0;
