@@ -522,11 +522,19 @@ class Job_card_model extends CI_Model{
 					$app = $approval_map[$row->shift_log_date];
 					if ($app->status === 'approved') {
 						$app_ot = (float)$app->approved_ot_hours;
-						$row->ot      = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
-						$row->eot     = 0;
-						$row->tot     = $row->ot;
-						$row->com_ot  = $row->ot;
-						$row->com_eot = 0;
+						$app_ot_val = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
+						if ($row->present_status === 'W' || $row->present_status === 'H') {
+							$reg_ot = 0;
+							$ext_ot = $app_ot_val;
+						} else {
+							$reg_ot = ($app_ot_val > 2) ? 2 : $app_ot_val;
+							$ext_ot = ($app_ot_val > 2) ? ($app_ot_val - 2) : 0;
+						}
+						$row->ot      = $reg_ot;
+						$row->eot     = $ext_ot;
+						$row->tot     = $app_ot_val;
+						$row->com_ot  = $app_ot_val;
+						$row->com_eot = $ext_ot;
 						// If shift log was marked Absent or missing punches but approval has punches, restore them
 						if (($row->in_time == '00:00:00' || empty($row->in_time)) && !empty($app->in_time) && $app->in_time != '00:00:00') {
 							$row->in_time = $app->in_time;
@@ -819,11 +827,19 @@ class Job_card_model extends CI_Model{
 					$app = $approval_map[$row->shift_log_date];
 					if ($app->status === 'approved') {
 						$app_ot = (float)$app->approved_ot_hours;
-						$row->ot      = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
-						$row->eot     = 0;
-						$row->tot     = $row->ot;
-						$row->com_ot  = $row->ot;
-						$row->com_eot = 0;
+						$app_ot_val = ($app_ot == intval($app_ot)) ? intval($app_ot) : $app_ot;
+						if ($row->present_status === 'W' || $row->present_status === 'H') {
+							$reg_ot = 0;
+							$ext_ot = $app_ot_val;
+						} else {
+							$reg_ot = ($app_ot_val > 2) ? 2 : $app_ot_val;
+							$ext_ot = ($app_ot_val > 2) ? ($app_ot_val - 2) : 0;
+						}
+						$row->ot      = $reg_ot;
+						$row->eot     = $ext_ot;
+						$row->tot     = $app_ot_val;
+						$row->com_ot  = $app_ot_val;
+						$row->com_eot = $ext_ot;
 						// If shift log was marked Absent or missing punches but approval has punches, restore them
 						if (($row->in_time == '00:00:00' || empty($row->in_time)) && !empty($app->in_time) && $app->in_time != '00:00:00') {
 							$row->in_time = $app->in_time;

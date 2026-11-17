@@ -317,8 +317,8 @@ echo "Payment Date : ";
 		$user_id = $this->Acl_model->get_user_id($this->session->userdata('username'));
 		$acl     = $this->Acl_model->get_acl_list($user_id);
 		if(in_array(14,$acl)){
-			$eot_hour 	= $value[$k]->eot_hr_for_sa;
-			$eot_amount = $value[$k]->eot_amt_for_sa;
+			$eot_hour 	= !empty($value[$k]->eot_hour) ? $value[$k]->eot_hour : $value[$k]->eot_hr_for_sa;
+			$eot_amount = !empty($value[$k]->eot_amount) ? $value[$k]->eot_amount : $value[$k]->eot_amt_for_sa;
 		}
 		else
 		{

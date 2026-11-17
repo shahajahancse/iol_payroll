@@ -517,7 +517,6 @@ class Salary_process_model extends CI_Model{
 						$ot_eot_12am_hour = $attendances->ot_eot_12am;
 						$ot_eot_4pm_hour  = $attendances->ot_eot_4pm;
 						$modify_eot_hour  = $attendances->modify_eot;
-						$eot_hour_for_sa  = $this->eot_without_holi_weekend($emp_id, $start_date, $end_date);
 						if ($is_emp_billing) {
 							// Billing Shift: half-day penalty is deducted directly from basic salary, so EOT is not penalized twice
 							$eot_hour = $collect_eot_hour + $modify_eot_hour;
@@ -526,6 +525,12 @@ class Salary_process_model extends CI_Model{
 						}
 						if ($eot_hour < 0) {
 							$eot_hour = 0;
+						}
+
+						if (!empty($attendances->has_approved_ot) || !empty($collect_eot_hour)) {
+							$eot_hour_for_sa = $eot_hour;
+						} else {
+							$eot_hour_for_sa = $this->eot_without_holi_weekend($emp_id, $start_date, $end_date);
 						}
 
 						$eot_amount 		= round($eot_hour * $ot_rate);
@@ -1006,6 +1011,7 @@ class Salary_process_model extends CI_Model{
             if (!empty($ot_approval_info['has_records'])) {
                 $query->ot  = $ot_approval_info['approved_ot'];
                 $query->eot = $ot_approval_info['approved_eot'];
+                $query->has_approved_ot = true;
             }
         }
 

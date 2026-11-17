@@ -180,6 +180,25 @@ class Grid_model extends CI_Model{
 
     function cal_eot_com($emp_id, $start_date, $end_date, $unit_id=null)
     {
+        if ($this->db->table_exists('pr_daily_ot_approval')) {
+            $this->load->model('Ot_approval_model');
+            $ot_approval_info = $this->Ot_approval_model->get_approved_ot_for_payroll($emp_id, $start_date, $end_date);
+            if (!empty($ot_approval_info['has_records'])) {
+                $row = new stdClass();
+                $row->ot  = $ot_approval_info['approved_ot'];
+                $row->eot = $ot_approval_info['approved_eot'];
+                $row->actual_eot_4pm  = 0;
+                $row->actual_eot_12am = 0;
+                $row->eot_4  = 0;
+                $row->eot_12 = 0;
+                $row->w_ot  = 0;
+                $row->h_ot  = 0;
+                $row->w_eot = 0;
+                $row->h_eot = 0;
+                return $row;
+            }
+        }
+
         $this->db->select("
                 COALESCE(SUM(log.ot), 0) AS ot,
                 COALESCE(SUM(log.eot), 0) AS eot,

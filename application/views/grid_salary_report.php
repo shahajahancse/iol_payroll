@@ -225,7 +225,7 @@
                 <tr>
                     <?php if(!in_array($user_id,$usr_arr_4)){ ?>
                     <!-- <td style="width:25%;"><input class="btn btn-primary" type="button" style=" width:96%; font-size:100%;"  value="Actual Salary Sheet" onClick="grid_actual_monthly_salary_sheet()"></td> -->
-                    <td style="width:20%;"><input class="btn btn-primary" type="button" style="width:96%; font-size:100%;" value="Actual Salary Sheet" onClick="actual_monthly_salary_sheet()"></td>
+                    <td style="width:20%;"><input class="btn btn-primary" type="button" style="width:96%; font-size:100%;" value="Actual Salary Sheet" onClick="actual_salary_sheet()"></td>
 
                     <!-- <td style="width:25%;"><input class="btn btn-primary" type="button" style=" width:96%; font-size:100%;" value="Pay Slip Actual" onClick="grid_pay_slip_non_compliance()"></td> -->
 

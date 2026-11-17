@@ -262,7 +262,7 @@
 				echo "</td>";
 
 				echo "<td>";
-				echo $a = $values[$k]->eot_hr_for_sa;
+				echo $a = (!empty($values[$k]->eot_hour) ? $values[$k]->eot_hour : $values[$k]->eot_hr_for_sa);
 				echo "</td>";
 				
 				$total_ot_eot_hour	= $ot_data->ot +$a;
