@@ -19,7 +19,7 @@ class Salary_process_model extends CI_Model{
 
 		$num_of_days   = date("t", strtotime($process_month));
 		$start_date    = date("Y-m-01", strtotime($process_month));
-		$end_date      = $process_month .'-'. $num_of_days;
+		$end_date      = date("Y-m-t", strtotime($process_month));
 		$table_name    = "att_".date("Y_m", strtotime($process_month));
 
 		//PROCESS MONTH EXISTANCE CHECK
