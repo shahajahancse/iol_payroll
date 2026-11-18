@@ -51,6 +51,19 @@
                     // $salary_structure = json_decode($rows->salary_structure);
                     // $rows = json_decode($rows->rows);
                     // dd($rows);
+
+                    $late_deduct_days = !empty($rows->late_deduct) ? (float)$rows->late_deduct : 0;
+                    $total_days = !empty($rows->total_days) ? (float)$rows->total_days : date('t', strtotime($rows->salary_month));
+                    $late_deduct_amount = 0;
+                    $actual_abs_deduction = (float)$rows->abs_deduction;
+
+                    if ($late_deduct_days > 0 && $total_days > 0) {
+                        $late_deduct_amount = round(((float)$rows->gross_sal / $total_days) * $late_deduct_days);
+                        if ($late_deduct_amount > $actual_abs_deduction) {
+                            $late_deduct_amount = $actual_abs_deduction;
+                        }
+                        $actual_abs_deduction = max(0, $actual_abs_deduction - $late_deduct_amount);
+                    }
                 echo "<tr>";
             ?>
             <td style="width:450px; height:300px;">
@@ -306,10 +319,18 @@
                                                 : <?php  echo $rows->adv_deduct;   ?>
                                         </td>
                                     </tr>
+                                    <?php if ($late_deduct_days > 0) { ?>
+                                    <tr>
+                                        <td width="50%"> লেট </td>
+                                        <td style="font-family: SutonnyMJ; font-size:12px;">
+                                                : <?php echo $late_deduct_amount; ?> (<?php echo $late_deduct_days; ?><span style="font-family: SolaimanLipi, Arial, sans-serif; font-size: 11px;"> দিন</span>)
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
                                     <tr>
                                         <td >অনুপস্থিত</td>
                                         <td  style="font-family: SutonnyMJ; font-size:12px;">
-                                                : <?php  echo $rows->abs_deduction;     ?>
+                                                : <?php  echo $actual_abs_deduction;     ?>
                                         </td>
                                     </tr>
                                     <tr>
@@ -621,10 +642,18 @@
                                                 : <?php  echo $rows->adv_deduct;   ?>
                                         </td>
                                     </tr>
+                                    <?php if ($late_deduct_days > 0) { ?>
+                                    <tr>
+                                        <td width="50%"> লেট </td>
+                                        <td style="font-family: SutonnyMJ; font-size:12px;">
+                                                : <?php echo $late_deduct_amount; ?> (<?php echo $late_deduct_days; ?><span style="font-family: SolaimanLipi, Arial, sans-serif; font-size: 11px;"> দিন</span>)
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
                                     <tr>
                                         <td >অনুপস্থিত</td>
                                         <td  style="font-family: SutonnyMJ; font-size:12px;">
-                                                : <?php  echo $rows->abs_deduction;     ?>
+                                                : <?php  echo $actual_abs_deduction;     ?>
                                         </td>
                                     </tr>
                                     <tr>
