@@ -135,7 +135,7 @@
 						}
 
 						$leave_codes = array('L', 'SL', 'CL', 'EL', 'ML', 'WP', 'PL');
-						if(strtoupper(trim($row->present_status)) != 'A' && (in_array(strtoupper(trim($row->present_status)), $leave_codes) || (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date])))){
+						if(in_array(strtoupper(trim($row->present_status)), $leave_codes) || (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date]))){
 							$leave_type = (isset($emp_data['leave']) && isset($emp_data['leave'][$row->shift_log_date])) ? $emp_data['leave'][$row->shift_log_date] : $this->job_card_model->get_leave_type($row->shift_log_date,$value->emp_id);
 							$att_status_count = "Leave";
 							$att_status = !empty($leave_type) ? $leave_type : $row->present_status;
@@ -165,7 +165,7 @@
 								$att_status_count = $att_status;
 							}
 						}
-						elseif(($row->present_status != 'A' && in_array($row->shift_log_date, $emp_data['weekend'])) || $row->present_status == 'W') {
+						elseif(in_array($row->shift_log_date, $emp_data['weekend']) || $row->present_status == 'W') {
 							$has_punch = (!empty($row->in_time) && $row->in_time != '00:00:00') || (!empty($row->out_time) && $row->out_time != '00:00:00');
 							if (!$has_punch) {
 								$att_status = "Work Off";

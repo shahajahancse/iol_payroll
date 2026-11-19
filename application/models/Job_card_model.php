@@ -423,7 +423,7 @@ class Job_card_model extends CI_Model{
 		foreach ($query as $row) {
 			$is_leave = false;
 			$leave_type = '';
-			if (strtoupper(trim($row->present_status)) != 'A' && (isset($leaves[$row->shift_log_date]) || in_array(strtoupper(trim($row->present_status)), $leave_codes))) {
+			if (isset($leaves[$row->shift_log_date]) || in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
 				$is_leave = true;
 				$leave_type = isset($leaves[$row->shift_log_date]) ? $leaves[$row->shift_log_date] : strtoupper(trim($row->present_status));
 				if ($leave_type == 'L') {
@@ -763,7 +763,7 @@ class Job_card_model extends CI_Model{
 			$is_leave = false;
 			$leave_type = '';
 
-			if (strtoupper(trim($row->present_status)) != 'A' && (isset($data['leave'][$row->shift_log_date]) || in_array(strtoupper(trim($row->present_status)), $leave_codes))) {
+			if (isset($data['leave'][$row->shift_log_date]) || in_array(strtoupper(trim($row->present_status)), $leave_codes)) {
 				$is_leave = true;
 				$leave_type = isset($data['leave'][$row->shift_log_date]) ? $data['leave'][$row->shift_log_date] : strtoupper(trim($row->present_status));
 				if ($leave_type == 'L') {

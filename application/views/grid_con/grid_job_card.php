@@ -140,7 +140,7 @@
 						$is_leave = false;
 						$leave_name = '';
 
-						if (strtoupper(trim($row->present_status)) != 'A' && (in_array(strtoupper(trim($row->present_status)), $leave_codes) || isset($emp_data['leave'][$row->shift_log_date]))) {
+						if (in_array(strtoupper(trim($row->present_status)), $leave_codes) || isset($emp_data['leave'][$row->shift_log_date])) {
 							$is_leave = true;
 							$leave_name = isset($emp_data['leave'][$row->shift_log_date]) ? $emp_data['leave'][$row->shift_log_date] : strtoupper(trim($row->present_status));
 							if ($leave_name == 'L') {
@@ -192,7 +192,7 @@
 								$att_status_count = $att_status;
 							}
 						}
-						elseif(($row->present_status != 'A' && in_array($row->shift_log_date, $emp_data['weekend'])) || $row->present_status == 'W') {
+						elseif(in_array($row->shift_log_date, $emp_data['weekend']) || $row->present_status == 'W') {
 							$has_punch = (!empty($row->in_time) && $row->in_time != '00:00:00') || (!empty($row->out_time) && $row->out_time != '00:00:00');
 							if (!$has_punch) {
 								$att_status = "Work Off";
