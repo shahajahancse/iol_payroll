@@ -250,17 +250,17 @@ echo "Payment Date : ";
 		echo "<td style='width:150px;'>";
 		print_r($value[$k]->name_en);
 		//echo '<br>';
-		if($grid_status == 4)
-		{
-			$resign_date = $this->grid_model->get_resign_date_by_empid($value[$k]->emp_id);
+		$CI =& get_instance();
+		$grid_m = isset($this->Grid_model) ? $this->Grid_model : (isset($CI->Grid_model) ? $CI->Grid_model : null);
+		if ($grid_m != null) {
+			$resign_date = $grid_m->get_resign_date_by_empid($value[$k]->emp_id);
 			if($resign_date != false){
-			echo $resign_date = date('d-M-y', strtotime($resign_date));}
-		}
-		elseif($grid_status == 3)
-		{
-			$left_date = $this->grid_model->get_left_date_by_empid($value[$k]->emp_id);
+				echo "<br>Resign: ".date('d-M-y', strtotime($resign_date));
+			}
+			$left_date = $grid_m->get_left_date_by_empid($value[$k]->emp_id);
 			if($left_date != false){
-			echo $left_date = date('d-M-y', strtotime($left_date));}
+				echo "<br>Left: ".date('d-M-y', strtotime($left_date));
+			}
 		}
 		echo "</td>"; 
 				

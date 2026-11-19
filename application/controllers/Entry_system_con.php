@@ -3234,8 +3234,13 @@ class Entry_system_con extends CI_Controller
             $dd = $this->db->where('unit_id', $unit_id)->where('emp_id', $sql)->get('pr_emp_left_history');
             if (empty($dd->row())) {
                 $this->db->insert('pr_emp_left_history', $data);
+            } else {
+                $this->db->where('unit_id', $unit_id)->where('emp_id', $sql)->update('pr_emp_left_history', $data);
             }
             // $this->db->insert_batch('pr_emp_left_history', $data);
+
+            // Delete obsolete attendance/shift logs after left date
+            $this->db->where('emp_id', $sql)->where('shift_log_date >', $date)->delete('pr_emp_shift_log');
 
             $this->db->where('unit_id', $unit_id)->where('emp_id', $sql);
             if ($this->db->update('pr_emp_com_info', array('emp_cat_id' => 2,'monitor_con'=>2, 'monitor_type'=> 'Left'))) {
@@ -3249,7 +3254,13 @@ class Entry_system_con extends CI_Controller
             $dd = $this->db->where('unit_id', $unit_id)->where('emp_id', $sql)->get('pr_emp_resign_history');
             if (empty($dd->row())) {
                 $this->db->insert('pr_emp_resign_history', $data);
+            } else {
+                $this->db->where('unit_id', $unit_id)->where('emp_id', $sql)->update('pr_emp_resign_history', $data);
             }
+
+            // Delete obsolete attendance/shift logs after resign date
+            $this->db->where('emp_id', $sql)->where('shift_log_date >', $date)->delete('pr_emp_shift_log');
+
             $this->db->where('unit_id', $unit_id)->where('emp_id', $sql);
             if ($this->db->update('pr_emp_com_info', array('emp_cat_id' => 3,'monitor_con'=>2, 'monitor_type'=> 'Resign'))) {
                 echo 'success';

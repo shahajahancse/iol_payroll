@@ -128,6 +128,9 @@ class Left_resign_model extends CI_Model{
 			);
 
 			$this->db->insert($table_name, $data1); 
+
+			// Delete obsolete attendance/shift logs after left/resign date
+			$this->db->where('emp_id', $emp_id)->where('shift_log_date >', $effective_date)->delete('pr_emp_shift_log');
 			
 			$data2 = array(
                'proxi_id' => ""

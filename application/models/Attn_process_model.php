@@ -2242,15 +2242,18 @@ class Attn_process_model extends CI_Model{
 	// delete attendance log after resign/left or before joining record
 	function attn_delete_for_eligibility_failed($emp_id, $att_date)
 	{
-		$this->db->select('emp_id');
 		$this->db->where('emp_id',$emp_id);
 		$this->db->where('shift_log_date',$att_date);
-		$query = $this->db->get('pr_emp_shift_log');
-		if($query->num_rows() > 0 )
-		{
-			$this->db->where('emp_id',$emp_id);
-			$this->db->where('shift_log_date',$att_date);
-			$this->db->delete('pr_emp_shift_log');
+		$this->db->delete('pr_emp_shift_log');
+
+		// Also clean up any shift logs after left_date or resign_date if employee is left/resigned
+		$left_row = $this->db->select('left_date')->where('emp_id', $emp_id)->get('pr_emp_left_history')->row();
+		if (!empty($left_row) && !empty($left_row->left_date)) {
+			$this->db->where('emp_id', $emp_id)->where('shift_log_date >', $left_row->left_date)->delete('pr_emp_shift_log');
+		}
+		$resign_row = $this->db->select('resign_date')->where('emp_id', $emp_id)->get('pr_emp_resign_history')->row();
+		if (!empty($resign_row) && !empty($resign_row->resign_date)) {
+			$this->db->where('emp_id', $emp_id)->where('shift_log_date >', $resign_row->resign_date)->delete('pr_emp_shift_log');
 		}
 	}
 

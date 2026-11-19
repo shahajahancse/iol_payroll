@@ -300,12 +300,13 @@ echo "টাকা প্রদানের তারিখ : "."<span style='fo
 			print_r($value[$k]->gr_name_bn);
 		}
 		echo '<br>';
-		if($grid_status == 4)
-		{
-			$resign_date = $this->Grid_model->get_resign_date_by_empid($value[$k]->emp_id);
-			if($resign_date != false){
-			echo "Resign : ".$resign_date = date('d-M-y', strtotime($resign_date));
-			}
+		$left_date = $this->Grid_model->get_left_date_by_empid($value[$k]->emp_id);
+		if($left_date != false){
+			echo "Left : ".date('d-M-y', strtotime($left_date)).'<br>';
+		}
+		$resign_date = $this->Grid_model->get_resign_date_by_empid($value[$k]->emp_id);
+		if($resign_date != false){
+			echo "Resign : ".date('d-M-y', strtotime($resign_date)).'<br>';
 		}
 		echo "</span>";
 		echo "</td>"; 

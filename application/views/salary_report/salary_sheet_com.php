@@ -6,13 +6,13 @@
 
 <?php 
 	if($grid_status == 1)
-	{ echo 'Reguler Employee '; }
+	{ echo 'Regular Employee '; }
 	elseif($grid_status == 2)
-	{ echo 'New Employee '; }
-	elseif($grid_status == 3)
 	{ echo 'Left Employee '; }
-	elseif($grid_status == 4)
+	elseif($grid_status == 3)
 	{ echo 'Resign Employee '; }
+	elseif($grid_status == 4)
+	{ echo 'New Employee '; }
 	elseif($grid_status == 6)
 	{ echo 'Promoted Employee '; }
 ?>Monthly Salary Sheet of 
@@ -114,13 +114,13 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		<?php 
 			$this->load->view("head_english");
 			if($grid_status == 1)
-			{ echo 'Reguler Employee '; }
+			{ echo 'Regular Employee '; }
 			elseif($grid_status == 2)
-			{ echo 'New Employee '; }
-			elseif($grid_status == 3)
 			{ echo 'Left Employee '; }
-			elseif($grid_status == 4)
+			elseif($grid_status == 3)
 			{ echo 'Resign Employee '; }
+			elseif($grid_status == 4)
+			{ echo 'New Employee '; }
 			elseif($grid_status == 6)
 			{ echo 'Promoted Employee '; }
 			echo '<span style="font-weight:bold;">';
@@ -261,11 +261,16 @@ for ( $counter = 1; $counter <= $page; $counter ++){
 		if (!empty($value[$k]->arrear_amount) && $value[$k]->arrear_amount > 0) {
 			echo "<span style='font-size:10px; font-weight:bold; color:#0c74bf;'>বকেয়া: " . number_format($value[$k]->arrear_amount) . "</span><br>";
 		}
-		if($grid_status == 4)
-		{
-			$resign_date = $this->grid_model->get_resign_date_by_empid($value[$k]->emp_id);
+		$CI =& get_instance();
+		$grid_m = isset($this->Grid_model) ? $this->Grid_model : (isset($CI->Grid_model) ? $CI->Grid_model : null);
+		if ($grid_m != null) {
+			$left_date = $grid_m->get_left_date_by_empid($value[$k]->emp_id);
+			if($left_date != false){
+				echo "Left : ".date('d-M-y', strtotime($left_date)).'<br>';
+			}
+			$resign_date = $grid_m->get_resign_date_by_empid($value[$k]->emp_id);
 			if($resign_date != false){
-			echo "Resign : ".$resign_date = date('d-M-y', strtotime($resign_date));
+				echo "Resign : ".date('d-M-y', strtotime($resign_date)).'<br>';
 			}
 		}
 		echo "</span>";

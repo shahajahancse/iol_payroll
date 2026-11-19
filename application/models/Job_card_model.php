@@ -305,34 +305,64 @@ class Job_card_model extends CI_Model{
 		$grid_firstdate = date("Y-m-d", strtotime($grid_firstdate));
 		$grid_seconddate = date("Y-m-d", strtotime($grid_seconddate));
 
-		$joining_check = $this->get_join_date($emp_id, $grid_firstdate, $grid_seconddate);
-		if( $joining_check != false)
-		{
-			$start_date = $joining_check;
-		}
-		else
-		{
-			$start_date = $grid_firstdate;
+		$start_date = $grid_firstdate;
+		$end_date   = $grid_seconddate;
+
+		// Check Join Date
+		$join_row = $this->db->select('emp_join_date')->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+		if (!empty($join_row) && !empty($join_row->emp_join_date)) {
+			$join_d = $join_row->emp_join_date;
+			if ($join_d > $grid_seconddate) {
+				$data['leave']    = array();
+				$data['weekend']  = array();
+				$data['holiday']  = array();
+				$data['od_map']   = array();
+				$data['emp_data'] = array();
+				return $data;
+			} elseif ($join_d >= $grid_firstdate) {
+				$start_date = $join_d;
+			}
 		}
 
-		$resign_check  = $this->get_resign_date($emp_id, $grid_firstdate, $grid_seconddate);
-		if($resign_check != false)
-		{
-			$end_date = $resign_check;
-		}
-		else
-		{
-			$end_date = $grid_seconddate;
+		// Check Resign Date
+		$resign_row = $this->db->select('resign_date')->where('emp_id', $emp_id)->get('pr_emp_resign_history')->row();
+		if (!empty($resign_row) && !empty($resign_row->resign_date)) {
+			$resign_d = $resign_row->resign_date;
+			if ($resign_d < $grid_firstdate) {
+				$data['leave']    = array();
+				$data['weekend']  = array();
+				$data['holiday']  = array();
+				$data['od_map']   = array();
+				$data['emp_data'] = array();
+				return $data;
+			} elseif ($resign_d <= $grid_seconddate) {
+				$end_date = min($end_date, $resign_d);
+			}
 		}
 
-		$left_check  = $this->get_left_date($emp_id, $grid_firstdate, $grid_seconddate);
-		if($left_check != false)
-		{
-			$end_date = $left_check;
+		// Check Left Date
+		$left_row = $this->db->select('left_date')->where('emp_id', $emp_id)->get('pr_emp_left_history')->row();
+		if (!empty($left_row) && !empty($left_row->left_date)) {
+			$left_d = $left_row->left_date;
+			if ($left_d < $grid_firstdate) {
+				$data['leave']    = array();
+				$data['weekend']  = array();
+				$data['holiday']  = array();
+				$data['od_map']   = array();
+				$data['emp_data'] = array();
+				return $data;
+			} elseif ($left_d <= $grid_seconddate) {
+				$end_date = min($end_date, $left_d);
+			}
 		}
-		else
-		{
-			$end_date = $grid_seconddate;
+
+		if ($start_date > $end_date) {
+			$data['leave']    = array();
+			$data['weekend']  = array();
+			$data['holiday']  = array();
+			$data['od_map']   = array();
+			$data['emp_data'] = array();
+			return $data;
 		}
 
 		$this->db->select('
@@ -588,27 +618,64 @@ class Job_card_model extends CI_Model{
 		$grid_firstdate = date("Y-m-d", strtotime($grid_firstdate));
 		$grid_seconddate = date("Y-m-d", strtotime($grid_seconddate));
 
-		$joining_check = $this->get_join_date($emp_id, $grid_firstdate, $grid_seconddate);
-		if( $joining_check != false){
-			$start_date = $joining_check;
-		}else{
-			$start_date = $grid_firstdate;
+		$start_date = $grid_firstdate;
+		$end_date   = $grid_seconddate;
+
+		// Check Join Date
+		$join_row = $this->db->select('emp_join_date')->where('emp_id', $emp_id)->get('pr_emp_com_info')->row();
+		if (!empty($join_row) && !empty($join_row->emp_join_date)) {
+			$join_d = $join_row->emp_join_date;
+			if ($join_d > $grid_seconddate) {
+				$data['leave']    = array();
+				$data['weekend']  = array();
+				$data['holiday']  = array();
+				$data['od_map']   = array();
+				$data['emp_data'] = array();
+				return $data;
+			} elseif ($join_d >= $grid_firstdate) {
+				$start_date = $join_d;
+			}
 		}
 
-		$resign_check  = $this->get_resign_date($emp_id, $grid_firstdate, $grid_seconddate);
-		if($resign_check != false){
-			$end_date = $resign_check;
-		}
-		else{
-			$end_date = $grid_seconddate;
+		// Check Resign Date
+		$resign_row = $this->db->select('resign_date')->where('emp_id', $emp_id)->get('pr_emp_resign_history')->row();
+		if (!empty($resign_row) && !empty($resign_row->resign_date)) {
+			$resign_d = $resign_row->resign_date;
+			if ($resign_d < $grid_firstdate) {
+				$data['leave']    = array();
+				$data['weekend']  = array();
+				$data['holiday']  = array();
+				$data['od_map']   = array();
+				$data['emp_data'] = array();
+				return $data;
+			} elseif ($resign_d <= $grid_seconddate) {
+				$end_date = min($end_date, $resign_d);
+			}
 		}
 
-		$left_check  = $this->get_left_date($emp_id, $grid_firstdate, $grid_seconddate);
-		if($left_check != false){
-			$end_date = $left_check;
+		// Check Left Date
+		$left_row = $this->db->select('left_date')->where('emp_id', $emp_id)->get('pr_emp_left_history')->row();
+		if (!empty($left_row) && !empty($left_row->left_date)) {
+			$left_d = $left_row->left_date;
+			if ($left_d < $grid_firstdate) {
+				$data['leave']    = array();
+				$data['weekend']  = array();
+				$data['holiday']  = array();
+				$data['od_map']   = array();
+				$data['emp_data'] = array();
+				return $data;
+			} elseif ($left_d <= $grid_seconddate) {
+				$end_date = min($end_date, $left_d);
+			}
 		}
-		else{
-			$end_date = $grid_seconddate;
+
+		if ($start_date > $end_date) {
+			$data['leave']    = array();
+			$data['weekend']  = array();
+			$data['holiday']  = array();
+			$data['od_map']   = array();
+			$data['emp_data'] = array();
+			return $data;
 		}
 
 

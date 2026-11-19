@@ -6954,16 +6954,16 @@ class Grid_model extends CI_Model{
 
 		$this->db->select('
 				pr_emp_per_info.name_en,
-				pr_emp_per_info.bangla_nam,
+				pr_emp_per_info.name_bn as bangla_nam,
 				emp_designation.desig_name,
 				emp_designation.desig_bangla,
 				emp_section.sec_name_bn,
 				emp_section.sec_name_en,
 				pr_emp_com_info.emp_join_date,
 				pr_emp_com_info.ot_entitle,
-				pr_emp_com_info.ot_show_in,
+				pr_emp_com_info.com_ot_entitle as ot_show_in,
 				pr_grade.gr_name,
-				pr_grade.gr_name_bn,
+				pr_grade.gr_name as gr_name_bn,
 				pay_salary_sheet_com.*
 			');
 		$this->db->from('pr_emp_per_info');
@@ -7038,7 +7038,7 @@ class Grid_model extends CI_Model{
 
 		$lastday = date("Y-m-d", mktime(0, 0, 0, $month, $lastday, $year));
 
-		$this->db->select('emp_line_num.*,pr_emp_per_info.name_en,pr_emp_per_info.bangla_nam,pr_emp_per_info.bank_ac_no,emp_designation.desig_name,emp_designation.desig_bangla, emp_section.*, pr_emp_com_info.emp_join_date,pr_emp_com_info.ot_show_in,pr_emp_com_info.ot_entitle,pr_grade.gr_name,pr_grade.gr_name_bn,pay_salary_sheet.*,emp_line_num.line_name_en');
+		$this->db->select('emp_line_num.*,pr_emp_per_info.name_en,pr_emp_per_info.name_bn as bangla_nam,pr_emp_per_info.bank_bkash_no as bank_ac_no,emp_designation.desig_name,emp_designation.desig_bangla, emp_section.*, pr_emp_com_info.emp_join_date,pr_emp_com_info.com_ot_entitle as ot_show_in,pr_emp_com_info.ot_entitle,pr_grade.gr_name,pr_grade.gr_name as gr_name_bn,pay_salary_sheet.*,emp_line_num.line_name_en');
 		$this->db->from('pr_emp_per_info');
 		$this->db->from('pr_emp_com_info');
 		$this->db->from('pr_grade');
@@ -7075,7 +7075,7 @@ class Grid_model extends CI_Model{
 
 		$lastday = date("Y-m-d", mktime(0, 0, 0, $month, $lastday, $year));
 
-		$this->db->select('emp_line_num.*,pr_emp_per_info.name_en,pr_emp_per_info.bangla_nam,emp_designation.desig_name,emp_designation.desig_bangla, emp_section.*, pr_emp_com_info.emp_join_date,pr_grade.gr_name,pr_grade.gr_name_bn,pay_salary_sheet_com.*,pr_emp_com_info.ot_show_in,pr_emp_com_info.ot_entitle,emp_line_num.line_name_en');
+		$this->db->select('emp_line_num.*,pr_emp_per_info.name_en,pr_emp_per_info.name_bn as bangla_nam,emp_designation.desig_name,emp_designation.desig_bangla, emp_section.*, pr_emp_com_info.emp_join_date,pr_grade.gr_name,pr_grade.gr_name as gr_name_bn,pay_salary_sheet_com.*,pr_emp_com_info.com_ot_entitle as ot_show_in,pr_emp_com_info.ot_entitle,emp_line_num.line_name_en');
 		$this->db->from('pr_emp_per_info');
 		$this->db->from('pr_emp_com_info');
 		$this->db->from('pr_grade');
@@ -7110,7 +7110,7 @@ class Grid_model extends CI_Model{
 
 		$lastday = date("Y-m-d", mktime(0, 0, 0, $month, $lastday, $year));
 
-		$this->db->select('emp_line_num.*,pr_emp_per_info.name_en,pr_emp_per_info.bangla_nam,pr_emp_per_info.bank_ac_no,emp_designation.desig_name,emp_designation.desig_bangla, emp_section.*, pr_emp_com_info.emp_join_date,pr_emp_com_info.ot_show_in,pr_emp_com_info.ot_entitle,pr_grade.gr_name,pr_grade.gr_name_bn,pay_salary_sheet.*,emp_line_num.line_name_en');
+		$this->db->select('emp_line_num.*,pr_emp_per_info.name_en,pr_emp_per_info.name_bn as bangla_nam,pr_emp_per_info.bank_bkash_no as bank_ac_no,emp_designation.desig_name,emp_designation.desig_bangla, emp_section.*, pr_emp_com_info.emp_join_date,pr_emp_com_info.com_ot_entitle as ot_show_in,pr_emp_com_info.ot_entitle,pr_grade.gr_name,pr_grade.gr_name as gr_name_bn,pay_salary_sheet.*,emp_line_num.line_name_en');
 		$this->db->from('pr_emp_per_info');
 		$this->db->from('pr_emp_com_info');
 		$this->db->from('pr_grade');
