@@ -1281,17 +1281,26 @@ function renderAdvanceTable(records) {
         html += '<td class="text-right" style="color: #d97706; font-weight: 700;">' + formatCurrency(r.outstanding_balance) + '</td>';
         html += '<td style="text-align: center;">' + statusBadge + '</td>';
 
+        var canEdit = (typeof r.can_edit !== 'undefined') ? r.can_edit : (!r.is_locked);
+        var canDelete = (typeof r.can_delete !== 'undefined') ? r.can_delete : (!r.is_locked);
+
         // Action buttons
         html += '<td style="text-align: center; white-space: nowrap;">';
         html += '<button type="button" class="btn-action-icon btn-view" onclick="openDetailsModal(' + r.id + ')" title="View Details & Deduction History"><i class="fa fa-eye"></i></button>';
 
-        if (r.status !== 'Completed' && r.status !== 'Cancelled') {
+        if (canEdit) {
             html += '<button type="button" class="btn-action-icon btn-edit" onclick="openEditModal(' + r.id + ')" title="Edit Advance"><i class="fa fa-pencil"></i></button>';
-            html += '<button type="button" class="btn-action-icon btn-cancel" onclick="cancelAdvancePrompt(' + r.id + ', \'' + r.advance_id + '\')" title="Cancel Advance"><i class="fa fa-ban"></i></button>';
+            if (r.status !== 'Cancelled') {
+                html += '<button type="button" class="btn-action-icon btn-cancel" onclick="cancelAdvancePrompt(' + r.id + ', \'' + r.advance_id + '\')" title="Cancel Advance"><i class="fa fa-ban"></i></button>';
+            }
         }
 
-        if (parseFloat(r.total_deducted) === 0) {
+        if (canDelete) {
             html += '<button type="button" class="btn-action-icon btn-delete" onclick="deleteAdvancePrompt(' + r.id + ', \'' + r.advance_id + '\')" title="Delete Advance"><i class="fa fa-trash"></i></button>';
+        }
+
+        if (r.is_locked) {
+            html += '<span class="badge" style="background: #e2e8f0; color: #475569; font-size: 11px; padding: 4px 7px; margin-left: 4px;" title="Locked by Final Process"><i class="fa fa-lock"></i> Finalized</span>';
         }
         html += '</td>';
 
@@ -1615,13 +1624,14 @@ function openDetailsModal(id) {
                 var dHtml = '';
                 var sl = 1;
                 deds.forEach(function(d) {
+                    var refBadge = d.is_finalized ? '<span class="label label-danger" style="font-size: 10px; margin-right: 4px;"><i class="fa fa-lock"></i> Finalized</span>' : '<span class="label label-info" style="font-size: 10px; margin-right: 4px;">Draft</span>';
                     dHtml += '<tr>';
                     dHtml += '<td>' + (sl++) + '</td>';
                     dHtml += '<td><strong style="color: #006ba3;">' + escapeHtml(d.salary_month) + '</strong></td>';
                     dHtml += '<td class="text-right">' + formatCurrency(d.advance_amount) + '</td>';
                     dHtml += '<td class="text-right" style="color: #16a34a; font-weight: 700;">' + formatCurrency(d.deduction_amount) + '</td>';
                     dHtml += '<td class="text-right" style="color: #d97706; font-weight: 600;">' + formatCurrency(d.remaining_balance) + '</td>';
-                    dHtml += '<td><span class="label label-default">' + escapeHtml(d.salary_reference_id || 'SALARY_PROCESS') + '</span></td>';
+                    dHtml += '<td>' + refBadge + '<span class="label label-default" style="font-size: 10px;">' + escapeHtml(d.salary_reference_id || 'SALARY_PROCESS') + '</span></td>';
                     dHtml += '<td>' + escapeHtml(d.deduction_date) + '</td>';
                     dHtml += '<td>' + escapeHtml(d.created_by || 'System') + '</td>';
                     dHtml += '</tr>';
@@ -1655,7 +1665,17 @@ function openEditModal(id) {
             $('#edit_dept_info').text(r.dept_name + ' &bull; ' + r.desig_name);
 
             $('#edit_advance_amount').val(r.advance_amount);
-            $('#edit_deducted_help').text('Already deducted: ' + formatCurrency(r.total_deducted));
+            if (r.has_finalized_deductions) {
+                $('#edit_deducted_help').html('<span class="text-danger"><i class="fa fa-lock"></i> Finalized in closed month: ' + formatCurrency(r.finalized_amount) + '</span>');
+                $('#edit_advance_amount').attr('min', r.finalized_amount);
+            } else if (parseFloat(r.total_deducted) > 0) {
+                $('#edit_deducted_help').html('<span class="text-info"><i class="fa fa-info-circle"></i> Draft deducted: ' + formatCurrency(r.total_deducted) + ' (Will auto-adjust on update)</span>');
+                $('#edit_advance_amount').removeAttr('min');
+            } else {
+                $('#edit_deducted_help').text('No deductions yet.');
+                $('#edit_advance_amount').removeAttr('min');
+            }
+
             $('#edit_effective_month').val(r.effective_month.substring(0, 7));
             $('#edit_deduction_method').val(r.deduction_method);
             $('#edit_monthly_deduction').val(r.monthly_deduction_amount);
@@ -1704,6 +1724,7 @@ function submitEditForm(e) {
                 $('#editModal').modal('hide');
                 Swal.fire('Updated', res.message, 'success');
                 loadAdvanceList(currentPage);
+                loadDashboardSummary();
             } else {
                 Swal.fire('Error', res.message, 'error');
             }
@@ -1743,6 +1764,7 @@ function cancelAdvancePrompt(id, advId) {
                     if (res.status) {
                         Swal.fire('Cancelled', res.message, 'success');
                         loadAdvanceList(currentPage);
+                        loadDashboardSummary();
                     } else {
                         Swal.fire('Error', res.message, 'error');
                     }
@@ -1771,6 +1793,7 @@ function deleteAdvancePrompt(id, advId) {
                     if (res.status) {
                         Swal.fire('Deleted', res.message, 'success');
                         loadAdvanceList(currentPage);
+                        loadDashboardSummary();
                     } else {
                         Swal.fire('Error', res.message, 'error');
                     }

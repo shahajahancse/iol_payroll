@@ -106,7 +106,17 @@ class Advanced_salary_con extends CI_Controller
             )));
         }
 
+        $lock_status = $this->Advanced_salary_model->get_advance_lock_status($record);
+        $record->is_locked                = $lock_status['is_locked'];
+        $record->can_edit                 = $lock_status['can_edit'];
+        $record->can_delete               = $lock_status['can_delete'];
+        $record->has_finalized_deductions = $lock_status['has_finalized_deductions'];
+        $record->finalized_amount         = $lock_status['finalized_amount'];
+
         $deductions = $this->Advanced_salary_model->get_deductions_by_advance_id($id);
+        foreach ($deductions as $d) {
+            $d->is_finalized = $this->Advanced_salary_model->is_month_finalized($record->unit_id, $d->salary_month);
+        }
 
         return $this->output->set_content_type('application/json')->set_output(json_encode(array(
             'status'     => true,

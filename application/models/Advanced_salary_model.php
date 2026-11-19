@@ -218,6 +218,125 @@ class Advanced_salary_model extends CI_Model
     }
 
     /**
+     * Check if a specific salary month is locked / blocked by Final Process
+     */
+    public function is_month_finalized($unit_id, $salary_month)
+    {
+        if (empty($salary_month)) {
+            return false;
+        }
+        $clean_month = $this->format_month($salary_month);
+        $month_start = $clean_month . '-01';
+        $this->db->where('block_month', $month_start);
+        $this->db->where('status', 'Block');
+        if (!empty($unit_id)) {
+            $this->db->where('unit_id', (int)$unit_id);
+        }
+        $cnt = $this->db->count_all_results('pay_salary_block');
+        return ($cnt > 0);
+    }
+
+    /**
+     * Get finalized deductions for an advance (deductions whose salary_month is blocked in pay_salary_block)
+     */
+    public function get_finalized_deductions_for_advance($advance_id, $unit_id = null)
+    {
+        if (empty($unit_id)) {
+            $adv = $this->db->select('unit_id, emp_id')->where('id', (int)$advance_id)->get($this->table_advances)->row();
+            if (!$adv) return array();
+            $unit_id = (int)$adv->unit_id;
+        }
+
+        $deductions = $this->db->where('advanced_salary_id', (int)$advance_id)->get($this->table_deductions)->result();
+        if (empty($deductions)) {
+            return array();
+        }
+
+        $finalized = array();
+        foreach ($deductions as $d) {
+            if ($this->is_month_finalized($unit_id, $d->salary_month)) {
+                $finalized[] = $d;
+            }
+        }
+        return $finalized;
+    }
+
+    /**
+     * Check if an advance can be edited or deleted based on Final Process status
+     */
+    public function get_advance_lock_status($advance_id_or_record)
+    {
+        if (is_object($advance_id_or_record)) {
+            $adv = $advance_id_or_record;
+            $advance_id = (int)$adv->id;
+        } else {
+            $advance_id = (int)$advance_id_or_record;
+            $adv = $this->db->where('id', $advance_id)->get($this->table_advances)->row();
+        }
+
+        if (!$adv) {
+            return array(
+                'is_locked'                => true,
+                'can_edit'                 => false,
+                'can_delete'               => false,
+                'has_finalized_deductions' => false,
+                'finalized_amount'         => 0.00,
+                'reason'                   => 'Record not found'
+            );
+        }
+
+        $unit_id = (int)$adv->unit_id;
+        if (empty($unit_id)) {
+            $emp_com = $this->db->where('emp_id', $adv->emp_id)->get('pr_emp_com_info')->row();
+            $unit_id = ($emp_com && !empty($emp_com->unit_id)) ? (int)$emp_com->unit_id : 1;
+        }
+
+        $finalized_deductions = $this->get_finalized_deductions_for_advance($advance_id, $unit_id);
+        $finalized_sum = 0.00;
+        foreach ($finalized_deductions as $fd) {
+            $finalized_sum += (float)$fd->deduction_amount;
+        }
+        $finalized_sum = round($finalized_sum, 2);
+
+        $has_finalized = (count($finalized_deductions) > 0);
+
+        if ($has_finalized) {
+            // If all balance is zero and completed in finalized months, it is fully locked
+            if ($adv->status === 'Completed' || (float)$adv->outstanding_balance <= 0) {
+                return array(
+                    'is_locked'                => true,
+                    'can_edit'                 => false,
+                    'can_delete'               => false,
+                    'has_finalized_deductions' => true,
+                    'finalized_amount'         => $finalized_sum,
+                    'reason'                   => 'Finalized by Final Process'
+                );
+            } else {
+                // Partially finalized in past month(s): user can still edit remaining balance, but cannot delete
+                return array(
+                    'is_locked'                => false,
+                    'can_edit'                 => true,
+                    'can_delete'               => false,
+                    'has_finalized_deductions' => true,
+                    'finalized_amount'         => $finalized_sum,
+                    'reason'                   => 'Partially finalized in past month(s)'
+                );
+            }
+        }
+
+        // No finalized deductions at all:
+        // Both edit and delete are fully allowed until Final Process!
+        return array(
+            'is_locked'                => false,
+            'can_edit'                 => true,
+            'can_delete'               => true,
+            'has_finalized_deductions' => false,
+            'finalized_amount'         => 0.00,
+            'reason'                   => 'Pending Final Process'
+        );
+    }
+
+    /**
      * Update existing Advance Record
      */
     public function update_advance($id, $data, $username = '')
@@ -228,24 +347,44 @@ class Advanced_salary_model extends CI_Model
             return array('status' => false, 'message' => 'Advance record not found.');
         }
 
-        if ($record->status === 'Completed') {
-            return array('status' => false, 'message' => 'Cannot modify a completed advance.');
+        $lock_status = $this->get_advance_lock_status($record);
+        if (!$lock_status['can_edit']) {
+            return array('status' => false, 'message' => 'Cannot modify advance: it has already been finalized by Final Process.');
         }
 
+        $finalized_amount = (float)$lock_status['finalized_amount'];
         $now = date('Y-m-d H:i:s');
         $update = array('updated_at' => $now);
 
-        if (isset($data['advance_amount'])) {
-            $new_amount = round((float)$data['advance_amount'], 2);
-            if ($new_amount <= 0) {
-                return array('status' => false, 'message' => 'Advance salary amount must be greater than zero.');
-            }
-            if ($new_amount < (float)$record->total_deducted) {
-                return array('status' => false, 'message' => "Advance amount cannot be less than already deducted amount (" . number_format($record->total_deducted, 2) . ").");
-            }
-            $update['advance_amount'] = $new_amount;
-            $update['outstanding_balance'] = round($new_amount - (float)$record->total_deducted, 2);
+        $new_amount = isset($data['advance_amount']) ? round((float)$data['advance_amount'], 2) : (float)$record->advance_amount;
+        if ($new_amount <= 0) {
+            return array('status' => false, 'message' => 'Advance salary amount must be greater than zero.');
         }
+        if ($new_amount < $finalized_amount) {
+            return array('status' => false, 'message' => "Advance amount cannot be less than already finalized deducted amount (" . number_format($finalized_amount, 2) . ").");
+        }
+
+        // Clean up any unfinalized (draft) deductions for this advance
+        $all_deductions = $this->db->where('advanced_salary_id', $id)->get($this->table_deductions)->result();
+        $affected_months = array();
+        $affected_months[$this->format_month($record->effective_month)] = true;
+        if (isset($data['effective_month'])) {
+            $affected_months[$this->format_month($data['effective_month'])] = true;
+        }
+
+        foreach ($all_deductions as $ad) {
+            $m = $this->format_month($ad->salary_month);
+            $affected_months[$m] = true;
+            if (!$this->is_month_finalized($record->unit_id, $m)) {
+                $this->db->where('id', $ad->id)->delete($this->table_deductions);
+            }
+        }
+
+        // Recalculate balances based on remaining finalized deductions
+        $outstanding = round($new_amount - $finalized_amount, 2);
+        $update['advance_amount']      = $new_amount;
+        $update['total_deducted']      = $finalized_amount;
+        $update['outstanding_balance'] = $outstanding;
 
         if (isset($data['effective_month'])) {
             $update['effective_month'] = $this->format_month($data['effective_month']);
@@ -255,46 +394,46 @@ class Advanced_salary_model extends CI_Model
             $update['advance_date'] = date('Y-m-d', strtotime($data['advance_date']));
         }
 
-        if (isset($data['deduction_method'])) {
-            $update['deduction_method'] = ($data['deduction_method'] === 'one_time') ? 'one_time' : 'installment';
-        }
+        $deduction_method = isset($data['deduction_method']) ? $data['deduction_method'] : $record->deduction_method;
+        $update['deduction_method'] = ($deduction_method === 'one_time') ? 'one_time' : 'installment';
 
-        if (isset($data['monthly_deduction_amount'])) {
-            $monthly_deduct = round((float)$data['monthly_deduction_amount'], 2);
-            if ($monthly_deduct <= 0) {
-                return array('status' => false, 'message' => 'Monthly deduction amount must be greater than zero.');
+        if ($update['deduction_method'] === 'one_time') {
+            $update['monthly_deduction_amount'] = $new_amount;
+        } else {
+            if (isset($data['monthly_deduction_amount'])) {
+                $monthly_deduct = round((float)$data['monthly_deduction_amount'], 2);
+                if ($monthly_deduct <= 0) {
+                    return array('status' => false, 'message' => 'Monthly deduction amount must be greater than zero.');
+                }
+                $update['monthly_deduction_amount'] = $monthly_deduct;
             }
-            $update['monthly_deduction_amount'] = $monthly_deduct;
         }
 
         if (isset($data['remarks'])) {
             $update['remarks'] = trim((string)$data['remarks']);
         }
 
-        if (isset($data['status'])) {
-            $valid_statuses = array('Pending', 'Approved', 'Disbursed', 'Partially Deducted', 'Completed', 'Cancelled');
-            if (in_array($data['status'], $valid_statuses)) {
-                $update['status'] = $data['status'];
-            }
-        }
-
-        // Auto-complete if outstanding is 0
-        $cur_balance = isset($update['outstanding_balance']) ? $update['outstanding_balance'] : (float)$record->outstanding_balance;
-        if ($cur_balance <= 0) {
+        if ($outstanding <= 0) {
             $update['status'] = 'Completed';
-            $update['outstanding_balance'] = 0.00;
+        } else {
+            if (isset($data['status']) && in_array($data['status'], array('Pending', 'Approved', 'Disbursed', 'Cancelled'))) {
+                $update['status'] = $data['status'];
+            } else {
+                $update['status'] = ($finalized_amount > 0) ? 'Partially Deducted' : 'Approved';
+            }
         }
 
         $this->db->where('id', $id)->update($this->table_advances, $update);
 
-        // Auto-sync with processed salary if needed
-        $target_month = isset($update['effective_month']) ? $update['effective_month'] : $record->effective_month;
-        $synced = $this->sync_to_processed_salary_sheet($record->emp_id, $target_month);
+        // Auto-sync with processed salary sheets for all affected months
+        foreach (array_keys($affected_months) as $m) {
+            $this->sync_to_processed_salary_sheet($record->emp_id, $m);
+        }
 
         return array(
             'status'      => true,
             'message'     => 'Advance salary record updated successfully.',
-            'auto_synced' => $synced,
+            'auto_synced' => true,
         );
     }
 
@@ -312,8 +451,10 @@ class Advanced_salary_model extends CI_Model
         if ($record->status === 'Cancelled') {
             return array('status' => false, 'message' => 'Record is already cancelled.');
         }
-        if ($record->status === 'Completed') {
-            return array('status' => false, 'message' => 'Cannot cancel a fully completed advance.');
+
+        $lock_status = $this->get_advance_lock_status($record);
+        if ($lock_status['is_locked']) {
+            return array('status' => false, 'message' => 'Cannot cancel a fully completed and finalized advance.');
         }
 
         $now = date('Y-m-d H:i:s');
@@ -335,7 +476,7 @@ class Advanced_salary_model extends CI_Model
     }
 
     /**
-     * Delete an Advance record (Only allowed if no deductions occurred)
+     * Delete an Advance record (Allowed if no deductions finalized by Final Process)
      */
     public function delete_advance($id)
     {
@@ -345,16 +486,34 @@ class Advanced_salary_model extends CI_Model
             return array('status' => false, 'message' => 'Advance record not found.');
         }
 
-        // Count deductions
-        $ded_count = $this->db->where('advanced_salary_id', $id)->count_all_results($this->table_deductions);
-        if ($ded_count > 0 || (float)$record->total_deducted > 0) {
+        $lock_status = $this->get_advance_lock_status($record);
+        if (!$lock_status['can_delete']) {
             return array(
                 'status'  => false,
-                'message' => 'Cannot delete advance record because salary deductions have already been processed against it. Please Cancel it instead to halt future deductions.'
+                'message' => 'Cannot delete: Advance salary has already been finalized by Final Process in a locked salary month (' . number_format($lock_status['finalized_amount'], 2) . ' BDT deducted).'
             );
         }
 
+        // Collect all draft deduction months
+        $draft_deductions = $this->db->where('advanced_salary_id', $id)->get($this->table_deductions)->result();
+        $affected_months = array();
+        $affected_months[$this->format_month($record->effective_month)] = true;
+        foreach ($draft_deductions as $dd) {
+            $m = $this->format_month($dd->salary_month);
+            $affected_months[$m] = true;
+        }
+
+        // Delete draft deduction records
+        $this->db->where('advanced_salary_id', $id)->delete($this->table_deductions);
+
+        // Delete the advance record itself
         $this->db->where('id', $id)->delete($this->table_advances);
+
+        // Re-sync all affected months in pay_salary_sheet / pay_salary_sheet_com
+        foreach (array_keys($affected_months) as $m) {
+            $this->sync_to_processed_salary_sheet($record->emp_id, $m);
+        }
+
         return array('status' => true, 'message' => "Advance record {$record->advance_id} deleted successfully.");
     }
 
@@ -429,7 +588,17 @@ class Advanced_salary_model extends CI_Model
             $this->db->limit((int)$limit, (int)$offset);
         }
 
-        return $this->db->get()->result();
+        $records = $this->db->get()->result();
+        foreach ($records as $r) {
+            $lock_info = $this->get_advance_lock_status($r);
+            $r->is_locked                = $lock_info['is_locked'];
+            $r->can_edit                 = $lock_info['can_edit'];
+            $r->can_delete               = $lock_info['can_delete'];
+            $r->has_finalized_deductions = $lock_info['has_finalized_deductions'];
+            $r->finalized_amount         = $lock_info['finalized_amount'];
+        }
+
+        return $records;
     }
 
     /**
@@ -722,8 +891,9 @@ class Advanced_salary_model extends CI_Model
         $gross          = (float)$sheet->gross_sal;
         $att_bonus      = (float)$sheet->att_bonus;
         $ot_amount      = (float)$sheet->ot_amount;
+        $eot_amount     = isset($sheet->eot_amount) ? (float)$sheet->eot_amount : 0.00;
         $arrear         = isset($sheet->arrear_amount) ? (float)$sheet->arrear_amount : 0.00;
-        $new_net_pay    = round($gross + $att_bonus + $ot_amount + $arrear - $new_total_ded, 2);
+        $new_net_pay    = round($gross + $att_bonus + $ot_amount + $eot_amount + $arrear - $new_total_ded, 2);
 
         $this->db->where('id', $sheet->id)->update('pay_salary_sheet', array(
             'adv_deduct'   => $adv_deduct,
