@@ -455,60 +455,80 @@ class Attn_process_model extends CI_Model{
 					} else {
 						$attn_status = "A";
 					}
-				}elseif ($is_billing_shift && ($in_time != '' || ($out_time != '' && $out_time != '00:00:00'))){
+				}elseif ($is_billing_shift){
 					// Billing Section/Shift Policy:
-					// 1. Working time counts 8 hrs from actual in_time (whenever they punch in).
-					// 2. NO late count (late_status = 0).
-					// 3. If total punched time < 8 hrs (480 mins): Half-day salary deduction (deduction_hour = 4).
-					// 4. If total punched time > 8 hrs & employee is OT eligible: overtime is granted for excess hours.
-					$attn_status = "P";
-					$work_mins = 0;
-					if ($in_time != '' && $in_time != '00:00:00' && $out_time != '' && $out_time != '00:00:00' && strtotime($out_time) > strtotime($in_time)) {
-						$work_mins = round((strtotime($out_time) - strtotime($in_time)) / 60);
-					}
+					// 1. Total standard duty is at least 8 hours (480 mins).
+					// 2. Grace time is 30 mins: Duty time between 7 hrs 30 mins (450 mins) and 8 hrs is accepted as Present ('P') with NO deduction.
+					// 3. If duty time < 7 hrs 30 mins (i.e. <= 7 hrs 29 mins / < 450 mins) OR if punch error (single punch: in only or out only):
+					//    Marked ABSENT ('A') with NO deduction_hour.
+					// 4. If duty time >= 8 hrs (480 mins) and employee is OT eligible: overtime is granted for excess hours beyond 8 hrs.
+					// 5. NO late count (late_status = 0).
+					$has_valid_in  = (!empty($in_time) && $in_time != '00:00:00');
+					$has_valid_out = (!empty($out_time) && $out_time != '00:00:00');
 
-					$is_ot_eligible = ($ot_entitle == 0 || $com_ot_entitle == 0);
+					if ($has_valid_in && $has_valid_out && $in_time != $out_time) {
+						$start_ts = strtotime($in_time);
+						$end_ts   = strtotime($out_time);
+						if ($end_ts < $start_ts) {
+							$end_ts += 86400; // overnight duty across midnight
+						}
+						$work_mins = round(($end_ts - $start_ts) / 60);
 
-					if ($work_mins >= 480) {
-						// Work >= 8 hours -> Full day fulfilled
-						$early_exit = 0;
-						$deduction_hour = 0;
-						if ($is_ot_eligible) {
-							$extra_mins = $work_mins - 480;
-							$calc_ot = floor($extra_mins / 60);
-							if (!empty($ot_last_hour) && ($extra_mins % 60) >= $ot_last_hour) {
-								$calc_ot += 1;
-							}
-							// Per day maximum OT limit = 16 hours
-							if ($calc_ot > 16) {
-								$calc_ot = 16;
-							}
-							$tot_hour = $calc_ot;
-							if ($calc_ot > 2) {
-								$ot_hour  = 2;
-								$eot_hour = $calc_ot - 2;
+						if ($work_mins >= 450) {
+							// Work >= 7 hours 30 mins (grace time up to 30 mins allowed) -> Full Day Present, no deduction
+							$attn_status    = "P";
+							$deduction_hour = 0;
+							$early_exit     = 0;
+
+							$is_ot_eligible = ($ot_entitle == 0 || $com_ot_entitle == 0);
+							if ($work_mins >= 480 && $is_ot_eligible) {
+								$extra_mins = $work_mins - 480;
+								$calc_ot = floor($extra_mins / 60);
+								if (!empty($ot_last_hour) && ($extra_mins % 60) >= $ot_last_hour) {
+									$calc_ot += 1;
+								}
+								// Per day maximum OT limit = 16 hours
+								if ($calc_ot > 16) {
+									$calc_ot = 16;
+								}
+								$tot_hour = $calc_ot;
+								if ($calc_ot > 2) {
+									$ot_hour  = 2;
+									$eot_hour = $calc_ot - 2;
+								} else {
+									$ot_hour  = $calc_ot;
+									$eot_hour = 0;
+								}
+								$ot_eot_4pm  = min($eot_hour, 2);
+								$ot_eot_12am = min($eot_hour, 5);
 							} else {
-								$ot_hour  = $calc_ot;
-								$eot_hour = 0;
+								$ot_hour     = 0;
+								$eot_hour    = 0;
+								$tot_hour    = 0;
+								$ot_eot_4pm  = 0;
+								$ot_eot_12am = 0;
 							}
-							$ot_eot_4pm  = min($eot_hour, 2);
-							$ot_eot_12am = min($eot_hour, 5);
 						} else {
-							$ot_hour     = 0;
-							$eot_hour    = 0;
-							$tot_hour    = 0;
-							$ot_eot_4pm  = 0;
-							$ot_eot_12am = 0;
+							// Work < 7 hrs 30 mins (<= 7 hrs 29 mins) -> Marked ABSENT ('A')
+							$attn_status    = "A";
+							$deduction_hour = 0;
+							$early_exit     = 0;
+							$ot_hour        = 0;
+							$eot_hour       = 0;
+							$tot_hour       = 0;
+							$ot_eot_4pm     = 0;
+							$ot_eot_12am    = 0;
 						}
 					} else {
-						// Work < 8 hours (or single punch) -> Half-day salary deduction
-						$early_exit = 1;
-						$deduction_hour = 4; // Half-day deduction (4 hours = 0.5 day)
-						$ot_hour     = 0;
-						$eot_hour    = 0;
-						$tot_hour    = 0;
-						$ot_eot_4pm  = 0;
-						$ot_eot_12am = 0;
+						// Punch error (single punch or missing punch) -> Marked ABSENT ('A')
+						$attn_status    = "A";
+						$deduction_hour = 0;
+						$early_exit     = 0;
+						$ot_hour        = 0;
+						$eot_hour       = 0;
+						$tot_hour       = 0;
+						$ot_eot_4pm     = 0;
+						$ot_eot_12am    = 0;
 					}
 				}elseif (($in_time != '' && $in_time != '00:00:00') && ($out_time != '' && $out_time != '00:00:00') && $in_time != $out_time){
 					// Both IN and OUT punches are present and distinct -> Full Day Present
