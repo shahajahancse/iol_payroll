@@ -1022,6 +1022,30 @@ class Salary_process_model extends CI_Model{
                 $query->ot  = $ot_approval_info['approved_ot'];
                 $query->eot = $ot_approval_info['approved_eot'];
                 $query->has_approved_ot = true;
+
+                // Admin-approved OT dates must not carry punch error deductions
+                $approved_dates = $this->db->select('ot_date')
+                    ->where('emp_id', $emp_id)
+                    ->where("ot_date BETWEEN '$start_date' AND '$end_date'")
+                    ->where('status', 'approved')
+                    ->get('pr_daily_ot_approval')
+                    ->result();
+                if (!empty($approved_dates)) {
+                    $app_dates_arr = array();
+                    foreach ($approved_dates as $ad) {
+                        $app_dates_arr[] = $ad->ot_date;
+                    }
+                    if (!empty($app_dates_arr)) {
+                        $deduct_on_approved = $this->db->select('COALESCE(SUM(deduction_hour), 0) as dh')
+                            ->where('emp_id', $emp_id)
+                            ->where_in('shift_log_date', $app_dates_arr)
+                            ->get('pr_emp_shift_log')
+                            ->row()->dh;
+                        if ($deduct_on_approved > 0) {
+                            $query->deduction_hour = max(0, $query->deduction_hour - $deduct_on_approved);
+                        }
+                    }
+                }
             }
         }
 

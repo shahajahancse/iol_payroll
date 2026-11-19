@@ -810,9 +810,11 @@ class Ot_approval_model extends CI_Model
                     if (($cur_shift->out_time == '00:00:00' || empty($cur_shift->out_time)) && !empty($approval->out_time) && $approval->out_time != '00:00:00') {
                         $update['out_time'] = $approval->out_time;
                     }
-                    if (strtoupper(trim($cur_shift->present_status)) == 'A' || empty($cur_shift->present_status)) {
+                    if (strtoupper(trim($cur_shift->present_status)) == 'A' || empty($cur_shift->present_status) || strtoupper(trim($cur_shift->present_status)) == 'P(ERROR)') {
                         $update['present_status'] = 'P';
                     }
+                    $update['deduction_hour'] = 0;
+                    $update['early_exit']     = 0;
                 }
             }
         }
