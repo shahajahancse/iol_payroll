@@ -299,11 +299,11 @@ class Attn_process_model extends CI_Model{
             		$in_start_ts = strtotime($in_start_dt);
             		$in_end_ts   = strtotime($in_end_dt);
 					// dd($out_time .'>='. $in_start_dt .'&&'. $out_time .'<='. $in_end_dt);
-            		if ($out_ts >= $in_start_ts && $out_ts <= $in_end_ts) {
+            		if (empty($manual_out) && $out_ts >= $in_start_ts && $out_ts <= $in_end_ts) {
             			$out_time = '00:00:00';
 						// dd('lo');
             		}
-            		if (!empty($in_time) && $in_time != '00:00:00' && $out_ts <= strtotime($in_time)) {
+            		if (empty($manual_out) && !empty($in_time) && $in_time != '00:00:00' && $out_ts <= strtotime($in_time)) {
             			$out_time = '00:00:00';
 						// dd('lo;');
 
@@ -690,6 +690,43 @@ class Attn_process_model extends CI_Model{
 				$alert_msg = 0;
 				if ($attn_status == "P" || $attn_status == "P(Error)") {
 					$alert_msg = $this->get_alert_message($emp_id, $process_date, 1);
+				}
+
+				// If Admin approved OT exists for this date, or approved regularization with waived deduction:
+				// Ensure deduction_hour = 0, early_exit = 0, and status = 'P' (never P(Error) or A)
+				if ($this->db->table_exists('pr_daily_ot_approval')) {
+					$app_rec = $this->db->where('emp_id', $emp_id)
+										->where('ot_date', $process_date)
+										->where('status', 'approved')
+										->get('pr_daily_ot_approval')
+										->row();
+					if (!empty($app_rec)) {
+						if (!empty($app_rec->in_time) && $app_rec->in_time != '00:00:00') {
+							$in_time = $app_rec->in_time;
+						}
+						if (!empty($app_rec->out_time) && $app_rec->out_time != '00:00:00') {
+							$out_time = $app_rec->out_time;
+						}
+						if ($attn_status == 'P(Error)' || $attn_status == 'A') {
+							$attn_status = 'P';
+						}
+						$deduction_hour = 0;
+						$early_exit = 0;
+					}
+				}
+				if ($this->db->table_exists('pr_attn_regularization')) {
+					$reg_rec = $this->db->where('emp_id', $emp_id)
+										->where('att_date', $process_date)
+										->where('(status = "approved" OR status IS NULL)')
+										->get('pr_attn_regularization')
+										->row();
+					if (!empty($reg_rec) && !empty($reg_rec->waive_deduction)) {
+						if ($attn_status == 'P(Error)' || $attn_status == 'A') {
+							$attn_status = 'P';
+						}
+						$deduction_hour = 0;
+						$early_exit = 0;
+					}
 				}
 
 				$data = array(
